@@ -6,551 +6,625 @@
 <title>動作小鏡子｜AI 動作學習小教室</title>
 <style>
 :root{
-  --bg:#FFF8EE; --card:#FFFFFF; --ink:#4A3F55; --muted:#8C8299;
+  --bg:#FFF6EA; --ink:#463B57; --muted:#8C8299; --line:#F1E4D4;
   --pink:#FFC2CF; --pinkD:#F27E98; --blue:#C4E2FF; --blueD:#4FA3EE;
-  --mint:#C9F2DE; --mintD:#2FB57E; --yellow:#FFEDB3; --yellowD:#EBA916;
-  --lav:#E3D9FF; --lavD:#8E6FEA; --peach:#FFDCC4; --peachD:#F08A4B;
-  --r:28px; --shadow:0 6px 0 rgba(74,63,85,.07), 0 12px 28px rgba(74,63,85,.08);
+  --mint:#C9F2DE; --mintD:#2FB57E; --yellow:#FFE8A3; --yellowD:#E5A511;
+  --lav:#E3D9FF; --lavD:#8E6FEA; --peach:#FFD9C0; --peachD:#F08A4B;
+  --stage:#2E2946; --top:64px; --lw:330px; --rw:350px;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
-body{
-  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;
-  background:var(--bg); color:var(--ink); font-size:18px; line-height:1.55;
-  background-image:radial-gradient(#FFE1C4 1.8px,transparent 1.8px); background-size:28px 28px;
-  padding-bottom:40px;
-}
-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px 6px;max-width:1400px;margin:0 auto}
-.logo{font-size:44px;line-height:1;background:var(--yellow);border-radius:24px;padding:8px 12px;box-shadow:var(--shadow)}
-h1{margin:0;font-size:30px;letter-spacing:1px}
-.sub{color:var(--muted);font-size:16px}
-#status{margin-left:auto;padding:10px 18px;border-radius:999px;background:var(--lav);font-weight:700;font-size:16px}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:17px;line-height:1.5;overflow:hidden}
+button,select,input{font-family:inherit;color:var(--ink)}
+
+/* ---------- 版面骨架 ---------- */
+#app{height:100vh;height:100dvh;display:grid;grid-template-rows:var(--top) 1fr}
+.topbar{display:flex;align-items:center;gap:10px;padding:0 12px;background:#fff;border-bottom:4px solid var(--line);z-index:5}
+.brand{font-weight:900;font-size:21px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.brand .egg{font-size:28px}
+.modes{display:flex;background:#F6EFE6;border-radius:999px;padding:4px;gap:4px}
+.modes button{border:none;background:transparent;font-size:17px;font-weight:800;padding:8px 16px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.modes button.on{background:#fff;box-shadow:0 3px 0 var(--line)}
+.spacer{flex:1}
+.hud{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;padding:6px 12px;border-radius:999px;background:#F6EFE6;white-space:nowrap}
+#recChip{background:#FFE3E9;color:#D9365C;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.5}}
+#status{border:none;cursor:pointer;background:var(--lav)}
 #status.ok{background:var(--mint)} #status.err{background:var(--pink)}
-nav{display:flex;gap:10px;flex-wrap:wrap;padding:10px 20px;max-width:1400px;margin:0 auto;position:sticky;top:0;z-index:20;background:rgba(255,248,238,.92);backdrop-filter:blur(6px)}
-nav button{font-size:19px;padding:12px 20px;border:none;border-radius:999px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;box-shadow:var(--shadow);font-family:inherit}
-nav button.on{background:var(--peach);transform:translateY(2px)}
-main{max-width:1400px;margin:0 auto;padding:8px 20px}
-.tab{display:none}.tab.on{display:block}
-.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:18px}
-.card h2{margin:0 0 10px;font-size:23px}
-.card h3{margin:14px 0 8px;font-size:20px}
-.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:18px;align-items:start}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-@media (max-width:900px){.grid,.grid2{grid-template-columns:1fr} h1{font-size:24px} body{font-size:17px}}
-.stage{position:relative;background:linear-gradient(135deg,#FFF1F4,#EEF6FF);border-radius:24px;overflow:hidden;min-height:240px;display:flex;align-items:center;justify-content:center}
-.stage canvas{width:100%;height:auto;max-height:72vh;object-fit:contain;display:block}
-.placeholder{text-align:center;color:var(--muted);padding:40px 20px;font-size:20px}
-.placeholder .big{font-size:72px}
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.count{font-size:min(30vw,220px);font-weight:900;color:#fff;text-shadow:0 6px 0 var(--pinkD),0 0 40px rgba(242,126,152,.6)}
-.recdot{position:absolute;top:14px;left:14px;background:#fff;color:#E5486B;font-weight:800;padding:6px 14px;border-radius:999px;box-shadow:var(--shadow);display:none}
-.recdot.on{display:block;animation:blink 1s infinite}
-@keyframes blink{50%{opacity:.45}}
-.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.btn{font-family:inherit;font-size:19px;font-weight:800;min-height:56px;padding:10px 22px;border:none;border-radius:999px;cursor:pointer;color:var(--ink);background:var(--yellow);box-shadow:0 5px 0 rgba(0,0,0,.1);transition:transform .08s}
-.btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.1)}
-.btn.pink{background:var(--pink)}.btn.blue{background:var(--blue)}.btn.mint{background:var(--mint)}.btn.lav{background:var(--lav)}.btn.peach{background:var(--peach)}.btn.white{background:#fff;border:3px solid #F1E6DA}
-.btn.sm{min-height:44px;font-size:16px;padding:6px 16px}
-.btn[disabled]{opacity:.45;cursor:not-allowed}
-.btn.toggle.off{background:#EEE9F2;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.ang{border-radius:20px;padding:10px 12px;background:#FFFAF3;border:3px solid #F6EBDD}
-.ang .n{font-weight:800;font-size:17px}
-.ang .v{display:flex;justify-content:space-between;font-size:24px;font-weight:900}
+.iconbtn{width:46px;height:46px;border-radius:16px;border:none;background:var(--yellow);font-size:22px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.1);flex:none}
+.iconbtn.off{background:#EEE8F2}
+
+.main{display:grid;grid-template-columns:0 1fr 0;min-height:0;transition:grid-template-columns .25s}
+body.left-open .main{grid-template-columns:var(--lw) 1fr 0}
+body.right-open .main{grid-template-columns:0 1fr var(--rw)}
+body.left-open.right-open .main{grid-template-columns:var(--lw) 1fr var(--rw)}
+.drawer{overflow-y:auto;overflow-x:hidden;min-width:0;background:#FFFBF5;padding:0}
+.drawer .inner{padding:12px;width:var(--lw)}
+#right .inner{width:var(--rw)}
+#left{border-right:4px solid var(--line)} #right{border-left:4px solid var(--line)}
+body:not(.left-open) #left, body:not(.right-open) #right{border:none}
+
+#center{display:flex;flex-direction:column;min-width:0;min-height:0;padding:10px;gap:10px}
+.stageArea{flex:1;min-height:0;display:flex;gap:10px}
+.stagebox{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px}
+.stagetitle{font-weight:900;font-size:15px;color:var(--muted);padding-left:8px}
+.stage{position:relative;flex:1;min-height:0;background:var(--stage);border-radius:22px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:5px solid #fff;box-shadow:0 6px 0 var(--line)}
+.stage canvas,.stage video{width:100%;height:100%;object-fit:contain;display:block}
+.stage iframe{width:100%;height:100%;border:0}
+.ph{color:#CFC6E6;text-align:center;font-weight:800;font-size:19px;padding:20px}
+.ph .big{font-size:64px}
+.countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:min(26vw,200px);font-weight:900;color:#fff;text-shadow:0 6px 0 var(--pinkD)}
+.reviewCol{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+#chart{width:100%;height:170px;flex:none;background:#fff;border-radius:18px;cursor:pointer;border:4px solid var(--line)}
+
+/* ---------- 操作列 ---------- */
+.actionbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;background:#fff;border-radius:22px;padding:8px 12px;box-shadow:0 5px 0 var(--line)}
+.abtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;min-width:74px;height:66px;padding:4px 10px;border:none;border-radius:20px;cursor:pointer;background:var(--yellow);box-shadow:0 5px 0 rgba(0,0,0,.12);font-weight:800;font-size:13px;transition:transform .06s}
+.abtn .ic{font-size:26px;line-height:1.1}
+.abtn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.abtn.big{min-width:96px;background:var(--mint)}
+.abtn.pink{background:var(--pink)}.abtn.blue{background:var(--blue)}.abtn.lav{background:var(--lav)}.abtn.peach{background:var(--peach)}.abtn.white{background:#F7F2EC}
+.abtn.off{background:#EEE8F2;color:var(--muted)}
+.abtn.rec{background:#FF8FA8;color:#fff}
+.sel{height:52px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:16px;font-weight:700;padding:0 10px}
+.sep{width:3px;height:44px;background:var(--line);border-radius:3px}
+.scorehud{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#FFF3CC,#FFE3EB);border-radius:18px;padding:6px 14px;min-width:240px}
+.scorehud .num{font-size:34px;font-weight:900;min-width:58px;text-align:center}
+.scorehud .stars{font-size:20px;line-height:1}
+.scorehud .tip{font-size:15px;font-weight:800}
+
+/* ---------- 面板 ---------- */
+details.panel{background:#fff;border-radius:20px;margin-bottom:12px;box-shadow:0 4px 0 var(--line);overflow:hidden}
+details.panel>summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:space-between}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary::after{content:"＋";font-size:20px;color:var(--peachD)}
+details.panel[open]>summary::after{content:"－"}
+details.panel>.body{padding:0 14px 14px}
+.angs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.ang{border-radius:16px;padding:6px 10px;background:#FFFAF3;border:3px solid var(--line)}
+.ang .n{font-weight:800;font-size:14px}
+.ang .v{display:flex;justify-content:space-between;font-size:21px;font-weight:900}
 .L{color:var(--pinkD)}.R{color:var(--blueD)}.C{color:var(--mintD)}
-.metric{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:18px;background:#F7F3FF;margin-top:8px;font-weight:700}
-.metric b{font-size:24px}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-weight:800;font-size:16px;margin-top:6px}
-.legend span::before{content:"";display:inline-block;width:16px;height:16px;border-radius:50%;margin-right:6px;vertical-align:-2px;background:currentColor}
-input[type=text],input[type=number],input[type=url],select{font-family:inherit;font-size:19px;padding:12px 16px;border-radius:18px;border:3px solid #F1E6DA;background:#fff;color:var(--ink);min-height:52px;max-width:100%}
-input[type=range]{width:100%}
-label.f{display:block;font-weight:800;margin:10px 0 4px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.chip{font-family:inherit;font-size:17px;font-weight:700;padding:8px 16px;border-radius:999px;border:3px solid #F1E6DA;background:#fff;cursor:pointer;color:var(--ink)}
+.metric{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:14px;background:#F7F3FF;margin-top:6px;font-weight:700;font-size:15px}
+.metric b{font-size:19px}
+.hands{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.handcard{border-radius:16px;border:3px solid var(--line);padding:6px 8px;background:#FFFAF3}
+.handcard h4{margin:0 0 4px;font-size:15px}
+.handcard table{font-size:13px}
+.handcard td{padding:2px 3px;border:none;text-align:right}
+.handcard td:first-child{text-align:left;font-weight:700}
+.grip{height:10px;border-radius:99px;background:#F1E4D4;overflow:hidden;margin:4px 0}
+.grip i{display:block;height:100%;background:linear-gradient(90deg,var(--mintD),var(--yellowD),var(--pinkD));width:0}
+label.f{display:block;font-weight:800;margin:8px 0 4px;font-size:15px}
+input[type=text],input[type=number],input[type=url],.drawer select{font-size:16px;padding:8px 12px;border-radius:14px;border:3px solid var(--line);background:#fff;min-height:44px;width:100%}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row>*{flex:1}
+.pbtn{font-size:15px;font-weight:800;border:none;border-radius:999px;padding:9px 14px;background:var(--yellow);cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.1);margin:4px 4px 0 0}
+.pbtn.mint{background:var(--mint)}.pbtn.blue{background:var(--blue)}.pbtn.peach{background:var(--peach)}.pbtn.lav{background:var(--lav)}.pbtn.off{background:#EEE8F2;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:14px;font-weight:700;padding:6px 12px;border-radius:999px;border:3px solid var(--line);background:#fff;cursor:pointer}
 .chip.on{background:var(--mint);border-color:var(--mintD)}
-.chip .x{margin-left:8px;color:var(--pinkD)}
-.score{text-align:center;padding:14px;border-radius:24px;background:linear-gradient(135deg,#FFF6D6,#FFE8EF)}
-.score .num{font-size:64px;font-weight:900;line-height:1.1}
-.score .stars{font-size:38px;min-height:48px}
-.score .tip{font-size:21px;font-weight:800;margin-top:6px}
-.note{background:#F2FBF6;border-radius:18px;padding:12px 16px;font-size:16px;color:#3E6B57;margin-top:10px}
-.warn{background:#FFF1F1;color:#9A3F52}
-table{border-collapse:collapse;width:100%;font-size:16px}
-th,td{padding:8px 10px;border-bottom:2px dashed #F1E6DA;text-align:left;vertical-align:top}
+.chip .x{margin-left:6px;color:var(--pinkD)}
+.note{background:#F2FBF6;border-radius:14px;padding:8px 12px;font-size:14px;color:#3E6B57;margin-top:8px}
+.note.warn{background:#FFF1F1;color:#9A3F52}
+.small{font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 6px;border-bottom:2px dashed var(--line);text-align:left;vertical-align:top}
 th{background:#FFF4E6}
-.tablewrap{overflow-x:auto}
-iframe.refframe{width:100%;aspect-ratio:16/9;border:0;border-radius:20px;display:none;background:#000}
-#chart{width:100%;height:280px;display:block;background:#FFFCF7;border-radius:20px;cursor:pointer}
-video.review{width:100%;border-radius:20px;background:#000;max-height:60vh}
-.hidden-video{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none;left:0;top:0}
-.small{font-size:15px;color:var(--muted)}
-.statline{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.statline div{background:#F7F3FF;border-radius:16px;padding:8px 14px;font-weight:800}
-ol li,ul li{margin:4px 0}
-.pill{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--yellow);font-weight:800;font-size:15px}
+.tw{overflow-x:auto}
+.statline{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.statline div{background:#F7F3FF;border-radius:12px;padding:4px 10px;font-weight:800;font-size:14px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-weight:800;font-size:13px}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px;background:currentColor}
+input[type=range]{width:100%}
+.hidden-video{position:fixed;width:2px;height:2px;opacity:0;pointer-events:none;left:0;top:0}
+ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
+
+/* ---------- 手機、平板直式 ---------- */
+@media (max-width:860px){
+  body{overflow:auto}
+  #app{height:auto;display:block}
+  .topbar{flex-wrap:wrap;height:auto;padding:8px;position:sticky;top:0}
+  .modes{order:5;width:100%;justify-content:space-between}
+  .modes button{flex:1;padding:8px 6px;font-size:16px}
+  .brand{font-size:18px}
+  .main,body.left-open .main,body.right-open .main,body.left-open.right-open .main{display:flex;flex-direction:column}
+  #center{order:1;padding:8px}
+  #right{order:2} #left{order:3}
+  .drawer{border:none!important}
+  .drawer .inner,#right .inner{width:100%}
+  body:not(.left-open) #left, body:not(.right-open) #right{display:none}
+  .stageArea{height:62vh;flex:none;flex-direction:column}
+  body[data-mode=review] .stageArea{height:auto}
+  .reviewCol video{max-height:48vh}
+  .abtn{min-width:62px;height:60px}
+  .scorehud{width:100%}
+}
 </style>
 </head>
-<body>
-
-<header>
-  <div class="logo">🐣</div>
-  <div>
-    <h1>動作小鏡子</h1>
-    <div class="sub">AI 骨架即時辨識・動作學習小教室</div>
-  </div>
-  <div id="status">⏳ AI 模型準備中…</div>
-</header>
-
-<nav id="nav">
-  <button data-tab="live" class="on">📷 即時鏡子</button>
-  <button data-tab="follow">🎬 跟著影片練</button>
-  <button data-tab="review">📊 錄影回顧</button>
-  <button data-tab="body">🧒 身體資料與設定</button>
-  <button data-tab="help">📚 說明與文獻</button>
-</nav>
-
-<main>
+<body data-mode="mirror">
 <video id="liveVideo" class="hidden-video" playsinline muted autoplay></video>
+<video id="refVideo" class="hidden-video" playsinline muted loop></video>
 
-<!-- ============ 即時鏡子 ============ -->
-<section class="tab on" id="tab-live">
-  <div class="grid">
-    <div class="card">
-      <div class="stage" id="liveStage">
-        <div class="placeholder" id="livePh"><div class="big">🪞</div>按下「開啟鏡頭」，就像照鏡子一樣！</div>
-        <canvas id="liveCanvas" style="display:none"></canvas>
-        <div class="recdot" id="recDot">● 錄影中</div>
-        <div class="overlay"><div class="count" id="countdown"></div></div>
+<div id="app">
+  <header class="topbar">
+    <button class="iconbtn off" id="tgLeft" title="設定與資料">⚙️</button>
+    <div class="brand"><span class="egg">🐣</span>動作小鏡子</div>
+    <div class="modes" id="modes">
+      <button data-mode="mirror" class="on">📷 鏡子</button>
+      <button data-mode="follow">🎬 跟練</button>
+      <button data-mode="review">📼 回顧</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="hud" id="recChip" hidden>● 錄影中 <span id="recTime">0.0</span>s</span>
+    <span class="hud" id="fpsChip">— fps</span>
+    <button class="hud" id="status">⏳ AI 準備中…</button>
+    <button class="iconbtn" id="tgRight" title="數據面板">📊</button>
+  </header>
+
+  <div class="main">
+    <!-- ================= 左側：設定與資料 ================= -->
+    <aside class="drawer" id="left"><div class="inner">
+      <details class="panel" open>
+        <summary>🧒 學員資料</summary>
+        <div class="body">
+          <label class="f" for="inName">暱稱</label>
+          <input type="text" id="inName" placeholder="例如：小明">
+          <div class="row">
+            <div><label class="f" for="inH">身高 cm</label><input type="number" id="inH" min="80" max="230"></div>
+            <div><label class="f" for="inW">體重 kg</label><input type="number" id="inW" min="10" max="200"></div>
+          </div>
+          <div class="note">身高用來把像素換算成公尺，體重用來算肢段質量與力。資料只存在這台裝置。</div>
+        </div>
+      </details>
+      <details class="panel" open>
+        <summary>⚙️ AI 設定</summary>
+        <div class="body">
+          <label class="f" for="setModel">身體模型</label>
+          <select id="setModel">
+            <option value="lite">🐇 輕量（手機、平板）</option>
+            <option value="full">🐻 標準（筆電）</option>
+            <option value="heavy">🐘 精準（高效能電腦）</option>
+          </select>
+          <label class="f" for="setAngle">角度計算</label>
+          <select id="setAngle">
+            <option value="2d">2D 影像平面（鏡頭垂直動作平面）</option>
+            <option value="3d">3D 估計（參考用）</option>
+          </select>
+          <div style="margin-top:8px">
+            <button class="pbtn mint" id="tgHands">✋ 手指追蹤：開</button>
+            <button class="pbtn mint" id="tgAngles">🔢 角度數字：開</button>
+            <button class="pbtn mint" id="tgCom">⭐ 重心：開</button>
+            <button class="pbtn mint" id="tgFace">🙂 臉部點：關</button>
+          </div>
+          <label class="f">模型檔（自動下載失敗時使用）</label>
+          <label class="pbtn peach" for="modelPick" style="display:inline-block">📂 手動載入 .task 模型檔</label>
+          <input type="file" id="modelPick" accept=".task" multiple hidden>
+          <div class="small">下載：身體
+            <a href="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task" target="_blank">輕量</a>／
+            <a href="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task" target="_blank">標準</a>／
+            <a href="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task" target="_blank">精準</a>；
+            <a href="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task" target="_blank">手指</a>。載入一次後就會存在這台裝置。
+          </div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>🦴 肢段參數表</summary>
+        <div class="body">
+          <div class="tw"><table id="segTable"></table></div>
+          <div class="small">Dempster 參數（Winter, 2009, Table 4.1）；長度比例依 Drillis &amp; Contini。「AI 量測」是 BlazePose 3D 世界座標的即時平均。</div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>🍎 老師快速上手</summary>
+        <div class="body">
+          <ol>
+            <li>在「學員資料」輸入身高和體重。</li>
+            <li>按「📷 鏡子」→ 下方的 <b>開鏡頭</b>，讓學員全身入鏡。看側面動作時，鏡頭要擺在側邊、和腰同高。</li>
+            <li>按 <b>🔴 錄影</b>，倒數 3 秒後開始錄，錄完會自動跳到「📼 回顧」，可以慢動作播放並對照曲線。</li>
+            <li>在「🎬 跟練」放入示範影片或存一個目標姿勢，學生跟著做，就會拿到分數和提示。</li>
+            <li>右上角 📊 可以打開／收起數據面板，左上角 ⚙️ 是這個設定面板。</li>
+          </ol>
+          <div class="note warn">請用 Chrome、Edge 或 Safari 開啟。在 Claude 等 App 的「預覽視窗」裡，AI 模型和相機都會被擋住。手機、平板要用 https 網址開啟（例如 GitHub Pages）。</div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>📍 身體 33 點</summary>
+        <div class="body"><div class="tw"><table id="lmTable"></table></div></div>
+      </details>
+      <details class="panel">
+        <summary>✋ 手指 21 點</summary>
+        <div class="body"><div class="tw"><table id="handTable"></table></div>
+        <div class="small">手指角度以「彎曲角度」表示：0° 是伸直，數字越大彎越多（由 3D 手部座標計算）。</div></div>
+      </details>
+      <details class="panel">
+        <summary>🧮 計算方法與文獻</summary>
+        <div class="body">
+          <ul>
+            <li><b>關節角度</b>：三點夾角 θ = arccos(u·v / |u||v|)。</li>
+            <li><b>全身重心</b>：Σ(肢段質量比 × 肢段重心)，肢段重心 = 近端 + 比例 ×（遠端 − 近端）。</li>
+            <li><b>比例尺</b>：大腿 0.245H、小腿 0.246H、軀幹 0.288H 的像素長度取中位數。</li>
+            <li><b>垂直地面反作用力估計</b>：F = m(g + a)，以體重倍數（BW）表示，僅供教學參考。</li>
+          </ul>
+          <ul class="small" style="color:var(--ink)">
+            <li>Bazarevsky et al. (2020). BlazePose: On-device real-time body pose tracking. arXiv:2006.10204.</li>
+            <li>Zhang, F., et al. (2020). MediaPipe Hands: On-device real-time hand tracking. arXiv:2006.10214.</li>
+            <li>Lugaresi, C., et al. (2019). MediaPipe: A framework for building perception pipelines. arXiv:1906.08172.</li>
+            <li>Winter, D. A. (2009). <i>Biomechanics and Motor Control of Human Movement</i> (4th ed.). Wiley.</li>
+            <li>Dempster, W. T. (1955). <i>Space requirements of the seated operator</i> (WADC TR 55-159).</li>
+            <li>Drillis, R., &amp; Contini, R. (1966). <i>Body segment parameters</i> (Report 1166-03). NYU.</li>
+            <li>de Leva, P. (1996). Adjustments to Zatsiorsky–Seluyanov's segment inertia parameters. <i>J Biomech, 29</i>(9), 1223–1230.</li>
+          </ul>
+        </div>
+      </details>
+    </div></aside>
+
+    <!-- ================= 中央：動作畫面 ================= -->
+    <section id="center">
+      <div class="stageArea">
+        <div class="stagebox" data-modes="follow">
+          <div class="stagetitle">👩‍🏫 示範</div>
+          <div class="stage" id="refStage">
+            <div class="ph" id="refPh"><div class="big">🎞️</div>到右側面板選一段示範影片</div>
+            <canvas id="refCanvas" hidden></canvas>
+            <iframe id="refFrame" hidden allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+          </div>
+        </div>
+        <div class="stagebox" data-modes="mirror follow">
+          <div class="stagetitle" data-modes="follow">🙋 我</div>
+          <div class="stage" id="liveStage">
+            <div class="ph" id="livePh"><div class="big">🪞</div>按下方「開鏡頭」，就像照鏡子一樣！</div>
+            <canvas id="liveCanvas" hidden></canvas>
+            <div class="countdown" id="countdown"></div>
+          </div>
+        </div>
+        <div class="reviewCol" data-modes="review">
+          <div class="stage">
+            <div class="ph" id="rvPh"><div class="big">📼</div>還沒有錄影，到「📷 鏡子」按 🔴 錄影</div>
+            <video id="reviewVideo" playsinline hidden></video>
+          </div>
+          <canvas id="chart"></canvas>
+        </div>
       </div>
-      <div class="btns">
-        <button class="btn mint" id="btnCam">▶️ 開啟鏡頭</button>
-        <button class="btn blue" id="btnFlip">🔄 前／後鏡頭</button>
-        <button class="btn lav toggle" id="btnMirror">🪞 鏡像：開</button>
-        <button class="btn pink" id="btnRec">🔴 錄影</button>
-        <select id="recLen" aria-label="錄影長度">
+
+      <!-- 操作列：鏡子 -->
+      <div class="actionbar" data-modes="mirror">
+        <button class="abtn big" id="btnCam"><span class="ic">▶️</span>開鏡頭</button>
+        <button class="abtn blue" id="btnFlip"><span class="ic">🔄</span>前／後</button>
+        <button class="abtn lav" id="btnMirror"><span class="ic">🪞</span>鏡像：開</button>
+        <div class="sep"></div>
+        <button class="abtn pink" id="btnRec"><span class="ic">🔴</span>錄影</button>
+        <select class="sel" id="recLen" aria-label="錄影長度">
           <option value="0">手動停止</option>
           <option value="5">錄 5 秒</option>
           <option value="10" selected>錄 10 秒</option>
           <option value="20">錄 20 秒</option>
         </select>
-        <button class="btn white" id="btnSnap">📸 拍照</button>
+        <button class="abtn white" id="btnSnap"><span class="ic">📸</span>拍照</button>
       </div>
-      <div class="legend"><span class="L">身體左側</span><span class="R">身體右側</span><span class="C">軀幹中線</span><span style="color:var(--yellowD)">重心</span></div>
-      <div class="small" style="margin-top:6px">左右指的是<b>被拍的人自己</b>的左右，不是畫面的左右。</div>
-    </div>
 
-    <div>
-      <div class="card">
-        <h2>📐 關節角度</h2>
-        <div class="cards" id="angleCards"></div>
-        <div class="metric"><span>↗️ 軀幹前傾</span><b id="mTrunk">—</b></div>
-        <div class="small" style="margin-top:6px">180° 代表伸直；數字越小代表彎越多。</div>
-      </div>
-      <div class="card">
-        <h2>⚖️ 重心與力學（估計）</h2>
-        <div class="metric"><span>重心離地高度</span><b id="mH">—</b></div>
-        <div class="metric"><span>重心水平速度</span><b id="mVx">—</b></div>
-        <div class="metric"><span>重心垂直速度</span><b id="mVy">—</b></div>
-        <div class="metric"><span>估計垂直地面反作用力</span><b id="mF">—</b></div>
-        <div class="metric"><span>畫面更新</span><b id="mFps">—</b></div>
-        <div class="note">力學數值由「身高、體重 + Dempster 肢段參數」推算，適合教學示範與趨勢比較，不能取代測力板。</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 跟著影片練 ============ -->
-<section class="tab" id="tab-follow">
-  <div class="card">
-    <h2>🎬 選一段示範動作</h2>
-    <div class="row">
-      <label class="btn peach" for="refFile" style="display:inline-flex;align-items:center">📁 選擇影片檔（手機相簿也可以）</label>
-      <input type="file" id="refFile" accept="video/*" hidden>
-      <button class="btn blue" id="btnScreen">🖥️ 擷取分頁畫面（電腦）</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <input type="url" id="refUrl" placeholder="貼上 YouTube／Vimeo／Bilibili 或 .mp4 影片網址" style="flex:1;min-width:240px">
-      <button class="btn mint" id="btnUrl">🔗 載入網址</button>
-    </div>
-    <div class="note" id="refMsg">影片檔與 .mp4 網址可以直接做 AI 骨架分析。YouTube 等平台的影片會用嵌入播放器顯示，這時可以用「擷取分頁畫面」讓 AI 分析，或先存一個「目標姿勢」來比對。示範影片僅供課堂動作參考，請勿另外散布。</div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h2>👩‍🏫 示範</h2>
-      <div class="stage" id="refStage">
-        <div class="placeholder" id="refPh"><div class="big">🎞️</div>還沒有示範影片</div>
-        <canvas id="refCanvas" style="display:none"></canvas>
-        <iframe class="refframe" id="refFrame" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-      </div>
-      <video id="refVideo" class="hidden-video" playsinline muted loop></video>
-      <div class="btns" id="refCtrls">
-        <button class="btn mint" id="refPlay">⏯️ 播放／暫停</button>
-        <button class="btn white sm" id="refBack">⏪ 上一格</button>
-        <button class="btn white sm" id="refFwd">下一格 ⏩</button>
-        <select id="refSpeed" aria-label="播放速度">
-          <option value="0.25">🐢 0.25 倍</option>
-          <option value="0.5">🐌 0.5 倍</option>
-          <option value="0.75">0.75 倍</option>
-          <option value="1" selected>🐇 1 倍</option>
+      <!-- 操作列：跟練 -->
+      <div class="actionbar" data-modes="follow">
+        <div class="scorehud">
+          <div class="num" id="scoreNum">—</div>
+          <div><div class="stars" id="stars"></div><div class="tip" id="scoreTip">選好比對目標就開始囉！</div></div>
+        </div>
+        <button class="abtn big" id="btnCam2"><span class="ic">▶️</span>開鏡頭</button>
+        <button class="abtn" id="refPlay"><span class="ic">⏯️</span>播放</button>
+        <button class="abtn white" id="refBack"><span class="ic">⏪</span>上一格</button>
+        <button class="abtn white" id="refFwd"><span class="ic">⏩</span>下一格</button>
+        <select class="sel" id="refSpeed" aria-label="播放速度">
+          <option value="0.25">🐢 0.25×</option>
+          <option value="0.5">🐌 0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>🐇 1×</option>
         </select>
-        <button class="btn lav toggle off" id="refMirrorBtn">🪞 示範鏡像：關</button>
+        <button class="abtn peach" id="savePoseLive"><span class="ic">📌</span>存我的姿勢</button>
       </div>
-      <input type="range" id="refSeek" min="0" max="1000" value="0" aria-label="影片進度">
-    </div>
 
-    <div class="card">
-      <h2>🙋 我</h2>
-      <div class="stage" id="followLiveSlot">
-        <div class="placeholder" id="followPh"><div class="big">📷</div>請先到「即時鏡子」開啟鏡頭</div>
-      </div>
-      <div class="btns">
-        <button class="btn mint" id="btnCam2">▶️ 開啟鏡頭</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h2>🌟 動作相似度</h2>
-      <div class="score">
-        <div class="stars" id="stars"></div>
-        <div class="num" id="scoreNum">—</div>
-        <div class="tip" id="scoreTip">選好比對目標，就開始囉！</div>
-      </div>
-      <div class="small" style="margin-top:8px">比較兩邊的肘、肩、髖、膝共 8 個關節角度。每個關節角度差 0° 得滿分，差到 45° 以上該關節得 0 分。</div>
-    </div>
-    <div class="card">
-      <h2>🎯 比對目標</h2>
-      <div class="chips" id="targetChips"></div>
-      <div class="btns">
-        <button class="btn peach sm" id="savePoseRef">📌 存影片這一格為目標姿勢</button>
-        <button class="btn blue sm" id="savePoseLive">📌 3 秒後存我的姿勢</button>
-      </div>
-      <div class="btns">
-        <button class="btn lav toggle off sm" id="swapBtn">🔁 左右互換：自動</button>
-      </div>
-      <div class="small">老師可以先自己示範並存成目標姿勢，再讓學生來挑戰。「左右互換」會自動依兩邊的鏡像設定調整；如果示範者是背對鏡頭，請手動切換。</div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 錄影回顧 ============ -->
-<section class="tab" id="tab-review">
-  <div class="card">
-    <h2>📼 我的錄影</h2>
-    <div class="chips" id="clipChips"><span class="small">還沒有錄影，請到「即時鏡子」按 🔴 錄影。</span></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <video id="reviewVideo" class="review" playsinline controls></video>
-      <div class="btns">
-        <button class="btn mint" id="rvPlay">⏯️ 播放／暫停</button>
-        <button class="btn white sm" id="rvBack">⏪ 上一格</button>
-        <button class="btn white sm" id="rvFwd">下一格 ⏩</button>
-        <select id="rvSpeed" aria-label="播放速度">
-          <option value="0.1">🐢 0.1 倍</option>
-          <option value="0.25">🐢 0.25 倍</option>
-          <option value="0.5">🐌 0.5 倍</option>
-          <option value="1" selected>🐇 1 倍</option>
+      <!-- 操作列：回顧 -->
+      <div class="actionbar" data-modes="review">
+        <select class="sel" id="clipSel" aria-label="選擇錄影"><option value="">（還沒有錄影）</option></select>
+        <button class="abtn big" id="rvPlay"><span class="ic">⏯️</span>播放</button>
+        <button class="abtn white" id="rvBack"><span class="ic">⏪</span>上一格</button>
+        <button class="abtn white" id="rvFwd"><span class="ic">⏩</span>下一格</button>
+        <select class="sel" id="rvSpeed" aria-label="播放速度">
+          <option value="0.1">🐢 0.1×</option>
+          <option value="0.25">🐢 0.25×</option>
+          <option value="0.5">🐌 0.5×</option>
+          <option value="1" selected>🐇 1×</option>
         </select>
+        <button class="abtn peach" id="dlCsv"><span class="ic">📄</span>CSV</button>
+        <button class="abtn blue" id="dlVid"><span class="ic">🎞️</span>影片</button>
+        <button class="abtn pink" id="delClip"><span class="ic">🗑️</span>刪除</button>
       </div>
-    </div>
-    <div class="card">
-      <h2>📈 數據曲線</h2>
-      <select id="series" style="width:100%"></select>
-      <div class="statline" id="stats"></div>
-      <div class="btns">
-        <button class="btn peach sm" id="dlCsv">⬇️ 下載數據 CSV</button>
-        <button class="btn blue sm" id="dlVid">⬇️ 下載影片</button>
-      </div>
-      <div class="small">點一下曲線，影片就會跳到那個時間點。</div>
-    </div>
-  </div>
-  <div class="card"><canvas id="chart"></canvas></div>
-</section>
+    </section>
 
-<!-- ============ 身體資料 ============ -->
-<section class="tab" id="tab-body">
-  <div class="grid2">
-    <div class="card">
-      <h2>🧒 學員身體資料</h2>
-      <label class="f" for="inName">暱稱</label>
-      <input type="text" id="inName" placeholder="例如：小明">
-      <div class="row">
-        <div><label class="f" for="inH">身高（公分）</label><input type="number" id="inH" value="150" min="80" max="230"></div>
-        <div><label class="f" for="inW">體重（公斤）</label><input type="number" id="inW" value="45" min="10" max="200"></div>
-      </div>
-      <div class="note">身高用來把畫面像素換算成公尺，體重用來算各肢段質量與力。資料只存在這台裝置的瀏覽器裡。</div>
-    </div>
-    <div class="card">
-      <h2>⚙️ 設定</h2>
-      <label class="f" for="setModel">AI 模型</label>
-      <select id="setModel">
-        <option value="lite">🐇 輕量（手機、平板建議）</option>
-        <option value="full">🐻 標準（筆電建議）</option>
-        <option value="heavy">🐘 精準（效能好的電腦）</option>
-      </select>
-      <label class="f" for="setAngle">角度計算方式</label>
-      <select id="setAngle">
-        <option value="2d">2D 影像平面（鏡頭垂直於動作平面時最準）</option>
-        <option value="3d">3D 估計（AI 推估深度，參考用）</option>
-      </select>
-      <div class="btns">
-        <button class="btn mint toggle sm" id="tgAngles">🔢 顯示角度數字：開</button>
-        <button class="btn mint toggle sm" id="tgCom">⭐ 顯示重心：開</button>
-        <button class="btn mint toggle off sm" id="tgFace">🙂 顯示臉部點：關</button>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <h2>🦴 肢段參數表（Dempster，引自 Winter 2009）</h2>
-    <div class="tablewrap"><table id="segTable"></table></div>
-    <div class="small" style="margin-top:8px">「依身高推估長度」使用 Drillis &amp; Contini 的身高比例；「AI 量測長度」是鏡頭裡的學員由 BlazePose 3D 世界座標算出的即時平均值，兩者可以互相對照。</div>
-  </div>
-</section>
+    <!-- ================= 右側：數據 ================= -->
+    <aside class="drawer" id="right"><div class="inner">
+      <details class="panel" open data-modes="follow">
+        <summary>🎬 示範影片來源</summary>
+        <div class="body">
+          <label class="pbtn peach" for="refFile" style="display:inline-block">📁 選擇影片檔</label>
+          <input type="file" id="refFile" accept="video/*" hidden>
+          <button class="pbtn blue" id="btnScreen">🖥️ 擷取分頁畫面（電腦）</button>
+          <div class="row" style="margin-top:8px">
+            <input type="url" id="refUrl" placeholder="YouTube／Vimeo／Bilibili／.mp4 網址">
+            <button class="pbtn mint" id="btnUrl" style="flex:none">🔗 載入</button>
+          </div>
+          <input type="range" id="refSeek" min="0" max="1000" value="0" aria-label="影片進度" style="margin-top:8px">
+          <button class="pbtn lav off" id="refMirrorBtn">🪞 示範鏡像：關</button>
+          <div class="note" id="refMsg">影片檔與 .mp4 網址可以直接讓 AI 分析。YouTube 等平台的影片請用「擷取分頁畫面」。示範影片僅供課堂參考，請勿另外散布。</div>
+        </div>
+      </details>
+      <details class="panel" open data-modes="follow">
+        <summary>🎯 比對目標</summary>
+        <div class="body">
+          <div class="chips" id="targetChips"></div>
+          <button class="pbtn peach" id="savePoseRef">📌 存影片這一格</button>
+          <button class="pbtn lav off" id="swapBtn">🔁 左右互換：自動</button>
+          <div class="small">比對肘、肩、髖、膝 8 個角度，差 0° 滿分、差 45° 以上該關節 0 分。示範者背對鏡頭時，請把左右互換切到手動。</div>
+        </div>
+      </details>
 
-<!-- ============ 說明 ============ -->
-<section class="tab" id="tab-help">
-  <div class="card">
-    <h2>🍎 老師快速上手</h2>
-    <ol>
-      <li>到「🧒 身體資料與設定」輸入學員身高、體重。</li>
-      <li>在「📷 即時鏡子」按 <b>開啟鏡頭</b>，第一次使用要允許相機權限。</li>
-      <li>讓學員<b>全身入鏡</b>。要看側面動作（例如蹲、跳、跑）時，鏡頭要擺在側邊，盡量與動作平面垂直、和腰部同高。</li>
-      <li>按 <b>🔴 錄影</b>，會倒數 3 秒後開始錄影。錄好的影片可以在「📊 錄影回顧」慢動作、逐格播放，並對照角度曲線。</li>
-      <li>在「🎬 跟著影片練」放入示範影片或存一個目標姿勢，學員跟著做，系統就會給星星和提示。</li>
-    </ol>
-    <div class="note">所有影像都只在這台裝置上即時分析，<b>不會上傳</b>。第一次開啟需要網路來下載 AI 模型（約 5–30 MB），之後瀏覽器通常會快取。</div>
-    <div class="note warn">手機和平板上的瀏覽器只有在 <b>https 網址</b>下才能開啟相機。用電腦直接點開這個檔案就可以；如果要在手機或平板上使用，請把這個檔案放到 GitHub Pages、Netlify Drop 等網站，再用網址開啟。</div>
-  </div>
+      <details class="panel" open data-modes="mirror follow">
+        <summary>📐 關節角度</summary>
+        <div class="body">
+          <div class="angs" id="angleCards"></div>
+          <div class="metric"><span>↗️ 軀幹前傾</span><b id="mTrunk">—</b></div>
+          <div class="legend" style="margin-top:6px"><span class="L">身體左側</span><span class="R">身體右側</span><span class="C">中線</span><span style="color:var(--yellowD)">重心</span></div>
+          <div class="small">180° 為伸直；左右指被拍者自己的左右。</div>
+        </div>
+      </details>
+      <details class="panel" open data-modes="mirror follow">
+        <summary>✋ 手指角度</summary>
+        <div class="body">
+          <div class="hands">
+            <div class="handcard"><h4 class="L">左手</h4><div class="grip"><i id="gripL"></i></div><div class="small">握拳 <b id="gripLv">—</b></div><table id="handL"></table></div>
+            <div class="handcard"><h4 class="R">右手</h4><div class="grip"><i id="gripR"></i></div><div class="small">握拳 <b id="gripRv">—</b></div><table id="handR"></table></div>
+          </div>
+          <div class="small">彎曲角度：0° 伸直；三欄依序為根部（MCP）、中間（PIP）、末端（DIP）關節。拇指為 CMC、MCP、IP 關節。</div>
+        </div>
+      </details>
+      <details class="panel" data-modes="mirror follow">
+        <summary>⚖️ 重心與力學（估計）</summary>
+        <div class="body">
+          <div class="metric"><span>重心離地高度</span><b id="mH">—</b></div>
+          <div class="metric"><span>重心水平速度</span><b id="mVx">—</b></div>
+          <div class="metric"><span>重心垂直速度</span><b id="mVy">—</b></div>
+          <div class="metric"><span>垂直地面反作用力</span><b id="mF">—</b></div>
+          <div class="note">由身高、體重和 Dempster 肢段參數推算，適合教學與看趨勢，不能取代測力板。</div>
+        </div>
+      </details>
 
-  <div class="card">
-    <h2>🦴 33 個身體標記點與對應骨性標記</h2>
-    <div class="tablewrap"><table id="lmTable"></table></div>
-    <div class="small" style="margin-top:8px">BlazePose 的點是 AI 從影像推估的「關節中心附近位置」，不是真的貼在骨凸上的反光球，所以會比 Vicon 等標記點系統有更多誤差。</div>
+      <details class="panel" open data-modes="review">
+        <summary>📈 數據曲線</summary>
+        <div class="body">
+          <select id="series"></select>
+          <div class="statline" id="stats"></div>
+          <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。</div>
+        </div>
+      </details>
+    </div></aside>
   </div>
-
-  <div class="card">
-    <h2>🧮 計算方法</h2>
-    <ul>
-      <li><b>關節角度</b>：用三個點組成的兩個向量求夾角，θ = arccos( (u·v) / (|u||v|) )。例如膝角是「髖－膝－踝」三點的夾角。</li>
-      <li><b>軀幹前傾</b>：兩髖中點指向兩肩中點的向量，與鉛垂線的夾角。</li>
-      <li><b>全身重心</b>：各肢段重心 = 近端點 + 比例 ×（遠端點 − 近端點），全身重心 = Σ(肢段質量比 × 肢段重心)。</li>
-      <li><b>像素換算公尺</b>：用大腿、小腿、軀幹的像素長度，對照 Drillis &amp; Contini 的身高比例（大腿 0.245H、小腿 0.246H、軀幹 0.288H），取中位數。</li>
-      <li><b>速度、加速度</b>：重心位置經平滑後做數值微分。</li>
-      <li><b>估計垂直地面反作用力</b>：F = m(g + a<sub>垂直</sub>)，以「幾倍體重（BW）」顯示。這是由影像推估的數值，雜訊比測力板大很多。</li>
-    </ul>
-  </div>
-
-  <div class="card">
-    <h2>📖 參考文獻</h2>
-    <ul class="small" style="color:var(--ink)">
-      <li>Bazarevsky, V., Grishchenko, I., Raveendran, K., Zhu, T., Zhang, F., &amp; Grundmann, M. (2020). BlazePose: On-device real-time body pose tracking. <i>CVPR Workshop on Computer Vision for AR/VR</i>. arXiv:2006.10204.</li>
-      <li>Lugaresi, C., et al. (2019). MediaPipe: A framework for building perception pipelines. arXiv:1906.08172.</li>
-      <li>Winter, D. A. (2009). <i>Biomechanics and Motor Control of Human Movement</i> (4th ed.). Wiley.（Table 4.1 肢段參數，資料來源為 Dempster, 1955）</li>
-      <li>Dempster, W. T. (1955). <i>Space requirements of the seated operator</i> (WADC TR 55-159). Wright-Patterson AFB.</li>
-      <li>Drillis, R., &amp; Contini, R. (1966). <i>Body segment parameters</i> (Report 1166-03). New York University.</li>
-      <li>de Leva, P. (1996). Adjustments to Zatsiorsky–Seluyanov's segment inertia parameters. <i>Journal of Biomechanics, 29</i>(9), 1223–1230.（可作為進階版本的肢段參數）</li>
-    </ul>
-  </div>
-</section>
-</main>
+</div>
 
 <script type="module">
-/* ===================== 常數與資料 ===================== */
-const MP_VER = "0.10.14";
-const MP_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`;
-const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`;
-const MODELS = {
-  lite: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-  full: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
-  heavy: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task"
+/* ===================== 常數 ===================== */
+const MP_VER="0.10.14";
+const LIB_SOURCES=[
+  {name:"jsDelivr", lib:`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`, wasm:`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`},
+  {name:"unpkg", lib:`https://unpkg.com/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`, wasm:`https://unpkg.com/@mediapipe/tasks-vision@${MP_VER}/wasm`}
+];
+const GS="https://storage.googleapis.com/mediapipe-models";
+const ASSETS={
+  lite:{file:"pose_landmarker_lite.task", url:`${GS}/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`},
+  full:{file:"pose_landmarker_full.task", url:`${GS}/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task`},
+  heavy:{file:"pose_landmarker_heavy.task", url:`${GS}/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task`},
+  hand:{file:"hand_landmarker.task", url:`${GS}/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`}
 };
 
-// BlazePose 33 點：名稱、中文、對應骨性標記
-const LM = [
+const LM=[
   ["nose","鼻尖","—"],["left_eye_inner","左眼內側","—"],["left_eye","左眼","—"],["left_eye_outer","左眼外側","—"],
   ["right_eye_inner","右眼內側","—"],["right_eye","右眼","—"],["right_eye_outer","右眼外側","—"],
-  ["left_ear","左耳","外耳道（Dempster 頭頸重心）"],["right_ear","右耳","外耳道（Dempster 頭頸重心）"],
+  ["left_ear","左耳","外耳道（頭頸重心）"],["right_ear","右耳","外耳道（頭頸重心）"],
   ["mouth_left","左嘴角","—"],["mouth_right","右嘴角","—"],
-  ["left_shoulder","左肩","肩峰／盂肱關節中心"],["right_shoulder","右肩","肩峰／盂肱關節中心"],
+  ["left_shoulder","左肩","肩峰／盂肱關節"],["right_shoulder","右肩","肩峰／盂肱關節"],
   ["left_elbow","左肘","肱骨外上髁"],["right_elbow","右肘","肱骨外上髁"],
   ["left_wrist","左腕","橈骨／尺骨莖突"],["right_wrist","右腕","橈骨／尺骨莖突"],
   ["left_pinky","左小指","第 5 掌指關節"],["right_pinky","右小指","第 5 掌指關節"],
   ["left_index","左食指","第 2 掌指關節"],["right_index","右食指","第 2 掌指關節"],
   ["left_thumb","左拇指","拇指"],["right_thumb","右拇指","拇指"],
-  ["left_hip","左髖","股骨大轉子／髖關節中心"],["right_hip","右髖","股骨大轉子／髖關節中心"],
+  ["left_hip","左髖","股骨大轉子／髖關節"],["right_hip","右髖","股骨大轉子／髖關節"],
   ["left_knee","左膝","股骨外上髁"],["right_knee","右膝","股骨外上髁"],
   ["left_ankle","左踝","外踝"],["right_ankle","右踝","外踝"],
   ["left_heel","左腳跟","跟骨"],["right_heel","右腳跟","跟骨"],
   ["left_foot_index","左腳尖","第 2 蹠骨頭／趾尖"],["right_foot_index","右腳尖","第 2 蹠骨頭／趾尖"]
 ];
-
-// 骨架連線：[a, b, side]  side: L/R/C
-const CONN = [
+const HAND_LM=[
+  ["wrist","手腕","腕關節中心"],
+  ["thumb_cmc","拇指 CMC","第 1 腕掌關節"],["thumb_mcp","拇指 MCP","第 1 掌指關節"],["thumb_ip","拇指 IP","拇指指間關節"],["thumb_tip","拇指尖","指尖"],
+  ["index_mcp","食指 MCP","第 2 掌指關節（指節）"],["index_pip","食指 PIP","近端指間關節"],["index_dip","食指 DIP","遠端指間關節"],["index_tip","食指尖","指尖"],
+  ["middle_mcp","中指 MCP","第 3 掌指關節"],["middle_pip","中指 PIP","近端指間關節"],["middle_dip","中指 DIP","遠端指間關節"],["middle_tip","中指尖","指尖"],
+  ["ring_mcp","無名指 MCP","第 4 掌指關節"],["ring_pip","無名指 PIP","近端指間關節"],["ring_dip","無名指 DIP","遠端指間關節"],["ring_tip","無名指尖","指尖"],
+  ["pinky_mcp","小指 MCP","第 5 掌指關節"],["pinky_pip","小指 PIP","近端指間關節"],["pinky_dip","小指 DIP","遠端指間關節"],["pinky_tip","小指尖","指尖"]
+];
+const CONN=[
   [11,12,"C"],[23,24,"C"],[11,23,"L"],[12,24,"R"],
   [11,13,"L"],[13,15,"L"],[15,17,"L"],[15,19,"L"],[17,19,"L"],[15,21,"L"],
   [12,14,"R"],[14,16,"R"],[16,18,"R"],[16,20,"R"],[18,20,"R"],[16,22,"R"],
   [23,25,"L"],[25,27,"L"],[27,29,"L"],[29,31,"L"],[27,31,"L"],
   [24,26,"R"],[26,28,"R"],[28,30,"R"],[30,32,"R"],[28,32,"R"]
 ];
-const COLORS = { L:"#FF8FA8", R:"#6DB8FF", C:"#5ED6A2", joint:"#FFFFFF", com:"#FFC93C" };
+const POSE_HAND_PTS={L:[17,19,21], R:[18,20,22]};
+const HAND_CONN=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
+const FINGER_COLOR=["#FFB86B","#FFB86B","#FFB86B","#FFB86B","#B18CFF","#B18CFF","#B18CFF","#B18CFF","#6FD3A8","#6FD3A8","#6FD3A8","#6FD3A8","#FF9EC4","#FF9EC4","#FF9EC4","#FF9EC4","#7CC4FF","#7CC4FF","#7CC4FF","#7CC4FF"];
+const COLORS={L:"#FF8FA8",R:"#6DB8FF",C:"#5ED6A2",joint:"#FFFFFF",com:"#FFC93C"};
 
-// 關節角度定義（三點夾角，b 為頂點）
-const ANGLES = [
+const ANGLES=[
   {k:"elbowL",n:"左肘",j:"elbow",a:11,b:13,c:15},{k:"elbowR",n:"右肘",j:"elbow",a:12,b:14,c:16},
   {k:"shL",n:"左肩",j:"shoulder",a:23,b:11,c:13},{k:"shR",n:"右肩",j:"shoulder",a:24,b:12,c:14},
   {k:"hipL",n:"左髖",j:"hip",a:11,b:23,c:25},{k:"hipR",n:"右髖",j:"hip",a:12,b:24,c:26},
   {k:"kneeL",n:"左膝",j:"knee",a:23,b:25,c:27},{k:"kneeR",n:"右膝",j:"knee",a:24,b:26,c:28},
   {k:"ankL",n:"左踝",j:"ankle",a:25,b:27,c:31},{k:"ankR",n:"右踝",j:"ankle",a:26,b:28,c:32}
 ];
-const ANG_BY_K = Object.fromEntries(ANGLES.map(a=>[a.k,a]));
-const CARD_GROUPS = [["💪 肘","elbowL","elbowR"],["🙆 肩","shL","shR"],["🧍 髖","hipL","hipR"],["🦵 膝","kneeL","kneeR"],["🦶 踝","ankL","ankR"]];
-const SCORE_KEYS = ["elbowL","elbowR","shL","shR","hipL","hipR","kneeL","kneeR"];
-
-// Dempster 肢段參數（Winter, 2009, Table 4.1）：質量比、重心距近端比例
-// len：Drillis & Contini 身高比例
-const SEGS = [
-  {k:"head", n:"頭頸", m:.081, p:"shMid", d:"earMid", r:1.000, len:null, def:"C7-T1 → 外耳道（重心在外耳道）"},
-  {k:"trunk",n:"軀幹", m:.497, p:"hipMid", d:"shMid", r:.500, len:.288, def:"大轉子 → 盂肱關節"},
-  {k:"uarmL",n:"左上臂",m:.028,p:11,d:13,r:.436,len:.186,def:"盂肱關節 → 肘關節"},
-  {k:"uarmR",n:"右上臂",m:.028,p:12,d:14,r:.436,len:.186,def:"盂肱關節 → 肘關節"},
-  {k:"farmL",n:"左前臂",m:.016,p:13,d:15,r:.430,len:.146,def:"肘關節 → 腕關節"},
-  {k:"farmR",n:"右前臂",m:.016,p:14,d:16,r:.430,len:.146,def:"肘關節 → 腕關節"},
-  {k:"handL",n:"左手", m:.006,p:15,d:"handL",r:.506,len:.108,def:"腕關節 → 第 2、5 掌指關節中點"},
-  {k:"handR",n:"右手", m:.006,p:16,d:"handR",r:.506,len:.108,def:"腕關節 → 第 2、5 掌指關節中點"},
+const ANG_BY_K=Object.fromEntries(ANGLES.map(a=>[a.k,a]));
+const CARD_GROUPS=[["💪 肘","elbowL","elbowR"],["🙆 肩","shL","shR"],["🧍 髖","hipL","hipR"],["🦵 膝","kneeL","kneeR"],["🦶 踝","ankL","ankR"]];
+const SCORE_KEYS=["elbowL","elbowR","shL","shR","hipL","hipR","kneeL","kneeR"];
+const FINGERS=[
+  {k:"thumb",n:"拇指",j:[[0,1,2],[1,2,3],[2,3,4]]},
+  {k:"index",n:"食指",j:[[0,5,6],[5,6,7],[6,7,8]]},
+  {k:"middle",n:"中指",j:[[0,9,10],[9,10,11],[10,11,12]]},
+  {k:"ring",n:"無名指",j:[[0,13,14],[13,14,15],[14,15,16]]},
+  {k:"pinky",n:"小指",j:[[0,17,18],[17,18,19],[18,19,20]]}
+];
+const SEGS=[
+  {k:"head",n:"頭頸",m:.081,p:"shMid",d:"earMid",r:1.000,len:null,def:"C7-T1 → 外耳道"},
+  {k:"trunk",n:"軀幹",m:.497,p:"hipMid",d:"shMid",r:.500,len:.288,def:"大轉子 → 盂肱關節"},
+  {k:"uarmL",n:"左上臂",m:.028,p:11,d:13,r:.436,len:.186,def:"肩 → 肘"},
+  {k:"uarmR",n:"右上臂",m:.028,p:12,d:14,r:.436,len:.186,def:"肩 → 肘"},
+  {k:"farmL",n:"左前臂",m:.016,p:13,d:15,r:.430,len:.146,def:"肘 → 腕"},
+  {k:"farmR",n:"右前臂",m:.016,p:14,d:16,r:.430,len:.146,def:"肘 → 腕"},
+  {k:"handL",n:"左手",m:.006,p:15,d:"handL",r:.506,len:.108,def:"腕 → 掌指關節中點"},
+  {k:"handR",n:"右手",m:.006,p:16,d:"handR",r:.506,len:.108,def:"腕 → 掌指關節中點"},
   {k:"thighL",n:"左大腿",m:.100,p:23,d:25,r:.433,len:.245,def:"大轉子 → 股骨髁"},
   {k:"thighR",n:"右大腿",m:.100,p:24,d:26,r:.433,len:.245,def:"大轉子 → 股骨髁"},
-  {k:"legL",n:"左小腿",m:.0465,p:25,d:27,r:.433,len:.246,def:"股骨髁 → 內踝"},
-  {k:"legR",n:"右小腿",m:.0465,p:26,d:28,r:.433,len:.246,def:"股骨髁 → 內踝"},
+  {k:"legL",n:"左小腿",m:.0465,p:25,d:27,r:.433,len:.246,def:"股骨髁 → 踝"},
+  {k:"legR",n:"右小腿",m:.0465,p:26,d:28,r:.433,len:.246,def:"股骨髁 → 踝"},
   {k:"footL",n:"左足",m:.0145,p:27,d:31,r:.500,len:.152,def:"外踝 → 第 2 蹠骨頭"},
   {k:"footR",n:"右足",m:.0145,p:28,d:32,r:.500,len:.152,def:"外踝 → 第 2 蹠骨頭"}
 ];
-const SCALE_SEGS = ["thighL","thighR","legL","legR","trunk"];
-const G = 9.81;
+const SCALE_SEGS=["thighL","thighR","legL","legR","trunk"];
+const G=9.81;
 
 /* ===================== 小工具 ===================== */
-const $ = id => document.getElementById(id);
-const store = {
-  get(k,d){ try{ const v = localStorage.getItem("mm_"+k); return v==null? d : JSON.parse(v); }catch(e){ return d; } },
-  set(k,v){ try{ localStorage.setItem("mm_"+k, JSON.stringify(v)); }catch(e){} }
+const $=id=>document.getElementById(id);
+const store={
+  get(k,d){ try{ const v=localStorage.getItem("mm_"+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem("mm_"+k,JSON.stringify(v)); }catch(e){} }
 };
-const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z});
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)});
 const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
 const norm=a=>Math.hypot(a.x,a.y,a.z);
 const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2,v:Math.min(a.v,b.v)});
 const lerp=(a,b,t)=>a+(b-a)*t;
-function angle3(a,b,c){
-  const u=sub(a,b), v=sub(c,b), nu=norm(u), nv=norm(v);
-  if(nu<1e-9||nv<1e-9) return null;
-  return Math.acos(Math.max(-1,Math.min(1,dot(u,v)/(nu*nv))))*180/Math.PI;
-}
-function median(arr){ if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); const m=s.length>>1; return s.length%2? s[m] : (s[m-1]+s[m])/2; }
-function fmt(v,d=0,u=""){ return (v==null||!isFinite(v))? "—" : v.toFixed(d)+u; }
-function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className=cls||""; }
+function angle3(a,b,c){ const u=sub(a,b),v=sub(c,b),nu=norm(u),nv=norm(v); if(nu<1e-9||nv<1e-9) return null; return Math.acos(Math.max(-1,Math.min(1,dot(u,v)/(nu*nv))))*180/Math.PI; }
+function median(a){ if(!a.length) return null; const s=[...a].sort((x,y)=>x-y),m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function fmt(v,d=0,u=""){ return (v==null||!isFinite(v))?"—":v.toFixed(d)+u; }
+function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className="hud"+(cls?" "+cls:""); }
+function sameFolder(f){ try{ const u=new URL(f,location.href); return /^https?:$/.test(u.protocol)?u.href:null; }catch(e){ return null; } }
+function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ return "同資料夾"; } }
+const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings = Object.assign({
-  model: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ? "lite" : "full",
-  angleMode:"2d", showAngles:true, showCom:true, showFace:false,
-  name:"", height:150, weight:45
-}, store.get("settings",{}));
-function saveSettings(){ store.set("settings", settings); }
-const bodyH = ()=> Math.max(.5, (Number(settings.height)||150)/100);
-const bodyM = ()=> Math.max(5, Number(settings.weight)||45);
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",showAngles:true,showCom:true,showFace:false,hands:!isMobile,name:"",height:150,weight:45},store.get("settings",{}));
+const saveSettings=()=>store.set("settings",settings);
+const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
+const bodyM=()=>Math.max(5,Number(settings.weight)||45);
 
-/* ===================== MediaPipe 載入 ===================== */
-// 每個檔案都準備備用下載來源，第一個失敗就自動換下一個
-const LIB_SOURCES = [
-  { name:"jsDelivr", lib:MP_URL, wasm:WASM_URL },
-  { name:"unpkg", lib:`https://unpkg.com/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`, wasm:`https://unpkg.com/@mediapipe/tasks-vision@${MP_VER}/wasm` }
-];
-const modelUrls = m => [MODELS[m], MODELS[m].replace("/float16/1/","/float16/latest/")];
-let mp=null, vision=null; const modelCache={};
-class LoadError extends Error{ constructor(step,detail){ super(step+"："+detail); this.step=step; } }
-
+/* ===================== 模型載入 ===================== */
+const idb={
+  open(){ return new Promise((res,rej)=>{ const r=indexedDB.open("moveMirror",1); r.onupgradeneeded=()=>r.result.createObjectStore("models"); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); },
+  async get(k){ try{ const db=await this.open(); return await new Promise(res=>{ const q=db.transaction("models").objectStore("models").get(k); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } },
+  async set(k,v){ try{ const db=await this.open(); await new Promise(res=>{ const t=db.transaction("models","readwrite"); t.objectStore("models").put(v,k); t.oncomplete=res; t.onerror=res; }); }catch(e){} }
+};
+let mp=null, vision=null; const bufCache={};
+class LoadError extends Error{ constructor(step,detail){ super(detail); this.step=step; } }
 async function ensureVision(){
   if(vision) return vision;
   const errs=[];
   for(const s of LIB_SOURCES){
     try{
-      setStatus(`⏳ 下載 AI 程式庫（${s.name}）…`);
-      const mod = await import(s.lib);
-      // 先確認 WASM 檔拿得到，再交給 MediaPipe
-      const r = await fetch(`${s.wasm}/vision_wasm_internal.js`, {cache:"force-cache"});
+      setStatus(`⏳ 下載 AI 程式庫（${s.name}）`);
+      const mod=await import(s.lib);
+      const r=await fetch(`${s.wasm}/vision_wasm_internal.js`,{cache:"force-cache"});
       if(!r.ok) throw new Error("WASM HTTP "+r.status);
-      mp = mod; vision = await mp.FilesetResolver.forVisionTasks(s.wasm);
-      console.log("AI 程式庫來源：", s.name);
+      mp=mod; vision=await mp.FilesetResolver.forVisionTasks(s.wasm);
       return vision;
-    }catch(e){ console.warn(s.name, e); errs.push(`${s.name}: ${e.message}`); }
+    }catch(e){ console.warn(s.name,e); errs.push(`${s.name}: ${e.message}`); }
   }
-  throw new LoadError("AI 程式庫", errs.join("；"));
+  throw new LoadError("AI 程式庫",errs.join("；"));
 }
-async function getModelBuffer(){
-  const m = settings.model;
-  if(modelCache[m]) return modelCache[m];
+async function getBuffer(key){
+  if(bufCache[key]) return bufCache[key];
+  const saved=await idb.get(key);
+  if(saved){ bufCache[key]=new Uint8Array(saved); return bufCache[key]; }
+  const a=ASSETS[key], urls=[a.url,a.url.replace("/float16/1/","/float16/latest/"),sameFolder(a.file)].filter(Boolean);
   const errs=[];
-  for(const url of modelUrls(m)){
+  for(const url of urls){
     try{
-      setStatus("⏳ 下載 AI 模型…");
-      const r = await fetch(url, {cache:"force-cache"});
+      const r=await fetch(url,{cache:"force-cache"});
       if(!r.ok) throw new Error("HTTP "+r.status);
-      modelCache[m] = new Uint8Array(await r.arrayBuffer());
-      return modelCache[m];
-    }catch(e){ console.warn(url, e); errs.push(`${new URL(url).host}: ${e.message}`); }
+      const buf=await r.arrayBuffer();
+      if(buf.byteLength<100000) throw new Error("檔案不完整");
+      bufCache[key]=new Uint8Array(buf); idb.set(key,buf);
+      return bufCache[key];
+    }catch(e){ console.warn(url,e); errs.push(`${hostOf(url)}: ${e.message}`); }
   }
-  throw new LoadError("AI 模型檔", errs.join("；"));
+  throw new LoadError(key==="hand"?"手指模型檔":"身體模型檔",errs.join("；"));
 }
-async function createLandmarker(){
+async function createTask(kind){
   await ensureVision();
-  const buf = await getModelBuffer();
-  const opts = delegate => ({
-    baseOptions:{ modelAssetBuffer: buf, delegate },
-    runningMode:"VIDEO", numPoses:1,
-    minPoseDetectionConfidence:.5, minPosePresenceConfidence:.5, minTrackingConfidence:.5,
-    outputSegmentationMasks:false
-  });
-  try{ return await mp.PoseLandmarker.createFromOptions(vision, opts("GPU")); }
-  catch(e){
-    console.warn("GPU 無法使用，改用 CPU", e);
-    try{ return await mp.PoseLandmarker.createFromOptions(vision, opts("CPU")); }
-    catch(e2){ throw new LoadError("AI 啟動", e2.message); }
-  }
+  const isHand=kind==="hand";
+  setStatus(isHand?"⏳ 載入手指模型…":"⏳ 載入身體模型…");
+  const buf=await getBuffer(isHand?"hand":settings.model);
+  const common={runningMode:"VIDEO"};
+  const opts=delegate=>isHand
+    ? {...common,baseOptions:{modelAssetBuffer:buf,delegate},numHands:2,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5}
+    : {...common,baseOptions:{modelAssetBuffer:buf,delegate},numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5,outputSegmentationMasks:false};
+  const Cls=isHand?mp.HandLandmarker:mp.PoseLandmarker;
+  try{ return await Cls.createFromOptions(vision,opts("GPU")); }
+  catch(e){ console.warn("GPU 無法使用，改用 CPU",e);
+    try{ return await Cls.createFromOptions(vision,opts("CPU")); }catch(e2){ throw new LoadError(isHand?"手指 AI 啟動":"身體 AI 啟動",e2.message); } }
 }
-let liveLM=null, refLM=null, lmLoading=null, lastLoadErr=null;
+let liveLM=null, refLM=null, handLM=null, loading=null, poseErr=null, handErr=null;
+function refreshStatus(){
+  if(poseErr) return setStatus(`⚠️ ${poseErr.step}失敗，點我`,"err");
+  if(!liveLM) return;
+  if(settings.hands && handErr) return setStatus("✅ 身體 OK・⚠️ 手指未載入","err");
+  setStatus(settings.hands&&handLM?"✅ AI 準備好了（含手指）":"✅ AI 準備好了","ok");
+}
 async function loadModels(){
-  if(lmLoading) return lmLoading;
-  lmLoading = (async()=>{
+  if(loading) return loading;
+  loading=(async()=>{
     try{
-      setStatus("⏳ AI 模型準備中…");
-      if(liveLM){ try{liveLM.close();}catch(e){} } if(refLM){ try{refLM.close();}catch(e){} }
-      liveLM=null; refLM=null;
-      liveLM = await createLandmarker();
-      refLM = await createLandmarker();
-      lastLoadErr=null;
-      setStatus("✅ AI 準備好了","ok");
-    }catch(e){
-      console.error(e); lastLoadErr=e;
-      setStatus(`⚠️ ${e.step||"AI"} 下載失敗，點這裡看原因`,"err");
-    }finally{ lmLoading=null; }
+      for(const t of [liveLM,refLM]) if(t) try{t.close();}catch(e){}
+      liveLM=refLM=null; poseErr=null;
+      liveLM=await createTask("pose"); refLM=await createTask("pose");
+    }catch(e){ console.error(e); poseErr=e; }
+    if(settings.hands && !poseErr) await loadHands();
+    loading=null; refreshStatus();
   })();
-  return lmLoading;
+  return loading;
 }
-$("status").style.cursor="pointer";
+async function loadHands(){
+  if(handLM) return;
+  try{ handErr=null; handLM=await createTask("hand"); }catch(e){ console.error(e); handErr=e; }
+}
 $("status").onclick=()=>{
-  if(!lastLoadErr) return;
-  const fileTip = location.protocol==="file:" ? "\n\n你現在是「直接點開檔案」的方式。有些瀏覽器或防毒軟體會擋住這種方式下載模型，請改用 https 網址開啟（例如放到 GitHub Pages）。" : "";
-  const ok = confirm(`沒辦法下載：${lastLoadErr.step||"AI"}\n\n詳細原因：${lastLoadErr.message}\n\n常見原因：\n① 學校或公司網路擋住了 storage.googleapis.com、cdn.jsdelivr.net、unpkg.com\n② 瀏覽器的廣告阻擋外掛擋住了下載\n③ 網路暫時不穩${fileTip}\n\n要再試一次嗎？`);
-  if(ok) loadModels();
+  const e=poseErr||(settings.hands?handErr:null); if(!e) return;
+  const inPreview=!/^(https?|file):$/.test(location.protocol)||window!==window.top;
+  const msg=`沒辦法載入：${e.step}\n\n詳細原因：${e.message}\n\n常見原因：\n①${inPreview?"【你現在很可能在 App 的預覽視窗裡】":""} 在 Claude 等 App 的預覽視窗開啟 → 請下載檔案後用 Chrome／Edge 開啟\n② 學校或公司網路擋住了 storage.googleapis.com\n③ 廣告阻擋外掛擋住了下載`;
+  if(/模型檔/.test(e.step)){ if(confirm(msg+"\n\n按「確定」：手動選擇已下載的 .task 模型檔\n按「取消」：重新下載")) $("modelPick").click(); else { handLM=null; loadModels(); } }
+  else if(confirm(msg+"\n\n要再試一次嗎？")){ handLM=null; loadModels(); }
 };
-const tsState = new Map();
-function nextTs(lm){ const t = Math.max(performance.now(), (tsState.get(lm)||0)+1); tsState.set(lm,t); return t; }
+$("modelPick").onchange=async e=>{
+  for(const f of e.target.files){
+    const buf=await f.arrayBuffer();
+    if(buf.byteLength<100000){ alert(`「${f.name}」太小，不像是 AI 模型檔。`); continue; }
+    const key=/hand/i.test(f.name)?"hand":/heavy/i.test(f.name)?"heavy":/lite/i.test(f.name)?"lite":"full";
+    if(key!=="hand"){ settings.model=key; saveSettings(); $("setModel").value=key; }
+    bufCache[key]=new Uint8Array(buf); await idb.set(key,buf);
+  }
+  e.target.value=""; handLM=null; handErr=null; loadModels();
+};
+const tsState=new Map();
+function nextTs(t){ const v=Math.max(performance.now(),(tsState.get(t)||0)+1); tsState.set(t,v); return v; }
 
 /* ===================== 姿勢計算 ===================== */
 function makeGetter(src){
-  return k => {
+  return k=>{
     if(typeof k==="number") return src(k);
     switch(k){
       case "earMid": return mid(src(7),src(8));
@@ -561,589 +635,491 @@ function makeGetter(src){
     }
   };
 }
-function computeMetrics(lms, world, W, H){
-  const vis = i => (lms[i].visibility ?? 1);
-  const P2 = makeGetter(i=>({x:lms[i].x*W, y:lms[i].y*H, z:0, v:vis(i)}));
-  const P3 = world ? makeGetter(i=>({x:world[i].x, y:world[i].y, z:world[i].z, v:vis(i)})) : null;
-  const PA = (settings.angleMode==="3d" && P3) ? P3 : P2;
-
-  const angles = {};
-  for(const d of ANGLES){
-    const a=PA(d.a), b=PA(d.b), c=PA(d.c);
-    angles[d.k] = Math.min(a.v,b.v,c.v) < .5 ? null : angle3(a,b,c);
-  }
-  // 軀幹前傾（與鉛垂線夾角）
+function computeMetrics(lms,world,W,H){
+  const vis=i=>(lms[i].visibility??1);
+  const P2=makeGetter(i=>({x:lms[i].x*W,y:lms[i].y*H,z:0,v:vis(i)}));
+  const P3=world?makeGetter(i=>({x:world[i].x,y:world[i].y,z:world[i].z,v:vis(i)})):null;
+  const PA=(settings.angleMode==="3d"&&P3)?P3:P2;
+  const angles={};
+  for(const d of ANGLES){ const a=PA(d.a),b=PA(d.b),c=PA(d.c); angles[d.k]=Math.min(a.v,b.v,c.v)<.5?null:angle3(a,b,c); }
   let trunk=null;
-  { const s=PA("shMid"), h=PA("hipMid"); if(Math.min(s.v,h.v)>=.5){ const t=sub(s,h), n=norm(t); if(n>1e-9) trunk=Math.acos(Math.max(-1,Math.min(1,-t.y/n)))*180/Math.PI; } }
-
-  // 全身重心（影像像素座標）
-  let cx=0, cy=0, msum=0;
-  for(const s of SEGS){
-    const p=P2(s.p), d=P2(s.d);
-    cx += s.m*(p.x + s.r*(d.x-p.x)); cy += s.m*(p.y + s.r*(d.y-p.y)); msum += s.m;
-  }
-  const com = {x:cx/msum, y:cy/msum};
-
-  // 像素 → 公尺比例尺
+  { const s=PA("shMid"),h=PA("hipMid"); if(Math.min(s.v,h.v)>=.5){ const t=sub(s,h),n=norm(t); if(n>1e-9) trunk=Math.acos(Math.max(-1,Math.min(1,-t.y/n)))*180/Math.PI; } }
+  let cx=0,cy=0,ms=0;
+  for(const s of SEGS){ const p=P2(s.p),d=P2(s.d); cx+=s.m*(p.x+s.r*(d.x-p.x)); cy+=s.m*(p.y+s.r*(d.y-p.y)); ms+=s.m; }
+  const com={x:cx/ms,y:cy/ms};
   const scales=[];
-  for(const k of SCALE_SEGS){
-    const s=SEGS.find(z=>z.k===k), p=P2(s.p), d=P2(s.d);
-    if(Math.min(p.v,d.v)<.6) continue;
-    const px=Math.hypot(d.x-p.x,d.y-p.y); if(px<10) continue;
-    scales.push(s.len*bodyH()/px);
-  }
-  const scale = median(scales);
-
-  // 最低腳點（地面）
+  for(const k of SCALE_SEGS){ const s=SEGS.find(z=>z.k===k),p=P2(s.p),d=P2(s.d); if(Math.min(p.v,d.v)<.6) continue; const px=Math.hypot(d.x-p.x,d.y-p.y); if(px<10) continue; scales.push(s.len*bodyH()/px); }
   let footY=null;
-  for(const i of [27,28,29,30,31,32]){ if(vis(i)>.3){ const y=lms[i].y*H; footY = footY==null? y : Math.max(footY,y); } }
-
-  // 3D 肢段長度（公尺）
+  for(const i of [27,28,29,30,31,32]) if(vis(i)>.3){ const y=lms[i].y*H; footY=footY==null?y:Math.max(footY,y); }
   const len3d={};
-  if(P3){ for(const s of SEGS){ const p=P3(s.p), d=P3(s.d); if(Math.min(p.v,d.v)>=.5) len3d[s.k]=norm(sub(d,p)); } }
-
-  return {angles, trunk, com, scale, footY, len3d};
+  if(P3) for(const s of SEGS){ const p=P3(s.p),d=P3(s.d); if(Math.min(p.v,d.v)>=.5) len3d[s.k]=norm(sub(d,p)); }
+  return {angles,trunk,com,scale:median(scales),footY,len3d};
 }
-
-// 重心運動學（平滑 + 數值微分）
+// 手指：彎曲角度 = 180° − 三點夾角（用 3D 手部世界座標）
+function computeHand(world){
+  const P=i=>({x:world[i].x,y:world[i].y,z:world[i].z});
+  const flex={}; let sum=0,n=0;
+  for(const f of FINGERS){
+    flex[f.k]=f.j.map(([a,b,c])=>{ const t=angle3(P(a),P(b),P(c)); return t==null?null:180-t; });
+    if(f.k!=="thumb") for(const v of flex[f.k]) if(v!=null){ sum+=v; n++; }
+  }
+  const grip=n? Math.max(0,Math.min(100,(sum/n)/90*100)) : null;
+  return {flex,grip};
+}
+// 依「離身體哪一隻手腕比較近」判斷是左手還是右手
+function assignHands(r,poseLms){
+  const out={L:null,R:null};
+  if(!r||!r.landmarks) return out;
+  const hd=r.handedness||r.handednesses||[];
+  r.landmarks.forEach((lms,i)=>{
+    let side;
+    if(poseLms){
+      const w=lms[0], dL=Math.hypot(w.x-poseLms[15].x,w.y-poseLms[15].y), dR=Math.hypot(w.x-poseLms[16].x,w.y-poseLms[16].y);
+      side=dL<dR?"L":"R";
+    }else{
+      const lab=hd[i]?.[0]?.categoryName; // MediaPipe 假設畫面是鏡像，所以未鏡像的影像要對調
+      side=lab==="Left"?"R":"L";
+    }
+    const world=r.worldLandmarks?.[i];
+    const h={lms,...(world?computeHand(world):{flex:{},grip:null})};
+    if(!out[side]) out[side]=h; else { const o=side==="L"?"R":"L"; if(!out[o]) out[o]=h; }
+  });
+  return out;
+}
 class Kin{
   constructor(){ this.reset(); }
-  reset(){ this.t=null; this.p=null; this.v={x:0,y:0}; this.a={x:0,y:0}; this.sc=null; this.h=null; this.Fbw=null; }
-  update(t, M){
-    if(!M){ this.t=null; this.p=null; return; }
-    if(M.scale) this.sc = this.sc==null ? M.scale : lerp(this.sc, M.scale, .04);
+  reset(){ this.t=null;this.p=null;this.v={x:0,y:0};this.a={x:0,y:0};this.sc=null;this.h=null;this.Fbw=null; }
+  update(t,M){
+    if(!M){ this.t=null;this.p=null;return; }
+    if(M.scale) this.sc=this.sc==null?M.scale:lerp(this.sc,M.scale,.04);
     if(this.sc==null) return;
-    const pos = {x:M.com.x*this.sc, y:M.com.y*this.sc};
-    this.h = M.footY!=null ? (M.footY - M.com.y)*this.sc : null;
-    if(this.p==null || this.t==null){ this.p=pos; this.t=t; return; }
+    const pos={x:M.com.x*this.sc,y:M.com.y*this.sc};
+    this.h=M.footY!=null?(M.footY-M.com.y)*this.sc:null;
+    if(this.p==null||this.t==null){ this.p=pos;this.t=t;return; }
     const dt=t-this.t; if(dt<.008) return;
-    const sp={x:lerp(this.p.x,pos.x,.55), y:lerp(this.p.y,pos.y,.55)};
-    const vNew={x:(sp.x-this.p.x)/dt, y:(sp.y-this.p.y)/dt};
-    const vOld={...this.v};
-    this.v={x:lerp(this.v.x,vNew.x,.35), y:lerp(this.v.y,vNew.y,.35)};
-    const aNew={x:(this.v.x-vOld.x)/dt, y:(this.v.y-vOld.y)/dt};
-    this.a={x:lerp(this.a.x,aNew.x,.2), y:lerp(this.a.y,aNew.y,.2)};
-    this.p=sp; this.t=t;
-    // 影像 y 向下為正：向上加速度 = -a.y
-    this.Fbw = (G - this.a.y)/G;
+    const sp={x:lerp(this.p.x,pos.x,.55),y:lerp(this.p.y,pos.y,.55)};
+    const vNew={x:(sp.x-this.p.x)/dt,y:(sp.y-this.p.y)/dt}, vOld={...this.v};
+    this.v={x:lerp(this.v.x,vNew.x,.35),y:lerp(this.v.y,vNew.y,.35)};
+    const aNew={x:(this.v.x-vOld.x)/dt,y:(this.v.y-vOld.y)/dt};
+    this.a={x:lerp(this.a.x,aNew.x,.2),y:lerp(this.a.y,aNew.y,.2)};
+    this.p=sp; this.t=t; this.Fbw=(G-this.a.y)/G;
   }
 }
 
 /* ===================== 繪圖 ===================== */
-function drawFrame(ctx, video, W, H, mirror){
-  ctx.save();
-  if(mirror){ ctx.translate(W,0); ctx.scale(-1,1); }
-  ctx.drawImage(video,0,0,W,H);
-  ctx.restore();
+function drawFrame(ctx,video,W,H,mirror){ ctx.save(); if(mirror){ctx.translate(W,0);ctx.scale(-1,1);} ctx.drawImage(video,0,0,W,H); ctx.restore(); }
+function pill(ctx,text,x,y,fs,bg,fg){
+  ctx.font=`800 ${fs}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
+  const w=ctx.measureText(text).width+fs*.9,h=fs*1.45;
+  ctx.fillStyle=bg; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x-w/2,y-h/2,w,h,h/2); else ctx.rect(x-w/2,y-h/2,w,h); ctx.fill();
+  ctx.fillStyle=fg; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(text,x,y+1);
 }
-function pill(ctx, text, x, y, fs, bg, fg){
-  ctx.font = `800 ${fs}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
-  const w = ctx.measureText(text).width + fs*.9, h = fs*1.45;
-  ctx.fillStyle=bg; ctx.beginPath();
-  if(ctx.roundRect) ctx.roundRect(x-w/2,y-h/2,w,h,h/2); else ctx.rect(x-w/2,y-h/2,w,h);
-  ctx.fill(); ctx.fillStyle=fg; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(text,x,y+1);
-}
-function drawPose(ctx, lms, W, H, mirror, M){
+function star(ctx,x,y,R,r){ ctx.save(); ctx.fillStyle=COLORS.com; ctx.strokeStyle="#fff"; ctx.lineWidth=R*.18; ctx.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5,rad=i%2?r:R; ctx.lineTo(x+Math.cos(a)*rad,y+Math.sin(a)*rad);} ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+function drawPose(ctx,lms,W,H,mirror,M,hands){
   if(!lms) return;
-  const X = l => (mirror? 1-l.x : l.x)*W, Y = l => l.y*H;
-  const lw = Math.max(4, Math.min(W,H)/90);
-  ctx.save();
-  ctx.lineCap="round"; ctx.lineJoin="round";
-  ctx.shadowColor="rgba(255,255,255,.95)"; ctx.shadowBlur=lw*1.6;
+  const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
+  const lw=Math.max(4,Math.min(W,H)/90);
+  const skip=new Set(); if(hands){ if(hands.L) POSE_HAND_PTS.L.forEach(i=>skip.add(i)); if(hands.R) POSE_HAND_PTS.R.forEach(i=>skip.add(i)); }
+  ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round"; ctx.shadowColor="rgba(255,255,255,.9)"; ctx.shadowBlur=lw*1.6;
   for(const [a,b,s] of CONN){
-    const A=lms[a], B=lms[b];
-    if((A.visibility??1)<.35 || (B.visibility??1)<.35) continue;
-    ctx.strokeStyle=COLORS[s]; ctx.lineWidth=lw;
-    ctx.beginPath(); ctx.moveTo(X(A),Y(A)); ctx.lineTo(X(B),Y(B)); ctx.stroke();
+    if(skip.has(a)||skip.has(b)) continue;
+    const A=lms[a],B=lms[b]; if((A.visibility??1)<.35||(B.visibility??1)<.35) continue;
+    ctx.strokeStyle=COLORS[s]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(A),Y(A)); ctx.lineTo(X(B),Y(B)); ctx.stroke();
   }
   ctx.shadowBlur=0;
-  const start = settings.showFace ? 0 : 11;
-  for(let i=start;i<33;i++){
+  for(let i=settings.showFace?0:11;i<33;i++){
+    if(skip.has(i)) continue;
     const l=lms[i]; if((l.visibility??1)<.35) continue;
-    const side = i<11 ? "C" : (i%2 ? "L" : "R");
-    const r = i<11 ? lw*.6 : (i>=17&&i<=22 ? lw*.7 : lw*1.15);
-    ctx.fillStyle=COLORS.joint; ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw*.55;
-    ctx.beginPath(); ctx.arc(X(l),Y(l),r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    const side=i<11?"C":(i%2?"L":"R"), r=i<11?lw*.6:(i>=17&&i<=22?lw*.7:lw*1.15);
+    ctx.fillStyle=COLORS.joint; ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw*.55; ctx.beginPath(); ctx.arc(X(l),Y(l),r,0,Math.PI*2); ctx.fill(); ctx.stroke();
   }
-  // 頭部圓
-  if(!settings.showFace){
-    const n=lms[0], e1=lms[7], e2=lms[8];
-    if((n.visibility??1)>.4){
-      const rr = Math.max(lw*2.2, Math.hypot((e1.x-e2.x)*W,(e1.y-e2.y)*H)*.7);
-      ctx.strokeStyle=COLORS.C; ctx.lineWidth=lw*.8; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke();
-    }
-  }
+  if(!settings.showFace){ const n=lms[0],e1=lms[7],e2=lms[8]; if((n.visibility??1)>.4){ const rr=Math.max(lw*2.2,Math.hypot((e1.x-e2.x)*W,(e1.y-e2.y)*H)*.7); ctx.strokeStyle=COLORS.C; ctx.lineWidth=lw*.8; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); } }
   if(M){
-    const fs = Math.max(14, Math.min(W,H)/28);
-    if(settings.showAngles){
-      for(const d of ANGLES){
-        const v=M.angles[d.k]; if(v==null) continue;
-        const l=lms[d.b]; const side=d.k.endsWith("L")?"L":"R";
-        const off = (side==="L") !== mirror ? fs*1.6 : -fs*1.6;
-        pill(ctx, Math.round(v)+"°", X(l)+off, Y(l), fs, "rgba(255,255,255,.88)", side==="L"?"#E0587A":"#2E86D9");
-      }
+    const fs=Math.max(14,Math.min(W,H)/28);
+    if(settings.showAngles) for(const d of ANGLES){
+      const v=M.angles[d.k]; if(v==null) continue;
+      const l=lms[d.b], side=d.k.endsWith("L")?"L":"R", off=(side==="L")!==mirror?fs*1.6:-fs*1.6;
+      pill(ctx,Math.round(v)+"°",X(l)+off,Y(l),fs,"rgba(255,255,255,.88)",side==="L"?"#E0587A":"#2E86D9");
     }
-    if(settings.showCom && M.com){
-      const cx = mirror? W-M.com.x : M.com.x, cy=M.com.y;
-      if(M.footY!=null){
-        ctx.setLineDash([lw*1.2,lw*1.2]); ctx.strokeStyle="rgba(235,169,22,.8)"; ctx.lineWidth=lw*.5;
-        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,M.footY); ctx.stroke(); ctx.setLineDash([]);
-      }
+    if(settings.showCom&&M.com){
+      const cx=mirror?W-M.com.x:M.com.x, cy=M.com.y;
+      if(M.footY!=null){ ctx.setLineDash([lw*1.2,lw*1.2]); ctx.strokeStyle="rgba(229,165,17,.85)"; ctx.lineWidth=lw*.5; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,M.footY); ctx.stroke(); ctx.setLineDash([]); }
       star(ctx,cx,cy,lw*2.6,lw*1.2);
     }
   }
   ctx.restore();
 }
-function star(ctx,x,y,R,r){
-  ctx.save(); ctx.fillStyle=COLORS.com; ctx.strokeStyle="#fff"; ctx.lineWidth=R*.18;
-  ctx.beginPath();
-  for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rad=i%2?r:R; ctx.lineTo(x+Math.cos(a)*rad,y+Math.sin(a)*rad); }
-  ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+function drawHands(ctx,hands,W,H,mirror){
+  if(!hands) return;
+  const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
+  const lw=Math.max(2.5,Math.min(W,H)/200);
+  ctx.save(); ctx.lineCap="round";
+  for(const side of ["L","R"]){
+    const h=hands[side]; if(!h) continue; const L=h.lms;
+    ctx.shadowColor="rgba(255,255,255,.9)"; ctx.shadowBlur=lw*2;
+    for(const [a,b] of HAND_CONN){ ctx.strokeStyle=FINGER_COLOR[Math.max(a,b)-1]||COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
+    ctx.shadowBlur=0;
+    L.forEach((p,i)=>{ ctx.fillStyle="#fff"; ctx.strokeStyle=i===0?COLORS[side]:(FINGER_COLOR[i-1]); ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(p),Y(p),i%4===0&&i>0?lw*1.4:lw*1.1,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+    if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`✊ ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"rgba(255,255,255,.88)",side==="L"?"#E0587A":"#2E86D9"); }
+  }
+  ctx.restore();
 }
 
 /* ===================== 即時鏡頭 ===================== */
 const liveVideo=$("liveVideo"), liveCanvas=$("liveCanvas"), lctx=liveCanvas.getContext("2d");
 let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
-let liveRes=null, liveWorld=null, liveM=null;
-const kin = new Kin();
-let fpsCount=0, fps=0, fpsT=performance.now();
-
+let liveRes=null, liveWorld=null, liveM=null, liveHands=null;
+const kin=new Kin();
+let fpsCount=0,fps=0,fpsT=performance.now();
+function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ic}</span>${label}`; }
 async function startCam(){
-  if(!window.isSecureContext && location.protocol!=="file:"){
-    alert("這個網址不是 https，瀏覽器不允許開啟相機。請改用 https 網址開啟。"); return;
-  }
-  if(!navigator.mediaDevices?.getUserMedia){ alert("這個瀏覽器不支援相機，請改用新版 Chrome、Edge 或 Safari。"); return; }
+  if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
   stopCam();
   try{
-    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:facing, width:{ideal:1280}, height:{ideal:720} }, audio:false });
-    liveVideo.srcObject = stream; await liveVideo.play();
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false});
+    liveVideo.srcObject=stream; await liveVideo.play();
     liveOn=true; kin.reset();
-    $("livePh").style.display="none"; liveCanvas.style.display="block";
-    $("followPh").style.display="none";
-    $("btnCam").textContent="⏹️ 關閉鏡頭"; $("btnCam2").textContent="⏹️ 關閉鏡頭";
-    if(!liveLM) loadModels();
+    $("livePh").hidden=true; liveCanvas.hidden=false;
+    setAbtn("btnCam","⏹️","關鏡頭"); setAbtn("btnCam2","⏹️","關鏡頭");
+    if(!liveLM&&!loading) loadModels();
   }catch(e){
     console.error(e);
-    const msg = e.name==="NotAllowedError" ? "相機權限被拒絕了。請在瀏覽器網址列旁的設定裡允許使用相機，再按一次。" :
-                e.name==="NotFoundError" ? "找不到相機，請確認裝置有鏡頭或外接攝影機已插好。" :
-                "相機開啟失敗："+e.message;
-    alert(msg);
+    alert(e.name==="NotAllowedError"?"相機權限被拒絕了。請在網址列旁的設定允許相機，再按一次。":e.name==="NotFoundError"?"找不到相機，請確認攝影機已接好。":"相機開啟失敗："+e.message);
   }
 }
 function stopCam(){
   if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
   if(rec) stopRecording();
-  liveOn=false; liveRes=null; liveM=null;
-  liveCanvas.style.display="none"; $("livePh").style.display="block"; $("followPh").style.display="block";
-  $("btnCam").textContent="▶️ 開啟鏡頭"; $("btnCam2").textContent="▶️ 開啟鏡頭";
+  liveOn=false; liveRes=null; liveM=null; liveHands=null;
+  liveCanvas.hidden=true; $("livePh").hidden=false;
+  setAbtn("btnCam","▶️","開鏡頭"); setAbtn("btnCam2","▶️","開鏡頭");
 }
-$("btnCam").onclick = ()=> liveOn? stopCam() : startCam();
-$("btnCam2").onclick = ()=> liveOn? stopCam() : startCam();
-$("btnFlip").onclick = async ()=>{
-  facing = facing==="user" ? "environment" : "user";
-  liveMirror = facing==="user"; updateMirrorBtn();
-  if(liveOn) await startCam();
-};
-function updateMirrorBtn(){ const b=$("btnMirror"); b.textContent = "🪞 鏡像："+(liveMirror?"開":"關"); b.classList.toggle("off",!liveMirror); updateSwapBtn(); }
-$("btnMirror").onclick = ()=>{ liveMirror=!liveMirror; updateMirrorBtn(); };
-$("btnSnap").onclick = ()=>{
-  if(!liveOn) return alert("請先開啟鏡頭");
-  const a=document.createElement("a"); a.href=liveCanvas.toDataURL("image/png");
-  a.download=`動作截圖_${settings.name||"學員"}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.click();
-};
+$("btnCam").onclick=()=>liveOn?stopCam():startCam();
+$("btnCam2").onclick=()=>liveOn?stopCam():startCam();
+$("btnFlip").onclick=async()=>{ facing=facing==="user"?"environment":"user"; liveMirror=facing==="user"; updateMirrorBtn(); if(liveOn) await startCam(); };
+function updateMirrorBtn(){ setAbtn("btnMirror","🪞","鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
+$("btnMirror").onclick=()=>{ liveMirror=!liveMirror; updateMirrorBtn(); };
+$("btnSnap").onclick=()=>{ if(!liveOn) return alert("請先開鏡頭"); const a=document.createElement("a"); a.href=liveCanvas.toDataURL("image/png"); a.download=`動作截圖_${settings.name||"學員"}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.click(); };
 
 function processLive(now){
-  if(!liveOn || liveVideo.readyState<2) return;
-  const W=liveVideo.videoWidth, H=liveVideo.videoHeight; if(!W) return;
+  if(!liveOn||liveVideo.readyState<2) return;
+  const W=liveVideo.videoWidth,H=liveVideo.videoHeight; if(!W) return;
   if(liveCanvas.width!==W||liveCanvas.height!==H){ liveCanvas.width=W; liveCanvas.height=H; }
-  if(liveLM && liveVideo.currentTime!==lastLiveT){
+  if(liveLM&&liveVideo.currentTime!==lastLiveT){
     lastLiveT=liveVideo.currentTime;
-    try{
-      const r = liveLM.detectForVideo(liveVideo, nextTs(liveLM));
-      liveRes = r.landmarks?.[0] || null; liveWorld = r.worldLandmarks?.[0] || null;
-    }catch(e){ console.warn(e); liveRes=null; }
-    liveM = liveRes ? computeMetrics(liveRes, liveWorld, W, H) : null;
-    kin.update(now/1000, liveM);
+    try{ const r=liveLM.detectForVideo(liveVideo,nextTs(liveLM)); liveRes=r.landmarks?.[0]||null; liveWorld=r.worldLandmarks?.[0]||null; }catch(e){ console.warn(e); liveRes=null; }
+    if(settings.hands&&handLM){ try{ liveHands=assignHands(handLM.detectForVideo(liveVideo,nextTs(handLM)),liveRes); }catch(e){ console.warn(e); liveHands=null; } } else liveHands=null;
+    liveM=liveRes?computeMetrics(liveRes,liveWorld,W,H):null;
+    kin.update(now/1000,liveM);
     if(liveM) accumulateLen(liveM.len3d);
     fpsCount++;
-    if(rec && rec.started) pushRecord(now);
+    if(rec&&rec.started) pushRecord(now);
   }
-  drawFrame(lctx, liveVideo, W, H, liveMirror);
-  drawPose(lctx, liveRes, W, H, liveMirror, liveM);
+  drawFrame(lctx,liveVideo,W,H,liveMirror);
+  drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
+  drawHands(lctx,liveHands,W,H,liveMirror);
 }
 
 /* ===================== 錄影 ===================== */
-let rec=null, clips=[], clipSeq=0, countdownTimer=null;
-function pickMime(){
-  const c=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4;codecs=avc1","video/mp4"];
-  for(const m of c){ if(window.MediaRecorder && MediaRecorder.isTypeSupported?.(m)) return m; }
-  return "";
-}
-$("btnRec").onclick = ()=>{
+let rec=null, clips=[], clipSeq=0, cdTimer=null;
+function pickMime(){ for(const m of ["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4;codecs=avc1","video/mp4"]) if(window.MediaRecorder&&MediaRecorder.isTypeSupported?.(m)) return m; return ""; }
+$("btnRec").onclick=()=>{
   if(rec){ stopRecording(); return; }
-  if(!liveOn) return alert("請先開啟鏡頭");
-  if(!window.MediaRecorder || !liveCanvas.captureStream) return alert("這個瀏覽器不支援錄影，請改用新版 Chrome、Edge 或 Safari。");
-  let n=3; const cd=$("countdown"); cd.textContent=n;
-  $("btnRec").textContent="⏹️ 停止錄影";
+  if(!liveOn) return alert("請先開鏡頭");
+  if(!window.MediaRecorder||!liveCanvas.captureStream) return alert("這個瀏覽器不支援錄影，請改用新版 Chrome、Edge 或 Safari。");
+  let n=3; const cd=$("countdown"); cd.textContent=n; setAbtn("btnRec","⏹️","停止"); $("btnRec").classList.add("rec");
   rec={started:false};
-  countdownTimer=setInterval(()=>{
-    n--; if(n>0){ cd.textContent=n; return; }
-    clearInterval(countdownTimer); cd.textContent="開始！"; setTimeout(()=>cd.textContent="",600);
-    beginRecording();
-  },1000);
+  cdTimer=setInterval(()=>{ n--; if(n>0){cd.textContent=n;return;} clearInterval(cdTimer); cdTimer=null; cd.textContent="開始！"; setTimeout(()=>cd.textContent="",600); beginRecording(); },1000);
 };
 function beginRecording(){
-  const mime=pickMime();
-  const s=liveCanvas.captureStream(30);
-  let mr; try{ mr = mime? new MediaRecorder(s,{mimeType:mime, videoBitsPerSecond:5e6}) : new MediaRecorder(s); }catch(e){ mr=new MediaRecorder(s); }
-  rec={started:true, mr, chunks:[], data:[], t0:performance.now(), mime:mr.mimeType||mime||"video/webm"};
-  mr.ondataavailable = e=>{ if(e.data && e.data.size) rec.chunks.push(e.data); };
-  mr.onstop = finishRecording;
-  mr.start(250);
-  $("recDot").classList.add("on");
-  const len=Number($("recLen").value);
-  if(len>0) rec.autoStop=setTimeout(stopRecording, len*1000);
+  const mime=pickMime(), s=liveCanvas.captureStream(30);
+  let mr; try{ mr=mime?new MediaRecorder(s,{mimeType:mime,videoBitsPerSecond:5e6}):new MediaRecorder(s); }catch(e){ mr=new MediaRecorder(s); }
+  rec={started:true,mr,chunks:[],data:[],t0:performance.now(),mime:mr.mimeType||mime||"video/webm"};
+  mr.ondataavailable=e=>{ if(e.data&&e.data.size) rec.chunks.push(e.data); };
+  mr.onstop=finishRecording; mr.start(250);
+  $("recChip").hidden=false;
+  const len=Number($("recLen").value); if(len>0) rec.autoStop=setTimeout(stopRecording,len*1000);
 }
 function stopRecording(){
-  if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null; $("countdown").textContent=""; }
+  if(cdTimer){ clearInterval(cdTimer); cdTimer=null; $("countdown").textContent=""; }
+  setAbtn("btnRec","🔴","錄影"); $("btnRec").classList.remove("rec"); $("recChip").hidden=true;
   if(!rec) return;
-  if(!rec.started){ rec=null; $("btnRec").textContent="🔴 錄影"; return; }
-  clearTimeout(rec.autoStop);
-  const r=rec; rec.mr.stop(); rec._stopping=true;
-  $("recDot").classList.remove("on"); $("btnRec").textContent="🔴 錄影";
+  if(!rec.started){ rec=null; return; }
+  clearTimeout(rec.autoStop); if(rec.mr.state!=="inactive") rec.mr.stop();
 }
 function finishRecording(){
   const r=rec; rec=null; if(!r) return;
   const blob=new Blob(r.chunks,{type:r.mime});
-  const clip={ id:++clipSeq, name:`${settings.name||"錄影"} ${clipSeq}`, blob, url:URL.createObjectURL(blob),
-               ext: r.mime.includes("mp4")?"mp4":"webm", data:r.data, mass:bodyM(), height:bodyH() };
-  clips.push(clip); renderClips(); selectClip(clip.id);
-  switchTab("review");
+  const clip={id:++clipSeq,name:`${settings.name||"錄影"} ${clipSeq}`,blob,url:URL.createObjectURL(blob),ext:r.mime.includes("mp4")?"mp4":"webm",data:r.data,mass:bodyM(),height:bodyH()};
+  clips.push(clip); renderClips(); selectClip(clip.id); setMode("review");
 }
+function handRow(h){ return h?{l:h.lms.map(p=>[p.x,p.y,p.z]),f:h.flex,g:h.grip}:null; }
 function pushRecord(now){
-  const t=(now-rec.t0)/1000;
-  const row={t, a: liveM? {...liveM.angles} : {}, trunk: liveM?.trunk ?? null,
-    h: kin.h, vx: kin.v.x, vy: -kin.v.y, F: kin.Fbw,
-    l: liveRes ? liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]) : null};
-  rec.data.push(row);
+  const t=(now-rec.t0)/1000; $("recTime").textContent=t.toFixed(1);
+  rec.data.push({t,a:liveM?{...liveM.angles}:{},trunk:liveM?.trunk??null,h:kin.h,vx:kin.v.x,vy:-kin.v.y,F:kin.Fbw,
+    l:liveRes?liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]):null, hL:handRow(liveHands?.L), hR:handRow(liveHands?.R)});
 }
 
 /* ===================== 回顧 ===================== */
 const rv=$("reviewVideo"); let curClip=null;
 function renderClips(){
-  const box=$("clipChips"); box.innerHTML="";
-  for(const c of clips){
-    const b=document.createElement("button"); b.className="chip"+(curClip?.id===c.id?" on":"");
-    b.innerHTML=`🎞️ ${c.name} <span class="x" title="刪除">✖</span>`;
-    b.onclick=e=>{
-      if(e.target.classList.contains("x")){ URL.revokeObjectURL(c.url); clips=clips.filter(z=>z.id!==c.id); if(curClip?.id===c.id){curClip=null; rv.removeAttribute("src"); rv.load(); drawChart();} renderClips(); return; }
-      selectClip(c.id);
-    };
-    box.appendChild(b);
-  }
-  if(!clips.length) box.innerHTML='<span class="small">還沒有錄影，請到「即時鏡子」按 🔴 錄影。</span>';
+  const s=$("clipSel"); s.innerHTML="";
+  if(!clips.length){ s.innerHTML='<option value="">（還沒有錄影）</option>'; return; }
+  for(const c of clips){ const o=document.createElement("option"); o.value=c.id; o.textContent="🎞️ "+c.name; s.appendChild(o); }
+  if(curClip) s.value=curClip.id;
 }
+$("clipSel").onchange=e=>selectClip(Number(e.target.value));
 function selectClip(id){
-  curClip=clips.find(c=>c.id===id); if(!curClip) return;
-  rv.src=curClip.url; rv.playbackRate=Number($("rvSpeed").value);
-  renderClips(); drawChart();
+  curClip=clips.find(c=>c.id===id)||null;
+  if(!curClip){ rv.removeAttribute("src"); rv.load(); rv.hidden=true; $("rvPh").hidden=false; drawChart(); return; }
+  rv.hidden=false; $("rvPh").hidden=true; rv.src=curClip.url; renderClips(); drawChart();
 }
+$("delClip").onclick=()=>{ if(!curClip) return; if(!confirm(`刪除「${curClip.name}」？`)) return; URL.revokeObjectURL(curClip.url); clips=clips.filter(c=>c.id!==curClip.id); curClip=null; renderClips(); selectClip(clips.length?clips[clips.length-1].id:-1); };
 rv.addEventListener("loadedmetadata",()=>{
-  if(rv.duration===Infinity){ // Chrome 錄的 webm 沒有長度資訊的修正
-    rv.currentTime=1e101;
-    rv.addEventListener("timeupdate",function f(){ rv.removeEventListener("timeupdate",f); rv.currentTime=0; });
-  }
+  if(rv.duration===Infinity){ rv.currentTime=1e101; rv.addEventListener("timeupdate",function f(){ rv.removeEventListener("timeupdate",f); rv.currentTime=0; }); }
   rv.playbackRate=Number($("rvSpeed").value);
 });
-$("rvPlay").onclick=()=> rv.paused? rv.play() : rv.pause();
+$("rvPlay").onclick=()=>{ if(!curClip) return; rv.paused?rv.play():rv.pause(); };
 $("rvBack").onclick=()=>{ rv.pause(); rv.currentTime=Math.max(0,rv.currentTime-1/30); };
 $("rvFwd").onclick=()=>{ rv.pause(); rv.currentTime=rv.currentTime+1/30; };
 $("rvSpeed").onchange=()=>{ rv.playbackRate=Number($("rvSpeed").value); };
 
-const SERIES = [
-  ...ANGLES.map(a=>({k:a.k, n:a.n+"角度", u:"°", get:r=>r.a?.[a.k]})),
+const SERIES=[
+  ...ANGLES.map(a=>({k:a.k,n:a.n+"角度",u:"°",get:r=>r.a?.[a.k]})),
   {k:"trunk",n:"軀幹前傾",u:"°",get:r=>r.trunk},
-  {k:"h",n:"重心離地高度",u:" m",get:r=>r.h, d:2},
-  {k:"vx",n:"重心水平速度",u:" m/s",get:r=>r.vx, d:2},
-  {k:"vy",n:"重心垂直速度（向上為正）",u:" m/s",get:r=>r.vy, d:2},
-  {k:"F",n:"估計垂直地面反作用力",u:" BW",get:r=>r.F, d:2}
+  {k:"h",n:"重心離地高度",u:" m",d:2,get:r=>r.h},
+  {k:"vx",n:"重心水平速度",u:" m/s",d:2,get:r=>r.vx},
+  {k:"vy",n:"重心垂直速度（向上為正）",u:" m/s",d:2,get:r=>r.vy},
+  {k:"F",n:"估計垂直地面反作用力",u:" BW",d:2,get:r=>r.F},
+  {k:"gL",n:"左手握拳程度",u:"%",get:r=>r.hL?.g},
+  {k:"gR",n:"右手握拳程度",u:"%",get:r=>r.hR?.g},
+  ...["L","R"].flatMap(s=>FINGERS.map(f=>({k:`f${s}_${f.k}`,n:`${s==="L"?"左":"右"}${f.n}總彎曲`,u:"°",get:r=>{ const h=r["h"+s]; const v=h?.f?.[f.k]; return v&&v.every(x=>x!=null)?v[0]+v[1]+v[2]:null; }})))
 ];
-{ const s=$("series"); for(const o of SERIES){ const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; s.appendChild(e);} s.value="kneeR"; s.onchange=drawChart; }
-
+{ const s=$("series"); for(const o of SERIES){ const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; s.appendChild(e); } s.value="kneeR"; s.onchange=drawChart; }
 function drawChart(){
-  const cv=$("chart"), dpr=window.devicePixelRatio||1;
-  const w=cv.clientWidth, h=cv.clientHeight; if(!w) return;
+  const cv=$("chart"),dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w) return;
   cv.width=w*dpr; cv.height=h*dpr;
   const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   const S=SERIES.find(z=>z.k===$("series").value);
-  c.font='700 15px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
-  if(!curClip || !curClip.data.length){ c.fillStyle="#8C8299"; c.textAlign="center"; c.fillText("錄影之後，這裡會出現數據曲線 📈", w/2, h/2); $("stats").innerHTML=""; return; }
-  const D=curClip.data, pts=D.map(r=>[r.t, S.get(r)]).filter(p=>p[1]!=null && isFinite(p[1]));
-  const T=D[D.length-1].t||1;
-  if(!pts.length){ c.fillStyle="#8C8299"; c.textAlign="center"; c.fillText("這段錄影沒有偵測到這個數值", w/2, h/2); $("stats").innerHTML=""; return; }
-  let lo=Math.min(...pts.map(p=>p[1])), hi=Math.max(...pts.map(p=>p[1]));
-  if(hi-lo<1e-6){ hi+=1; lo-=1; } const pad=(hi-lo)*.1; lo-=pad; hi+=pad;
-  const L=56,R=16,Tp=16,B=34, pw=w-L-R, ph=h-Tp-B;
-  const xs=t=>L+t/T*pw, ys=v=>Tp+(1-(v-lo)/(hi-lo))*ph;
-  c.strokeStyle="#F1E6DA"; c.lineWidth=1.5; c.fillStyle="#8C8299"; c.textAlign="right"; c.textBaseline="middle";
-  for(let i=0;i<=4;i++){ const v=lo+(hi-lo)*i/4, y=ys(v); c.beginPath(); c.moveTo(L,y); c.lineTo(w-R,y); c.stroke(); c.fillText(v.toFixed(S.d??0),L-6,y); }
-  c.textAlign="center"; c.textBaseline="top";
-  for(let i=0;i<=5;i++){ const t=T*i/5; c.fillText(t.toFixed(1)+" s", xs(t), h-B+8); }
-  const color = S.k.endsWith("L")? "#F27E98" : S.k.endsWith("R")? "#4FA3EE" : "#8E6FEA";
-  c.strokeStyle=color; c.lineWidth=3.5; c.lineJoin="round"; c.beginPath();
-  let prevT=-1; for(const [t,v] of pts){ if(prevT>=0 && t-prevT>.3) c.moveTo(xs(t),ys(v)); else c.lineTo(xs(t),ys(v)); prevT=t; } c.stroke();
-  const ct = rv.currentTime||0;
-  if(isFinite(ct)){ c.strokeStyle="#EBA916"; c.lineWidth=3; c.beginPath(); c.moveTo(xs(Math.min(ct,T)),Tp); c.lineTo(xs(Math.min(ct,T)),Tp+ph); c.stroke(); }
-  const vals=pts.map(p=>p[1]), mx=Math.max(...vals), mn=Math.min(...vals);
-  const near=pts.reduce((b,p)=>Math.abs(p[0]-ct)<Math.abs(b[0]-ct)?p:b, pts[0]);
-  const d=S.d??0;
+  c.font='700 13px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+  const msg=t=>{ c.fillStyle="#8C8299"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(t,w/2,h/2); $("stats").innerHTML=""; };
+  if(!curClip||!curClip.data.length) return msg("錄影之後，這裡會出現「"+S.n+"」的曲線 📈");
+  const D=curClip.data, pts=D.map(r=>[r.t,S.get(r)]).filter(p=>p[1]!=null&&isFinite(p[1])), T=D[D.length-1].t||1;
+  if(!pts.length) return msg("這段錄影沒有偵測到「"+S.n+"」");
+  let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1])); if(hi-lo<1e-6){hi+=1;lo-=1;} const pad=(hi-lo)*.1; lo-=pad; hi+=pad;
+  const L=52,R=14,Tp=12,B=26,pw=w-L-R,ph=h-Tp-B, xs=t=>L+t/T*pw, ys=v=>Tp+(1-(v-lo)/(hi-lo))*ph;
+  c.strokeStyle="#F1E4D4"; c.lineWidth=1.5; c.fillStyle="#8C8299"; c.textAlign="right"; c.textBaseline="middle";
+  for(let i=0;i<=4;i++){ const v=lo+(hi-lo)*i/4,y=ys(v); c.beginPath(); c.moveTo(L,y); c.lineTo(w-R,y); c.stroke(); c.fillText(v.toFixed(S.d??0),L-6,y); }
+  c.textAlign="center"; c.textBaseline="top"; for(let i=0;i<=5;i++){ const t=T*i/5; c.fillText(t.toFixed(1)+"s",xs(t),h-B+6); }
+  const isL=/L$|^fL|^gL/.test(S.k), isR=/R$|^fR|^gR/.test(S.k);
+  c.strokeStyle=isL?"#F27E98":isR?"#4FA3EE":"#8E6FEA"; c.lineWidth=3; c.lineJoin="round"; c.beginPath();
+  let pt=-1; for(const [t,v] of pts){ if(pt>=0&&t-pt>.3) c.moveTo(xs(t),ys(v)); else c.lineTo(xs(t),ys(v)); pt=t; } c.stroke();
+  const ct=isFinite(rv.currentTime)?rv.currentTime:0;
+  c.strokeStyle="#E5A511"; c.lineWidth=3; c.beginPath(); c.moveTo(xs(Math.min(ct,T)),Tp); c.lineTo(xs(Math.min(ct,T)),Tp+ph); c.stroke();
+  const vals=pts.map(p=>p[1]),mx=Math.max(...vals),mn=Math.min(...vals), near=pts.reduce((b,p)=>Math.abs(p[0]-ct)<Math.abs(b[0]-ct)?p:b,pts[0]), d=S.d??0;
   $("stats").innerHTML=`<div>現在 ${near[1].toFixed(d)}${S.u}</div><div>最大 ${mx.toFixed(d)}${S.u}</div><div>最小 ${mn.toFixed(d)}${S.u}</div><div>範圍 ${(mx-mn).toFixed(d)}${S.u}</div>`;
   cv._map={L,pw,T};
 }
-$("chart").addEventListener("click",e=>{
-  const m=$("chart")._map; if(!m||!curClip) return;
-  const r=$("chart").getBoundingClientRect(); const t=(e.clientX-r.left-m.L)/m.pw*m.T;
-  rv.pause(); rv.currentTime=Math.max(0,Math.min(m.T,t)); drawChart();
-});
+$("chart").addEventListener("click",e=>{ const m=$("chart")._map; if(!m||!curClip) return; const r=$("chart").getBoundingClientRect(); rv.pause(); rv.currentTime=Math.max(0,Math.min(m.T,(e.clientX-r.left-m.L)/m.pw*m.T)); drawChart(); });
 rv.addEventListener("timeupdate",drawChart); rv.addEventListener("seeked",drawChart);
-window.addEventListener("resize",drawChart);
+new ResizeObserver(()=>drawChart()).observe($("chart"));
 
 $("dlCsv").onclick=()=>{
   if(!curClip) return alert("請先選一段錄影");
   const head=["time_s",...ANGLES.map(a=>a.k+"_deg"),"trunk_lean_deg","com_height_m","com_vx_mps","com_vy_up_mps","vGRF_BW"];
-  for(const l of LM){ head.push(l[0]+"_x",l[0]+"_y",l[0]+"_z",l[0]+"_vis"); }
-  const lines=[`# 學員,${settings.name||""},身高_m,${curClip.height},體重_kg,${curClip.mass}`, head.join(",")];
+  for(const l of LM) head.push(l[0]+"_x",l[0]+"_y",l[0]+"_z",l[0]+"_vis");
+  for(const s of ["L","R"]){
+    head.push(`hand${s}_grip_pct`);
+    for(const f of FINGERS) for(let j=1;j<=3;j++) head.push(`hand${s}_${f.k}_j${j}_flex_deg`);
+    for(const h of HAND_LM) head.push(`hand${s}_${h[0]}_x`,`hand${s}_${h[0]}_y`,`hand${s}_${h[0]}_z`);
+  }
   const f=v=>(v==null||!isFinite(v))?"":(+v).toFixed(4);
+  const lines=[`# 學員,${settings.name||""},身高_m,${curClip.height},體重_kg,${curClip.mass}`,head.join(",")];
   for(const r of curClip.data){
     const row=[f(r.t),...ANGLES.map(a=>f(r.a?.[a.k])),f(r.trunk),f(r.h),f(r.vx),f(r.vy),f(r.F)];
     if(r.l) for(const p of r.l) row.push(f(p[0]),f(p[1]),f(p[2]),f(p[3])); else for(let i=0;i<33*4;i++) row.push("");
+    for(const s of ["L","R"]){
+      const h=r["h"+s];
+      row.push(f(h?.g));
+      for(const fg of FINGERS) for(let j=0;j<3;j++) row.push(f(h?.f?.[fg.k]?.[j]));
+      if(h) for(const p of h.l) row.push(f(p[0]),f(p[1]),f(p[2])); else for(let i=0;i<21*3;i++) row.push("");
+    }
     lines.push(row.join(","));
   }
   const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`${curClip.name}_動作數據.csv`; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`${curClip.name}_動作數據.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 };
-$("dlVid").onclick=()=>{
-  if(!curClip) return alert("請先選一段錄影");
-  const a=document.createElement("a"); a.href=curClip.url; a.download=`${curClip.name}.${curClip.ext}`; a.click();
-};
+$("dlVid").onclick=()=>{ if(!curClip) return alert("請先選一段錄影"); const a=document.createElement("a"); a.href=curClip.url; a.download=`${curClip.name}.${curClip.ext}`; a.click(); };
 
 /* ===================== 示範影片 ===================== */
 const refVideo=$("refVideo"), refCanvas=$("refCanvas"), rctx=refCanvas.getContext("2d");
-let refMode=null; // 'video' | 'iframe' | null
-let refMirror=false, refStream=null, lastRefT=-1, refRes=null, refM=null, refAI=true;
+let refMode=null, refMirror=false, refStream=null, lastRefT=-1, refRes=null, refM=null, refAI=true;
 function refMsg(t,warn){ const m=$("refMsg"); m.innerHTML=t; m.classList.toggle("warn",!!warn); }
 function clearRef(){
   if(refStream){ refStream.getTracks().forEach(t=>t.stop()); refStream=null; }
   refVideo.pause(); refVideo.removeAttribute("src"); refVideo.srcObject=null; refVideo.load();
-  $("refFrame").src="about:blank"; $("refFrame").style.display="none";
-  refCanvas.style.display="none"; $("refPh").style.display="block";
+  $("refFrame").src="about:blank"; $("refFrame").hidden=true; refCanvas.hidden=true; $("refPh").hidden=false;
   refRes=null; refM=null; refMode=null; refAI=true; lastRefT=-1;
 }
-function showRefVideo(){ refMode="video"; $("refPh").style.display="none"; refCanvas.style.display="block"; if(!refLM) loadModels(); }
+function showRefVideo(){ refMode="video"; $("refPh").hidden=true; refCanvas.hidden=false; if(!refLM&&!loading) loadModels(); }
 $("refFile").onchange=e=>{
   const f=e.target.files?.[0]; if(!f) return;
-  clearRef(); refVideo.removeAttribute("crossorigin");
-  refVideo.src=URL.createObjectURL(f); refVideo.playbackRate=Number($("refSpeed").value);
-  showRefVideo(); refVideo.play().catch(()=>{});
-  refMsg(`已載入「${f.name}」，AI 會同步分析示範者的骨架 🦴`);
+  clearRef(); refVideo.removeAttribute("crossorigin"); refVideo.src=URL.createObjectURL(f); refVideo.playbackRate=Number($("refSpeed").value);
+  showRefVideo(); refVideo.play().catch(()=>{}); refMsg(`已載入「${f.name}」，AI 會同步分析示範者骨架 🦴`);
 };
 function parseEmbed(u){
   let m;
   if((m=u.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/))) return `https://www.youtube.com/embed/${m[1]}?playsinline=1&rel=0`;
   if((m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/))) return `https://player.vimeo.com/video/${m[1]}`;
-  if((m=u.match(/bilibili\.com\/video\/(BV[\w]+)/))) return `https://player.bilibili.com/player.html?bvid=${m[1]}&autoplay=0`;
+  if((m=u.match(/bilibili\.com\/video\/(BV\w+)/))) return `https://player.bilibili.com/player.html?bvid=${m[1]}&autoplay=0`;
   return null;
 }
 $("btnUrl").onclick=()=>{
   const u=$("refUrl").value.trim(); if(!u) return;
-  clearRef();
-  const em=parseEmbed(u);
-  if(em){
-    refMode="iframe"; $("refPh").style.display="none"; const fr=$("refFrame"); fr.src=em; fr.style.display="block";
-    refMsg("已嵌入影音平台播放器。平台影片受保護，AI 無法直接讀取畫面，你可以：<br>① 用電腦按「🖥️ 擷取分頁畫面」，選這個分頁讓 AI 分析；或 ② 自己做出示範動作，按「📌 3 秒後存我的姿勢」當作目標。");
-    return;
-  }
+  clearRef(); const em=parseEmbed(u);
+  if(em){ refMode="iframe"; $("refPh").hidden=true; const fr=$("refFrame"); fr.src=em; fr.hidden=false;
+    refMsg("已嵌入播放器。平台影片受保護，AI 無法直接讀取：請用電腦按「🖥️ 擷取分頁畫面」，或由老師示範後按「📌 存我的姿勢」。"); return; }
   refVideo.crossOrigin="anonymous"; refVideo.src=u; refVideo.playbackRate=Number($("refSpeed").value);
-  showRefVideo(); refVideo.play().catch(()=>{});
-  refMsg("正在載入影片網址…");
+  showRefVideo(); refVideo.play().catch(()=>{}); refMsg("正在載入影片網址…");
 };
-refVideo.addEventListener("error",()=>{ if(refMode==="video" && !refStream) refMsg("這個網址無法播放或被網站保護。請改用下載好的影片檔，或用「擷取分頁畫面」。",true); });
-refVideo.addEventListener("loadeddata",()=>{ if(refMode==="video" && !refStream && refVideo.src.startsWith("http")) refMsg("影片網址載入成功 ✅"); });
+refVideo.addEventListener("error",()=>{ if(refMode==="video"&&!refStream) refMsg("這個網址無法播放或被網站保護。請改用影片檔或「擷取分頁畫面」。",true); });
+refVideo.addEventListener("loadeddata",()=>{ if(refMode==="video"&&!refStream&&/^http/.test(refVideo.src)) refMsg("影片網址載入成功 ✅"); });
 $("btnScreen").onclick=async()=>{
-  if(!navigator.mediaDevices?.getDisplayMedia) return alert("這台裝置不支援擷取畫面（手機、平板通常不支援），請改用電腦版 Chrome 或 Edge。");
+  if(!navigator.mediaDevices?.getDisplayMedia) return alert("這台裝置不支援擷取畫面（手機、平板通常不支援），請用電腦版 Chrome 或 Edge。");
   try{
     const s=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:false});
     clearRef(); refStream=s; refVideo.srcObject=s; await refVideo.play(); showRefVideo();
     s.getVideoTracks()[0].addEventListener("ended",()=>{ clearRef(); refMsg("畫面擷取已結束。"); });
-    refMsg("正在擷取畫面 🖥️ 請在被擷取的分頁播放示範影片（YouTube 等都可以），AI 會即時分析。");
+    refMsg("正在擷取畫面 🖥️ 請到被分享的分頁播放示範影片。");
   }catch(e){ if(e.name!=="NotAllowedError") alert("擷取畫面失敗："+e.message); }
 };
-$("refPlay").onclick=()=>{ if(refMode!=="video"||refStream) return; refVideo.paused? refVideo.play() : refVideo.pause(); };
-$("refBack").onclick=()=>{ if(refMode!=="video"||refStream) return; refVideo.pause(); refVideo.currentTime=Math.max(0,refVideo.currentTime-1/30); };
-$("refFwd").onclick=()=>{ if(refMode!=="video"||refStream) return; refVideo.pause(); refVideo.currentTime+=1/30; };
+const refCtl=()=>refMode==="video"&&!refStream;
+$("refPlay").onclick=()=>{ if(!refCtl()) return; refVideo.paused?refVideo.play():refVideo.pause(); };
+$("refBack").onclick=()=>{ if(!refCtl()) return; refVideo.pause(); refVideo.currentTime=Math.max(0,refVideo.currentTime-1/30); };
+$("refFwd").onclick=()=>{ if(!refCtl()) return; refVideo.pause(); refVideo.currentTime+=1/30; };
 $("refSpeed").onchange=()=>{ refVideo.playbackRate=Number($("refSpeed").value); };
-$("refSeek").oninput=e=>{ if(refMode!=="video"||refStream||!isFinite(refVideo.duration)) return; refVideo.currentTime=e.target.value/1000*refVideo.duration; };
-$("refMirrorBtn").onclick=()=>{ refMirror=!refMirror; const b=$("refMirrorBtn"); b.textContent="🪞 示範鏡像："+(refMirror?"開":"關"); b.classList.toggle("off",!refMirror); updateSwapBtn(); };
-
+$("refSeek").oninput=e=>{ if(!refCtl()||!isFinite(refVideo.duration)) return; refVideo.currentTime=e.target.value/1000*refVideo.duration; };
+$("refMirrorBtn").onclick=()=>{ refMirror=!refMirror; $("refMirrorBtn").textContent="🪞 示範鏡像："+(refMirror?"開":"關"); $("refMirrorBtn").classList.toggle("off",!refMirror); updateSwapBtn(); };
 function processRef(){
-  if(refMode!=="video" || refVideo.readyState<2) return;
-  const W=refVideo.videoWidth, H=refVideo.videoHeight; if(!W) return;
+  if(refMode!=="video"||refVideo.readyState<2) return;
+  const W=refVideo.videoWidth,H=refVideo.videoHeight; if(!W) return;
   if(refCanvas.width!==W||refCanvas.height!==H){ refCanvas.width=W; refCanvas.height=H; }
-  if(refLM && refAI && refVideo.currentTime!==lastRefT){
+  if(refLM&&refAI&&refVideo.currentTime!==lastRefT){
     lastRefT=refVideo.currentTime;
-    try{
-      const r=refLM.detectForVideo(refVideo, nextTs(refLM));
-      refRes=r.landmarks?.[0]||null;
-      refM = refRes ? computeMetrics(refRes, r.worldLandmarks?.[0]||null, W, H) : null;
-    }catch(e){
-      console.warn(e); refAI=false; refRes=null; refM=null;
-      refMsg("影片可以播放，但這個網站不允許 AI 讀取畫面。請改用下載好的影片檔，或用「擷取分頁畫面」。",true);
-    }
+    try{ const r=refLM.detectForVideo(refVideo,nextTs(refLM)); refRes=r.landmarks?.[0]||null; refM=refRes?computeMetrics(refRes,r.worldLandmarks?.[0]||null,W,H):null; }
+    catch(e){ console.warn(e); refAI=false; refRes=null; refM=null; refMsg("影片可以播放，但這個網站不允許 AI 讀取畫面。請改用影片檔或「擷取分頁畫面」。",true); }
   }
-  drawFrame(rctx, refVideo, W, H, refMirror);
-  drawPose(rctx, refRes, W, H, refMirror, refM);
-  if(!refStream && isFinite(refVideo.duration) && refVideo.duration>0) $("refSeek").value=Math.round(refVideo.currentTime/refVideo.duration*1000);
+  drawFrame(rctx,refVideo,W,H,refMirror); drawPose(rctx,refRes,W,H,refMirror,refM,null);
+  if(!refStream&&isFinite(refVideo.duration)&&refVideo.duration>0) $("refSeek").value=Math.round(refVideo.currentTime/refVideo.duration*1000);
 }
 
-/* ===================== 比對目標與評分 ===================== */
-let poses=store.get("poses",[]); let target="video"; let swapManual=false;
-const autoSwap=()=> liveMirror!==refMirror;
-function updateSwapBtn(){ const b=$("swapBtn"); b.textContent="🔁 左右互換："+(swapManual?"手動切換（背對）":"自動"); b.classList.toggle("off",!swapManual); }
+/* ===================== 比對與評分 ===================== */
+let poses=store.get("poses",[]), target="video", swapManual=false;
+function updateSwapBtn(){ $("swapBtn").textContent="🔁 左右互換："+(swapManual?"手動（背對）":"自動"); $("swapBtn").classList.toggle("off",!swapManual); }
 $("swapBtn").onclick=()=>{ swapManual=!swapManual; updateSwapBtn(); };
 function renderTargets(){
   const box=$("targetChips"); box.innerHTML="";
-  const mk=(id,label,del)=>{ const b=document.createElement("button"); b.className="chip"+(target===id?" on":""); b.innerHTML=label+(del?' <span class="x" title="刪除">✖</span>':""); b.onclick=e=>{
-      if(e.target.classList.contains("x")){ poses=poses.filter(p=>p.id!==id); store.set("poses",poses); if(target===id) target="video"; renderTargets(); return; }
-      target=id; renderTargets(); }; box.appendChild(b); };
-  mk("video","🎬 即時跟影片比",false);
-  for(const p of poses) mk(p.id,"🎯 "+p.name,true);
+  const mk=(id,label,del)=>{ const b=document.createElement("button"); b.className="chip"+(target===id?" on":""); b.innerHTML=label+(del?' <span class="x">✖</span>':"");
+    b.onclick=e=>{ if(e.target.classList.contains("x")){ poses=poses.filter(p=>p.id!==id); store.set("poses",poses); if(target===id) target="video"; renderTargets(); return; } target=id; renderTargets(); }; box.appendChild(b); };
+  mk("video","🎬 即時跟影片",false); for(const p of poses) mk(p.id,"🎯 "+p.name,true);
 }
-function addPose(angles, fromRef){
-  const n=poses.length+1;
-  const name=prompt("幫這個姿勢取個名字：", `姿勢 ${n}`); if(name===null) return;
-  const p={id:"p"+Date.now(), name:name||`姿勢 ${n}`, angles, swap: fromRef ? (liveMirror!==refMirror)!==swapManual : false};
+function addPose(angles,fromRef){
+  const n=poses.length+1, name=prompt("幫這個姿勢取個名字：",`姿勢 ${n}`); if(name===null) return;
+  const p={id:"p"+Date.now(),name:name||`姿勢 ${n}`,angles,swap:fromRef?((liveMirror!==refMirror)!==swapManual):false};
   poses.push(p); store.set("poses",poses); target=p.id; renderTargets();
 }
-$("savePoseRef").onclick=()=>{ if(!refM) return alert("示範影片中目前沒有偵測到人，請把影片停在動作清楚的那一格。"); addPose({...refM.angles}, true); };
+$("savePoseRef").onclick=()=>{ if(!refM) return alert("示範影片中沒有偵測到人，請停在動作清楚的那一格。"); addPose({...refM.angles},true); };
 $("savePoseLive").onclick=()=>{
-  if(!liveOn) return alert("請先開啟鏡頭");
-  switchTab("live");
+  if(!liveOn) return alert("請先開鏡頭");
   let n=3; const cd=$("countdown"); cd.textContent=n;
-  const t=setInterval(()=>{ n--; if(n>0){cd.textContent=n;return;} clearInterval(t); cd.textContent="📌";
-    setTimeout(()=>{ cd.textContent=""; if(!liveM) return alert("沒有偵測到人，請再試一次。"); const a={...liveM.angles}; switchTab("follow"); addPose(a,false); },300); },1000);
+  const t=setInterval(()=>{ n--; if(n>0){cd.textContent=n;return;} clearInterval(t); cd.textContent="📌"; setTimeout(()=>{ cd.textContent=""; if(!liveM) return alert("沒有偵測到人，請再試一次。"); addPose({...liveM.angles},false); },300); },1000);
 };
-const swapK=k=> k.endsWith("L")? k.slice(0,-1)+"R" : k.endsWith("R")? k.slice(0,-1)+"L" : k;
-function compare(live, tgt, swap){
-  let sum=0,n=0,worst=null;
-  for(const k of SCORE_KEYS){
-    const a=live[k], b=tgt[swap?swapK(k):k]; if(a==null||b==null) continue;
-    const d=a-b; sum+=Math.max(0,1-Math.abs(d)/45); n++;
-    if(!worst||Math.abs(d)>Math.abs(worst.d)) worst={k,d};
-  }
-  return n<4? null : {score:Math.round(sum/n*100), worst};
-}
+const swapK=k=>k.endsWith("L")?k.slice(0,-1)+"R":k.endsWith("R")?k.slice(0,-1)+"L":k;
+function compare(live,tgt,swap){ let sum=0,n=0,worst=null; for(const k of SCORE_KEYS){ const a=live[k],b=tgt[swap?swapK(k):k]; if(a==null||b==null) continue; const d=a-b; sum+=Math.max(0,1-Math.abs(d)/45); n++; if(!worst||Math.abs(d)>Math.abs(worst.d)) worst={k,d}; } return n<4?null:{score:Math.round(sum/n*100),worst}; }
 function tipFor(w){
-  if(!w || Math.abs(w.d)<12) return "動作很到位，太棒了！🎉";
-  const A=ANG_BY_K[w.k], more=w.d<0; // 我的角度比較小 = 比較彎／比較收
-  const side=A.n.slice(0,1);
-  const t={
-    elbow: more? `${side}手肘再伸直一點` : `${side}手肘再彎一點`,
-    knee: more? `${side}膝蓋再伸直一點` : `${side}膝蓋再彎一點`,
-    hip: more? `${side}邊身體再挺直一點` : `${side}邊身體再往前彎一點`,
-    shoulder: more? `${side}手臂再抬高一點` : `${side}手臂再放低一點`
-  }[A.j];
+  if(!w||Math.abs(w.d)<12) return "動作很到位，太棒了！🎉";
+  const A=ANG_BY_K[w.k], more=w.d<0, s=A.n.slice(0,1);
+  const t={elbow:more?`${s}手肘再伸直一點`:`${s}手肘再彎一點`,knee:more?`${s}膝蓋再伸直一點`:`${s}膝蓋再彎一點`,hip:more?`${s}邊身體再挺直一點`:`${s}邊身體再往前彎一點`,shoulder:more?`${s}手臂再抬高一點`:`${s}手臂再放低一點`}[A.j];
   return `${t}（差 ${Math.round(Math.abs(w.d))}°）`;
 }
 function updateScore(){
-  let tgt=null, swap=false;
-  if(target==="video"){ if(refM){ tgt=refM.angles; swap=autoSwap()!==swapManual; } }
-  else { const p=poses.find(z=>z.id===target); if(p){ tgt=p.angles; swap=p.swap; } }
-  const box={num:$("scoreNum"),stars:$("stars"),tip:$("scoreTip")};
-  if(!liveM){ box.num.textContent="—"; box.stars.textContent=""; box.tip.textContent= liveOn? "請站到鏡頭前，讓全身入鏡 🙋" : "請先開啟鏡頭 📷"; return; }
-  if(!tgt){ box.num.textContent="—"; box.stars.textContent=""; box.tip.textContent= target==="video" ? "請載入示範影片，或選一個目標姿勢 🎯" : "找不到目標姿勢"; return; }
-  const r=compare(liveM.angles,tgt,swap);
-  if(!r){ box.num.textContent="—"; box.stars.textContent=""; box.tip.textContent="手和腳要都讓鏡頭看得到喔 👀"; return; }
-  box.num.textContent=r.score;
-  box.stars.textContent = r.score>=90?"⭐⭐⭐": r.score>=75?"⭐⭐": r.score>=55?"⭐":"💪";
-  box.tip.textContent = tipFor(r.worst);
+  let tgt=null,swap=false;
+  if(target==="video"){ if(refM){ tgt=refM.angles; swap=(liveMirror!==refMirror)!==swapManual; } }
+  else{ const p=poses.find(z=>z.id===target); if(p){ tgt=p.angles; swap=p.swap; } }
+  const N=$("scoreNum"),S=$("stars"),T=$("scoreTip");
+  const set=(n,s,t)=>{ N.textContent=n; S.textContent=s; T.textContent=t; };
+  if(!liveM) return set("—","",liveOn?"請站到鏡頭前，全身入鏡 🙋":"請先開鏡頭 📷");
+  if(!tgt) return set("—","",target==="video"?"請載入示範影片或選目標姿勢 🎯":"找不到目標姿勢");
+  const r=compare(liveM.angles,tgt,swap); if(!r) return set("—","","手和腳都要讓鏡頭看得到喔 👀");
+  set(r.score,r.score>=90?"⭐⭐⭐":r.score>=75?"⭐⭐":r.score>=55?"⭐":"💪",tipFor(r.worst));
 }
 
-/* ===================== 身體資料與設定 UI ===================== */
-const lenAcc={}; // 3D 長度累積平均
+/* ===================== 面板 UI ===================== */
+const lenAcc={};
 function accumulateLen(len){ for(const k in len){ const a=lenAcc[k]||(lenAcc[k]={s:0,n:0}); if(a.n>300){a.s*=.99;a.n*=.99;} a.s+=len[k]; a.n++; } }
 function renderSegTable(){
-  const H=bodyH(), M=bodyM();
-  let h="<tr><th>肢段</th><th>定義（近端 → 遠端）</th><th>質量比</th><th>質量 (kg)</th><th>重心位置（距近端）</th><th>依身高推估長度 (cm)</th><th>AI 量測長度 (cm)</th></tr>";
-  for(const s of SEGS){
-    const a=lenAcc[s.k];
-    h+=`<tr><td><b>${s.n}</b></td><td>${s.def}</td><td>${(s.m*100).toFixed(2)}%</td><td>${(s.m*M).toFixed(2)}</td><td>${(s.r*100).toFixed(1)}%</td><td>${s.len? (s.len*H*100).toFixed(1):"—"}</td><td>${a&&a.n>5? (a.s/a.n*100).toFixed(1):"—"}</td></tr>`;
-  }
+  const H=bodyH(),M=bodyM();
+  let h="<tr><th>肢段</th><th>質量比</th><th>kg</th><th>重心%</th><th>推估cm</th><th>AI cm</th></tr>";
+  for(const s of SEGS){ const a=lenAcc[s.k]; h+=`<tr><td title="${s.def}"><b>${s.n}</b><div class="small">${s.def}</div></td><td>${(s.m*100).toFixed(2)}%</td><td>${(s.m*M).toFixed(2)}</td><td>${(s.r*100).toFixed(1)}</td><td>${s.len?(s.len*H*100).toFixed(1):"—"}</td><td>${a&&a.n>5?(a.s/a.n*100).toFixed(1):"—"}</td></tr>`; }
   $("segTable").innerHTML=h;
 }
-function renderLmTable(){
-  let h="<tr><th>編號</th><th>名稱</th><th>英文</th><th>對應骨性標記（近似）</th></tr>";
-  LM.forEach((l,i)=>{ h+=`<tr><td>${i}</td><td>${l[1]}</td><td>${l[0]}</td><td>${l[2]}</td></tr>`; });
-  $("lmTable").innerHTML=h;
+function renderRefTables(){
+  let h="<tr><th>#</th><th>名稱</th><th>骨性標記（近似）</th></tr>"; LM.forEach((l,i)=>h+=`<tr><td>${i}</td><td>${l[1]}<div class="small">${l[0]}</div></td><td>${l[2]}</td></tr>`); $("lmTable").innerHTML=h;
+  h="<tr><th>#</th><th>名稱</th><th>解剖位置</th></tr>"; HAND_LM.forEach((l,i)=>h+=`<tr><td>${i}</td><td>${l[1]}<div class="small">${l[0]}</div></td><td>${l[2]}</td></tr>`); $("handTable").innerHTML=h;
+}
+function buildCards(){
+  const box=$("angleCards"); box.innerHTML="";
+  for(const [n,l,r] of CARD_GROUPS){ const d=document.createElement("div"); d.className="ang"; d.innerHTML=`<div class="n">${n}</div><div class="v"><span class="L" id="v_${l}">—</span><span class="R" id="v_${r}">—</span></div>`; box.appendChild(d); }
+  for(const s of ["L","R"]){ let h=`<tr><td></td><td>根</td><td>中</td><td>末</td></tr>`; for(const f of FINGERS) h+=`<tr><td>${f.n}</td>${[0,1,2].map(j=>`<td id="hf_${s}_${f.k}_${j}">—</td>`).join("")}</tr>`; $("hand"+s).innerHTML=h; }
 }
 function bindSettings(){
-  $("inName").value=settings.name; $("inH").value=settings.height; $("inW").value=settings.weight;
-  $("setModel").value=settings.model; $("setAngle").value=settings.angleMode;
-  $("inName").oninput=e=>{settings.name=e.target.value; saveSettings();};
-  $("inH").oninput=e=>{settings.height=Number(e.target.value)||150; saveSettings(); kin.reset(); renderSegTable();};
-  $("inW").oninput=e=>{settings.weight=Number(e.target.value)||45; saveSettings(); renderSegTable();};
-  $("setModel").onchange=e=>{settings.model=e.target.value; saveSettings(); loadModels();};
-  $("setAngle").onchange=e=>{settings.angleMode=e.target.value; saveSettings();};
-  const tg=(id,key,label)=>{ const b=$(id); const up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{settings[key]=!settings[key]; saveSettings(); up();}; };
-  tg("tgAngles","showAngles","🔢 顯示角度數字"); tg("tgCom","showCom","⭐ 顯示重心"); tg("tgFace","showFace","🙂 顯示臉部點");
-}
-function buildAngleCards(){
-  const box=$("angleCards"); box.innerHTML="";
-  for(const [n,l,r] of CARD_GROUPS){
-    const d=document.createElement("div"); d.className="ang";
-    d.innerHTML=`<div class="n">${n}</div><div class="v"><span class="L" id="v_${l}">—</span><span class="R" id="v_${r}">—</span></div><div class="small" style="display:flex;justify-content:space-between"><span>左</span><span>右</span></div>`;
-    box.appendChild(d);
-  }
+  $("inName").value=settings.name; $("inH").value=settings.height; $("inW").value=settings.weight; $("setModel").value=settings.model; $("setAngle").value=settings.angleMode;
+  $("inName").oninput=e=>{settings.name=e.target.value;saveSettings();};
+  $("inH").oninput=e=>{settings.height=Number(e.target.value)||150;saveSettings();kin.reset();renderSegTable();};
+  $("inW").oninput=e=>{settings.weight=Number(e.target.value)||45;saveSettings();renderSegTable();};
+  $("setModel").onchange=e=>{settings.model=e.target.value;saveSettings();loadModels();};
+  $("setAngle").onchange=e=>{settings.angleMode=e.target.value;saveSettings();};
+  const tg=(id,key,label,after)=>{ const b=$(id),up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{ settings[key]=!settings[key]; saveSettings(); up(); after&&after(); }; };
+  tg("tgHands","hands","✋ 手指追蹤",async()=>{ if(settings.hands&&!handLM&&vision){ setStatus("⏳ 載入手指模型…"); await loadHands(); } refreshStatus(); });
+  tg("tgAngles","showAngles","🔢 角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
 }
 function updateUI(now){
   if(now-fpsT>1000){ fps=fpsCount*1000/(now-fpsT); fpsCount=0; fpsT=now; }
+  $("fpsChip").textContent=liveOn?`${Math.round(fps)} fps`:"— fps";
   const A=liveM?.angles||{};
-  for(const d of ANGLES){ const e=$("v_"+d.k); if(e) e.textContent=fmt(A[d.k],0,"°"); }
+  for(const d of ANGLES) $("v_"+d.k).textContent=fmt(A[d.k],0,"°");
   $("mTrunk").textContent=fmt(liveM?.trunk,0,"°");
-  const ok=!!liveM && kin.sc!=null;
-  $("mH").textContent= ok? fmt(kin.h,2," m") : "—";
-  $("mVx").textContent= ok? fmt(kin.v.x*(liveMirror?-1:1),2," m/s") : "—";
-  $("mVy").textContent= ok? fmt(-kin.v.y,2," m/s") : "—";
-  $("mF").textContent= ok && kin.Fbw!=null? `${kin.Fbw.toFixed(2)} BW（${Math.round(kin.Fbw*bodyM()*G)} N）` : "—";
-  $("mFps").textContent= liveOn? fmt(fps,0," fps") : "—";
+  const ok=!!liveM&&kin.sc!=null;
+  $("mH").textContent=ok?fmt(kin.h,2," m"):"—";
+  $("mVx").textContent=ok?fmt(kin.v.x*(liveMirror?-1:1),2," m/s"):"—";
+  $("mVy").textContent=ok?fmt(-kin.v.y,2," m/s"):"—";
+  $("mF").textContent=ok&&kin.Fbw!=null?`${kin.Fbw.toFixed(2)} BW（${Math.round(kin.Fbw*bodyM()*G)} N）`:"—";
+  for(const s of ["L","R"]){
+    const h=liveHands?.[s];
+    $("grip"+s).style.width=(h?.grip??0)+"%"; $("grip"+s+"v").textContent=h?.grip!=null?Math.round(h.grip)+"%":(settings.hands?"未偵測":"已關閉");
+    for(const f of FINGERS) for(let j=0;j<3;j++) $(`hf_${s}_${f.k}_${j}`).textContent=fmt(h?.flex?.[f.k]?.[j],0,"°");
+  }
   updateScore();
-  if($("tab-body").classList.contains("on")) renderSegTable();
+  if(document.body.classList.contains("left-open")) renderSegTable();
 }
 
-/* ===================== 分頁切換 ===================== */
-function switchTab(name){
-  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
-  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.id==="tab-"+name));
-  // 把即時畫面移到對應的區域
-  if(name==="follow") $("followLiveSlot").appendChild(liveCanvas);
-  else $("liveStage").insertBefore(liveCanvas, $("recDot"));
-  if(name==="review") setTimeout(drawChart,50);
-  if(name==="body") renderSegTable();
+/* ===================== 模式與面板開關 ===================== */
+function setMode(m){
+  document.body.dataset.mode=m;
+  document.querySelectorAll("#modes button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m));
+  document.querySelectorAll("[data-modes]").forEach(e=>e.hidden=!e.dataset.modes.split(" ").includes(m));
+  if(m==="review") setTimeout(drawChart,60);
 }
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.querySelectorAll("#modes button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+function toggleDrawer(side){ const c=side+"-open"; document.body.classList.toggle(c); $(side==="left"?"tgLeft":"tgRight").classList.toggle("off",!document.body.classList.contains(c)); setTimeout(drawChart,280); }
+$("tgLeft").onclick=()=>toggleDrawer("left"); $("tgRight").onclick=()=>toggleDrawer("right");
+if(window.innerWidth>860){ document.body.classList.add("right-open"); } else { $("tgRight").classList.add("off"); }
 
 /* ===================== 主迴圈 ===================== */
 let lastUI=0;
-function loop(){
-  requestAnimationFrame(loop);
-  const now=performance.now();
-  processLive(now);
-  processRef();
-  if(now-lastUI>120){ lastUI=now; updateUI(now); }
-}
+function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
-/* ===================== 啟動 ===================== */
-buildAngleCards(); bindSettings(); renderSegTable(); renderLmTable(); renderTargets(); updateMirrorBtn(); drawChart();
+buildCards(); bindSettings(); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror");
 requestAnimationFrame(loop);
 loadModels();
 </script>
