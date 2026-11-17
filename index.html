@@ -580,6 +580,45 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 .pbar button.on{background:#fff;color:#1B2230;border-color:#fff}
 #liveStage .pbar{bottom:auto;top:56px}
 #refStage .pbar{bottom:auto;top:12px;left:auto;right:12px}
+.camlist{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+.camitem{display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 10px;font-size:13.5px;cursor:pointer}
+.camitem.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.ck{flex:none;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:#EEF1F4;color:#4A5566}
+.ck-usb{background:#E3F0FF;color:#1D5FB4}.ck-phone{background:#FFF1D6;color:#8A5A00}.ck-virtual{background:#F1E9FF;color:#5B3BB0}
+.tgl{display:flex;gap:8px;align-items:center;font-size:13.5px;margin:10px 0 4px}
+.txt{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;letter-spacing:.12em}
+.mmtoast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#1B2230;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:9999;max-width:90vw}
+.mmtoast.on{opacity:1;transform:translate(-50%,0)}
+.lmodal{position:fixed;inset:0;background:rgba(16,21,30,.55);display:grid;place-items:center;z-index:9000;padding:16px}
+.lmodal[hidden]{display:none}
+.lbox{position:relative;background:#fff;border-radius:14px;padding:22px 22px 18px;width:min(420px,100%);max-height:92vh;overflow:auto;text-align:center}
+.lbox h3{margin:0 0 6px;font-size:19px}
+.lx{position:absolute;right:10px;top:8px;border:none;background:none;font-size:26px;cursor:pointer;color:#5B6678}
+.lqr{width:220px;height:220px;margin:12px auto;display:grid;place-items:center;background:#F6F7F9;border-radius:10px}
+.lqr svg{width:100%;height:100%}
+.lcode{font-size:13px;color:var(--muted)}.lcode b{display:block;font-size:30px;letter-spacing:.22em;color:var(--ink);margin-top:2px}
+.lurl{word-break:break-all;margin:4px 0 10px}
+.lstat{list-style:none;padding:0;margin:8px 0;text-align:left;font-size:13.5px}.lstat li{padding:6px 0;border-top:1px solid var(--line2)}
+.lbox .note{text-align:left}
+body.phone-link{overflow:hidden}
+#phonePage{position:fixed;inset:0;z-index:9500;background:#F3F5F8;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#phonePage[hidden]{display:none}
+.ph-top{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.ph-top b{font-size:15px}.ph-st{margin-left:auto;font-size:12px;color:#8A5A00}.ph-st.ok{color:#2E7D4F}
+.ph-role{padding:24px 16px;display:flex;flex-direction:column;gap:12px}.ph-role p{margin:0 0 4px;font-weight:700}
+.ph-big{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 16px;font-size:14px;cursor:pointer}
+.ph-big b{font-size:18px}.ph-big span{color:var(--muted)}
+.ph-cam{flex:1;display:flex;flex-direction:column;background:#000}
+.ph-cam video{flex:1;width:100%;object-fit:contain;background:#000}.ph-cam video.mir{transform:scaleX(-1)}
+.ph-bar{display:flex;gap:8px;padding:10px;background:#10151E;justify-content:center}
+.ph-tip{color:#C9D2DE;text-align:center;padding:6px 12px 12px;background:#10151E}
+.ph-remote{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto}
+.ph-score{background:#1B2230;color:#fff;border-radius:14px;padding:16px;display:grid;gap:4px}
+.ph-score span{font-size:18px;font-weight:700}.ph-score b{font-size:48px;line-height:1}.ph-score em{font-style:normal;color:#C9D2DE;font-size:14px}
+.ph-warn{color:#B4233C;font-weight:700;min-height:1.2em}
+.ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ph-grid button{height:76px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:17px;font-weight:700;cursor:pointer}
+.ph-grid button.on{background:#C0364E;color:#fff;border-color:#C0364E}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -647,6 +686,22 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
           <label class="f" for="inSex">性別（膝內夾參考值會依性別調整）</label>
           <select id="inSex"><option value="">未填</option><option value="F">女</option><option value="M">男</option></select>
           <div class="note">身高用來把像素換算成公尺，體重用來算肢段質量與力。資料只存在這台裝置。</div>
+        </div>
+      </details>
+      <details class="panel" open>
+        <summary>鏡頭與手機連動</summary>
+        <div class="body">
+          <div class="subh">外接鏡頭</div>
+          <div class="camlist" id="camList"><span class="small">按「開鏡頭」或下方「重新偵測」後列出可用的鏡頭。</span></div>
+          <div class="brow"><button class="pbtn" id="btnCamScan">重新偵測鏡頭</button></div>
+          <label class="f" for="setCamQ">畫質</label>
+          <select id="setCamQ"><option value="720">720p・30 fps（建議）</option><option value="720x60">720p・60 fps（快速動作）</option><option value="1080">1080p・30 fps（較耗效能）</option><option value="480">480p（舊電腦）</option></select>
+          <label class="tgl"><input type="checkbox" id="setPreferExt"> 插上外接鏡頭時自動改用</label>
+          <div class="note" id="camInfo">尚未開鏡頭。</div>
+          <div class="subh">手機連動</div>
+          <div class="small">手機可以當<b>無線鏡頭</b>（放在側面或遠處拍，電腦分析），或當<b>遙控器</b>（在場上按錄影、看即時分數）。手機和電腦連同一個 Wi-Fi 最穩定。</div>
+          <div class="brow"><button class="pbtn" id="btnLinkHost">在這台電腦產生 QR Code</button></div>
+          <div class="brow"><input id="linkJoinCode" class="txt" placeholder="輸入電腦上的 6 碼連線碼" maxlength="6" inputmode="text" autocapitalize="characters" style="flex:1;min-width:0"><button class="pbtn" id="btnLinkJoin">用這支手機加入</button></div>
         </div>
       </details>
       <details class="panel">
@@ -1242,7 +1297,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({camQ:"720",preferExt:true,people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -2402,18 +2457,134 @@ let liveRes=null, liveWorld=null, liveM=null, liveHands=null, livePeople=null;
 const kin=new Kin();
 let fpsCount=0,fps=0,fpsT=performance.now();
 function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||ICON[ic]||""}</span>${label}`; }
+/* ===================== 外接鏡頭：分類、畫質、熱插拔 ===================== */
+const camKind=l=>{ l=l||""; return /camo|continuity|iphone|ipad|droidcam|iriun|epoccam|android|phone|手機/i.test(l)?"phone":/obs|virtual|snap camera|xsplit|manycam|nvidia broadcast|虛擬/i.test(l)?"virtual":/integrated|built-?in|facetime|internal|front|back|內建|前置|後置|user facing|world facing/i.test(l)?"builtin":l?"usb":"unknown"; };
+const CAMK_N={phone:"手機",virtual:"虛擬",builtin:"內建",usb:"外接 USB",unknown:"相機"};
+let knownCams=null, camSource="local";
+function camConstraints(){ const q=settings.camQ||"720"; return q==="1080"?{width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}}:q==="720x60"?{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}}:q==="480"?{width:{ideal:640},height:{ideal:480},frameRate:{ideal:30}}:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}; }
+async function getCams(){ try{ return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput"); }catch(e){ return []; } }
+function camInfoText(){ const t=stream?.getVideoTracks()[0]; if(!t) return "尚未開鏡頭。"; const st=t.getSettings?.()||{};
+  return `目前使用：<b>${esc(camSource==="phone"?(phoneCamLabel||"手機（無線）"):t.label||"相機")}</b>${camSource==="phone"?"（手機無線）":"（"+CAMK_N[camKind(t.label)]+"）"}・${st.width||"?"}×${st.height||"?"}・${st.frameRate?Math.round(st.frameRate):"?"} fps`; }
+async function renderCamList(){ const box=$("camList"); if(!box) return; const cams=await getCams(); const cur=stream?.getVideoTracks()[0]?.getSettings?.().deviceId;
+  if(!cams.length){ box.innerHTML='<span class="small">沒有偵測到鏡頭。外接鏡頭請確認 USB 已插好；第一次使用要先允許相機權限（按一次「開鏡頭」）。</span>'; }
+  else box.innerHTML=cams.map((d,i)=>`<button class="camitem${camSource!=="phone"&&cur===d.deviceId?" on":""}" data-id="${esc(d.deviceId)}"><span class="ck ck-${camKind(d.label)}">${CAMK_N[camKind(d.label)]}</span>${esc(d.label||("相機 "+(i+1)+"（允許權限後顯示名稱）"))}</button>`).join("");
+  box.querySelectorAll(".camitem").forEach(b=>b.onclick=async()=>{ settings.camId=b.dataset.id; saveSettings(); $("camSel").value=b.dataset.id; closePhoneCam(); await startCam(); });
+  $("camInfo").innerHTML=camInfoText(); }
+async function onDeviceChange(){
+  const cams=await getCams(), ids=new Set(cams.map(c=>c.deviceId));
+  if(knownCams){ const added=cams.filter(c=>!knownCams.has(c.deviceId)&&c.deviceId), removedCur=settings.camId&&!ids.has(settings.camId);
+    const ext=added.find(c=>["usb","phone"].includes(camKind(c.label)));
+    if(ext){ if(settings.preferExt!==false){ settings.camId=ext.deviceId; saveSettings(); toast(`偵測到新鏡頭「${ext.label||"外接鏡頭"}」，已切換`); if(liveOn&&camSource!=="phone") await startCam(); } else toast(`偵測到新鏡頭「${ext.label||"外接鏡頭"}」，可在相機選單切換`); }
+    if(removedCur&&camSource!=="phone"){ settings.camId=""; saveSettings(); toast("外接鏡頭已拔除，改用預設相機"); if(liveOn) await startCam(); } }
+  knownCams=ids; listCams(); renderCamList(); }
+function toast(t){ let el=$("mmToast"); if(!el){ el=document.createElement("div"); el.id="mmToast"; el.className="mmtoast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("on"),3500); }
+
+/* ===================== 手機連動（WebRTC 點對點，PeerJS 只負責配對） ===================== */
+const LINK_LIBS={peer:"https://cdn.jsdelivr.net/npm/peerjs@1.5/dist/peerjs.min.js",qr:"https://cdn.jsdelivr.net/npm/qrcode-generator@1.4/qrcode.min.js"};
+const loadScript=u=>new Promise((ok,no)=>{ if(document.querySelector(`script[data-src="${u}"]`)) return ok(); const s=document.createElement("script"); s.src=u; s.dataset.src=u; s.crossOrigin="anonymous"; s.onload=ok; s.onerror=()=>no(new Error("無法載入 "+u)); document.head.appendChild(s); });
+let hostPeer=null, hostCode="", linkConns=[], phoneCall=null, phoneCamLabel="", statusTimer=null;
+const LINK_ABC="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", newCode=()=>Array.from({length:6},()=>LINK_ABC[Math.floor(Math.random()*LINK_ABC.length)]).join("");
+const peerId=c=>"mf-rtfb-"+c.toLowerCase();
+function linkMsg(t,warn){ const m=$("linkMsg"); m.innerHTML=t; m.classList.toggle("warn",!!warn); }
+function renderLinkList(){ const L=$("linkList"); const items=linkConns.filter(c=>c.open).map(c=>`<li><b>${c.metadata?.role==="cam"?"無線鏡頭":"遙控器"}</b>・${esc(c.metadata?.dev||"手機")}${c.metadata?.role==="cam"&&phoneCall?"・畫面已接上":""}</li>`);
+  L.innerHTML=items.length?items.join(""):'<li class="small">等待手機加入…</li>'; }
+async function openHost(){
+  $("linkModal").hidden=false;
+  if(hostPeer&&!hostPeer.destroyed&&hostCode) return;
+  linkMsg("載入連線元件中…");
+  try{ await loadScript(LINK_LIBS.peer); }catch(e){ return linkMsg("連線元件載入失敗：請確認網路，或關掉擋廣告外掛後再試。",true); }
+  try{ await loadScript(LINK_LIBS.qr); }catch(e){}
+  const start=()=>{ hostCode=newCode(); hostPeer=new Peer(peerId(hostCode),{debug:1});
+    hostPeer.on("open",()=>{ const url=location.origin+location.pathname+"?link="+hostCode; $("linkCode").textContent=hostCode; $("linkUrl").textContent=url;
+      if(window.qrcode){ const q=qrcode(0,"M"); q.addData(url); q.make(); $("linkQR").innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true}); } else $("linkQR").innerHTML='<div class="small">（QR Code 元件沒載入，請在手機輸入連線碼）</div>';
+      linkMsg("視訊直接在兩台裝置之間傳送（WebRTC 點對點），不經過伺服器、也不會被儲存；連線服務只交換配對碼。"); });
+    hostPeer.on("error",e=>{ if(e.type==="unavailable-id"){ hostPeer.destroy(); start(); } else linkMsg("連線服務錯誤："+(e.type||e.message)+"。請關掉視窗再開一次。",true); });
+    hostPeer.on("connection",c=>{ linkConns.push(c); c.on("open",()=>{ renderLinkList(); toast((c.metadata?.role==="cam"?"手機鏡頭":"遙控器")+"已連線"); sendStatus(); });
+      c.on("data",d=>hostCmd(d,c)); c.on("close",()=>{ linkConns=linkConns.filter(x=>x!==c); renderLinkList(); }); });
+    hostPeer.on("call",call=>{ call.answer(); call.on("stream",s=>usePhoneStream(s,call)); call.on("close",()=>{ if(phoneCall===call){ phoneCall=null; if(camSource==="phone"){ stopCam(); toast("手機鏡頭已中斷"); } renderLinkList(); } }); });
+  };
+  start();
+  if(!statusTimer) statusTimer=setInterval(sendStatus,400);
+}
+async function usePhoneStream(s,call){
+  stopCam(); if(phoneCall&&phoneCall!==call) try{ phoneCall.close(); }catch(e){}
+  phoneCall=call; phoneCamLabel=call.metadata?.dev?`${call.metadata.dev} 的鏡頭`:"手機鏡頭"; camSource="phone"; stream=s; liveVideo.srcObject=s; try{ await liveVideo.play(); }catch(e){}
+  liveMirror=call.metadata?.facing==="user"; updateMirrorBtn?.();
+  liveOn=true; kin.reset(); engine.reset(); lifter.reset(); liveTrk.reset();
+  $("livePh").hidden=true; liveCanvas.hidden=false; setAbtn("btnCam","⏹️","關鏡頭"); setAbtn("btnCam2","⏹️","關鏡頭");
+  if(!liveLM&&!loading) loadModels();
+  listCams(); renderCamList(); renderLinkList(); toast("已改用手機鏡頭（無線）"); $("linkModal").hidden=true;
+}
+function closePhoneCam(){ if(phoneCall){ try{ phoneCall.close(); }catch(e){} phoneCall=null; } camSource="local"; }
+function hostCmd(d,c){ if(!d||typeof d!=="object") return;
+  const click=id=>$(id)?.click();
+  if(d.cmd==="cam") click(document.body.dataset.mode==="follow"?"btnCam2":"btnCam");
+  else if(d.cmd==="rec"){ if(document.body.dataset.mode!=="mirror") setMode?.("mirror"); click("btnRec"); }
+  else if(d.cmd==="trial"){ if(document.body.dataset.mode!=="follow") setMode?.("follow"); click("btnTrial"); }
+  else if(d.cmd==="snap") click("btnSnap");
+  else if(d.cmd==="audio") click("btnAudio");
+  else if(d.cmd==="mode"){ const m=document.body.dataset.mode==="mirror"?"follow":"mirror"; setMode?.(m); }
+  else if(d.cmd==="facing"){ liveMirror=d.facing==="user"; updateMirrorBtn?.(); }
+  sendStatus(); }
+function sendStatus(){ const open=linkConns.filter(c=>c.open); if(!open.length) return;
+  const st={st:1,live:liveOn,src:camSource,mode:document.body.dataset.mode,rec:!!rec,trial:!!trial,pose:$("dHead")?.textContent||"",warn:$("dWarn")?.textContent||"",num:$("scoreNum")?.textContent||"",tip:$("scoreTip")?.textContent||"",audio:settings.audio};
+  for(const c of open) try{ c.send(st); }catch(e){} }
+$("btnLinkHost").onclick=openHost;
+$("linkClose").onclick=()=>{ $("linkModal").hidden=true; };
+$("linkModal").addEventListener("click",e=>{ if(e.target.id==="linkModal") $("linkModal").hidden=true; });
+
+/* ---------- 手機端 ---------- */
+let phPeer=null, phConn=null, phCall=null, phStream=null, phFacing="environment", phWake=null;
+function phSt(t,ok){ const e=$("phSt"); e.textContent=t; e.classList.toggle("ok",!!ok); }
+const devName=()=>{ const u=navigator.userAgent; return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"Android 手機":"裝置"; };
+async function phoneJoin(code){
+  code=(code||"").toUpperCase().replace(/[^A-Z0-9]/g,""); if(code.length!==6) return alert("請輸入 6 碼連線碼");
+  document.body.classList.add("phone-link"); $("phonePage").hidden=false; $("phRole").hidden=false; $("phCam").hidden=true; $("phRemote").hidden=true; phSt("載入連線元件…");
+  try{ await loadScript(LINK_LIBS.peer); }catch(e){ return phSt("連線元件載入失敗，請檢查網路"); }
+  phPeer=new Peer({debug:1}); phPeer.code=code;
+  phPeer.on("open",()=>phSt("已找到連線服務，請選擇用途",true));
+  phPeer.on("error",e=>phSt(e.type==="peer-unavailable"?"找不到這組連線碼：請確認電腦上的 QR Code 視窗還開著":"連線錯誤："+(e.type||e.message)));
+}
+function phConnect(role){ const conn=phPeer.connect(peerId(phPeer.code),{reliable:true,metadata:{role,dev:devName()}}); phConn=conn;
+  conn.on("open",()=>phSt("已連上電腦",true)); conn.on("close",()=>phSt("與電腦的連線已中斷"));
+  conn.on("data",d=>{ if(d?.st) phRender(d); }); return conn; }
+async function phStartCam(){
+  try{ phStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:phFacing,width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:false}); }
+  catch(e){ return alert("無法開啟手機相機："+(e.name==="NotAllowedError"?"請允許相機權限":e.message)); }
+  $("phVideo").srcObject=phStream; $("phVideo").classList.toggle("mir",phFacing==="user");
+  if(!phCall){ phCall=phPeer.call(peerId(phPeer.code),phStream,{metadata:{role:"cam",dev:devName(),facing:phFacing}}); phCall.on("close",()=>phSt("電腦已結束接收畫面")); }
+  else { const snd=phCall.peerConnection?.getSenders().find(s=>s.track?.kind==="video"); if(snd) await snd.replaceTrack(phStream.getVideoTracks()[0]); phConn?.open&&phConn.send({cmd:"facing",facing:phFacing}); }
+  try{ phWake=await navigator.wakeLock?.request("screen"); }catch(e){}
+}
+document.querySelectorAll("#phRole .ph-big").forEach(b=>b.onclick=async()=>{ if(!phPeer?.open) return phSt("還在連線，請稍候再按");
+  const role=b.dataset.role; $("phRole").hidden=true; phConnect(role);
+  if(role==="cam"){ $("phCam").hidden=false; await phStartCam(); } else { $("phRemote").hidden=false; } });
+$("phFlip").onclick=async()=>{ const old=phStream; phFacing=phFacing==="environment"?"user":"environment"; await phStartCam(); old?.getTracks().forEach(t=>{ if(!phStream.getTracks().includes(t)) t.stop(); }); };
+const phEnd=()=>{ try{ phCall?.close(); phConn?.close(); phPeer?.destroy(); }catch(e){} phStream?.getTracks().forEach(t=>t.stop()); try{ phWake?.release(); }catch(e){}
+  phCall=phConn=phPeer=phStream=null; $("phonePage").hidden=true; document.body.classList.remove("phone-link"); history.replaceState(null,"",location.pathname); };
+$("phStop").onclick=phEnd; $("phStop2").onclick=phEnd;
+document.querySelectorAll("#phRemote [data-cmd]").forEach(b=>b.onclick=()=>{ if(phConn?.open) phConn.send({cmd:b.dataset.cmd}); else phSt("尚未連上電腦"); });
+function phRender(d){ $("phPose").textContent=d.live?d.pose:"電腦鏡頭未開"; $("phNum").textContent=d.mode==="follow"?d.num:""; $("phTip").textContent=d.mode==="follow"?d.tip:"";
+  $("phWarn").textContent=d.warn||""; $("phCmdCam").textContent=d.live?"關鏡頭":"開鏡頭"; $("phCmdRec").textContent=d.rec?"錄影中…":"錄影"; $("phCmdRec").classList.toggle("on",d.rec);
+  $("phCmdAudio").textContent="聲音："+(AUDIO_NAME[d.audio]||"關"); }
+$("btnLinkJoin").onclick=()=>phoneJoin($("linkJoinCode").value);
+{ const q=new URLSearchParams(location.search).get("link"); if(q) setTimeout(()=>phoneJoin(q),300); }
+
 async function startCam(){
   audioUnlock(); audioReset();
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
-  stopCam();
+  stopCam(); closePhoneCam();
   try{
-    const vc={width:{ideal:1280},height:{ideal:720}};
-    if(settings.camId) vc.deviceId={exact:settings.camId}; else vc.facingMode=facing;
+    const vc={...camConstraints()};
+    if(!settings.camId&&settings.preferExt!==false){ const ext=(await getCams()).find(c=>camKind(c.label)==="usb"); if(ext) vc.deviceId={exact:ext.deviceId}; }
+    if(settings.camId) vc.deviceId={exact:settings.camId}; else if(!vc.deviceId) vc.facingMode=facing;
     try{ stream=await navigator.mediaDevices.getUserMedia({video:vc,audio:false}); }
     catch(e){ if(!settings.camId||e.name==="NotAllowedError") throw e; // 選的相機不見了（例如 Camo 沒開）→ 改用預設相機
       alert("找不到選擇的相機（如果是 Camo，請確認電腦上的 Camo Studio 和手機上的 Camo 都已開啟並連線）。先改用預設相機。");
-      settings.camId=""; saveSettings(); stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false}); }
-    listCams();
+      settings.camId=""; saveSettings(); stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,...camConstraints()},audio:false}); }
+    camSource="local";
+    stream.getVideoTracks()[0]?.addEventListener("ended",()=>{ if(camSource==="local"&&liveOn){ toast("鏡頭訊號中斷（可能被拔除），改用預設相機"); settings.camId=""; saveSettings(); startCam(); } });
+    listCams(); setTimeout(renderCamList,300);
     liveVideo.srcObject=stream; await liveVideo.play();
     liveOn=true; kin.reset();
     $("livePh").hidden=true; liveCanvas.hidden=false;
@@ -2425,6 +2596,7 @@ async function startCam(){
   }
 }
 function stopCam(){
+  if(camSource==="phone"&&stream) closePhoneCam();
   if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
   if(rec) stopRecording();
   liveOn=false; liveRes=null; liveM=null; liveHands=null;
@@ -2435,12 +2607,12 @@ async function listCams(){
   if(!navigator.mediaDevices?.enumerateDevices) return;
   const sel=$("camSel"), cams=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
   const cur=stream?.getVideoTracks()[0]?.getSettings?.().deviceId;
-  sel.innerHTML='<option value="">📷 預設相機</option>'+cams.map((d,i)=>`<option value="${esc(d.deviceId)}">${/camo/i.test(d.label)?"📱 ":"📷 "}${esc(d.label||("相機 "+(i+1)))}</option>`).join("");
-  sel.value=settings.camId&&cams.some(d=>d.deviceId===settings.camId)?settings.camId:(settings.camId?"":"");
+  sel.innerHTML='<option value="">預設相機</option>'+cams.map((d,i)=>`<option value="${esc(d.deviceId)}">［${CAMK_N[camKind(d.label)]}］${esc(d.label||("相機 "+(i+1)))}</option>`).join("")+(camSource==="phone"?'<option value="__phonecur">［手機無線］'+esc(phoneCamLabel)+'</option>':"")+'<option value="__phone">＋ 用手機當無線鏡頭…</option>';
+  sel.value=camSource==="phone"?"__phonecur":settings.camId&&cams.some(d=>d.deviceId===settings.camId)?settings.camId:"";
   sel.title=cur?"目前使用："+(cams.find(d=>d.deviceId===cur)?.label||"相機"):"選擇相機";
 }
-$("camSel").onchange=async e=>{ settings.camId=e.target.value; saveSettings(); kin.reset(); engine.reset(); lifter.reset(); if(liveOn) await startCam(); };
-navigator.mediaDevices?.addEventListener?.("devicechange",()=>listCams());
+$("camSel").onchange=async e=>{ const v=e.target.value; if(v==="__phone"){ listCams(); openHost(); return; } if(v==="__phonecur") return; settings.camId=v; saveSettings(); kin.reset(); engine.reset(); lifter.reset(); if(liveOn) await startCam(); };
+navigator.mediaDevices?.addEventListener?.("devicechange",()=>onDeviceChange());
 listCams();
 $("btnCam").onclick=()=>liveOn?stopCam():startCam();
 $("btnCam2").onclick=()=>liveOn?stopCam():startCam();
@@ -3440,6 +3612,9 @@ function bindSettings(){
   $("inH").oninput=e=>{settings.height=Number(e.target.value)||150;saveSettings();kin.reset();renderSegTable();};
   $("inW").oninput=e=>{settings.weight=Number(e.target.value)||45;saveSettings();renderSegTable();};
   $("setModel").onchange=e=>{settings.model=e.target.value;saveSettings();loadModels();};
+  $("setCamQ").value=settings.camQ||"720"; $("setCamQ").onchange=e=>{ settings.camQ=e.target.value; saveSettings(); if(liveOn&&camSource==="local") startCam(); };
+  $("setPreferExt").checked=settings.preferExt!==false; $("setPreferExt").onchange=e=>{ settings.preferExt=e.target.checked; saveSettings(); };
+  $("btnCamScan").onclick=async()=>{ try{ if(!liveOn){ const t=await navigator.mediaDevices.getUserMedia({video:true}); t.getTracks().forEach(x=>x.stop()); } }catch(e){} knownCams=null; await onDeviceChange(); };
   $("setPeople").value=String(settings.people||2); $("setPeople").onchange=e=>{ settings.people=Number(e.target.value); saveSettings(); liveTrk.reset(); refTrk.reset(); loadModels(); };
   $("setSeg").value=settings.segModel;
   $("setSeg").onchange=e=>{ settings.segModel=e.target.value; saveSettings(); applySegModel(); for(const k in lenAcc) delete lenAcc[k]; renderSegTable(); };
@@ -3559,5 +3734,41 @@ document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySe
 requestAnimationFrame(loop);
 loadModels();
 </script>
+<div class="lmodal" id="linkModal" hidden><div class="lbox" role="dialog" aria-labelledby="linkTtl">
+  <button class="lx" id="linkClose" aria-label="關閉">×</button>
+  <h3 id="linkTtl">手機連動</h3>
+  <p class="small">用手機相機掃描 QR Code，或在手機開本網站 → 設定 → 輸入連線碼。</p>
+  <div class="lqr" id="linkQR"></div>
+  <div class="lcode">連線碼<b id="linkCode">——</b></div>
+  <div class="small lurl" id="linkUrl"></div>
+  <ul class="lstat" id="linkList"><li class="small">等待手機加入…</li></ul>
+  <div class="note" id="linkMsg">視訊直接在兩台裝置之間傳送（WebRTC 點對點），不經過伺服器、也不會被儲存；連線服務只交換配對碼。</div>
+</div></div>
+<section id="phonePage" hidden>
+  <header class="ph-top"><span class="zlogo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#1B2230"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 19Q33 11.5 44.5 18"/><path d="M44.5 18L20.5 44.5"/><path d="M20.5 44.5Q31 47 41 45.6"/></g><path d="M32.15 16.04A12.5 12.5 0 0 0 34.79 25.87" fill="none" stroke="#FF8A3D" stroke-width="2.6" stroke-linecap="round"/><circle cx="13.5" cy="19.5" r="5" fill="#fff"/><path d="M39.5 43.1Q42.3 41.6 44.2 43.2L51 45.6Q52.4 46.6 51.2 47.9Q50.5 48.3 49.6 48.2L39.5 48Z" fill="#fff"/><g fill="none" stroke="#FFC23D" stroke-width="1.3" opacity=".6"><circle cx="44.5" cy="18" r="6.6"/><circle cx="20.5" cy="44.5" r="6.6"/></g><g fill="#FFC23D" stroke="#1B2230" stroke-width="1.8"><circle cx="44.5" cy="18" r="3.9"/><circle cx="20.5" cy="44.5" r="3.9"/></g></svg></span><b>動作即時回饋系統</b><span class="ph-st" id="phSt">連線中…</span></header>
+  <div class="ph-role" id="phRole">
+    <p>這支手機要做什麼？</p>
+    <button class="ph-big" data-role="cam"><b>當無線鏡頭</b><span>把手機架在側面或遠處拍攝，電腦負責分析</span></button>
+    <button class="ph-big" data-role="remote"><b>當遙控器</b><span>在場上控制錄影、跟做，並看即時分數與提醒</span></button>
+  </div>
+  <div class="ph-cam" id="phCam" hidden>
+    <video id="phVideo" playsinline muted autoplay></video>
+    <div class="ph-bar"><button class="pbtn" id="phFlip">切換前／後鏡頭</button><button class="pbtn" id="phStop">結束</button></div>
+    <div class="small ph-tip">畫面傳到電腦分析中。請保持這個頁面開著、螢幕不要關。</div>
+  </div>
+  <div class="ph-remote" id="phRemote" hidden>
+    <div class="ph-score"><span id="phPose">—</span><b id="phNum">—</b><em id="phTip"></em></div>
+    <div class="ph-warn" id="phWarn"></div>
+    <div class="ph-grid">
+      <button data-cmd="cam" id="phCmdCam">開鏡頭</button>
+      <button data-cmd="rec" id="phCmdRec">錄影</button>
+      <button data-cmd="trial">跟做一次</button>
+      <button data-cmd="snap">拍照</button>
+      <button data-cmd="audio" id="phCmdAudio">聲音</button>
+      <button data-cmd="mode">切換模式</button>
+    </div>
+    <button class="pbtn" id="phStop2">結束連動</button>
+  </div>
+</section>
 </body>
 </html>
