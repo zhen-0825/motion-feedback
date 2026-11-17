@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>動作學習系統｜AI 動作分析與回饋</title>
 <style>
@@ -196,6 +197,103 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
   .abtn{min-width:62px;height:60px}
   .scorehud{width:100%}
 }
+/* ===================== 介面重設計：量測儀器風格 ===================== */
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --panel:#F7F9FB; --ink:#1B2230; --muted:#5B6678; --faint:#8D99AB; --line:#D5DBE3; --line2:#E6EAF0;
+  --Lc:#E4573D; --Rc:#2F7DE1; --ok:#17996B; --warn:#D08A00; --alert:#C8364E;
+  --pinkD:var(--Lc); --blueD:var(--Rc); --mintD:var(--ok); --yellowD:var(--warn); --lavD:var(--muted); --peachD:var(--muted);
+  --stage:#18202C; --top:56px; --lw:320px; --rw:340px;
+  --num:"Barlow Semi Condensed","Bahnschrift","DIN Alternate","Roboto Condensed","Arial Narrow",sans-serif;
+}
+body{font-size:15px;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.topbar{border-bottom:1px solid var(--line);gap:12px;padding:0 14px}
+.brand{font-size:17px;font-weight:700;letter-spacing:.02em;gap:10px}
+.brand .egg{display:none}
+.brand .small{font-weight:400!important;color:var(--muted);font-size:12px}
+.modes{background:#E3E8EE;border-radius:10px;padding:3px;gap:2px}
+.modes button{font-size:14px;font-weight:600;padding:6px 16px;border-radius:8px;color:var(--muted)}
+.modes button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(27,34,48,.14)}
+.hud{background:transparent;font-weight:600;font-size:13px;color:var(--muted);padding:5px 10px;border-radius:8px}
+#fpsChip{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:15px}
+#status{background:#fff;border:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:7px}
+#status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
+#status.ok,#status.err{background:#fff} #status.ok::before{background:var(--ok)} #status.err::before{background:var(--alert)}
+#recChip{background:#FCEBEE;color:var(--alert);font-family:var(--num);font-size:15px;animation:none}
+#recChip::first-letter{animation:blink 1s infinite}
+.iconbtn{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;border:1px solid var(--ink);box-shadow:none;display:grid;place-items:center;padding:0}
+.iconbtn.off{background:#fff;color:var(--ink);border-color:var(--line)}
+.iconbtn svg{width:20px;height:20px}
+.drawer{background:var(--panel)}
+#left{border-right:1px solid var(--line)} #right{border-left:1px solid var(--line)}
+.drawer .inner{padding:0}
+details.panel{background:transparent;border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid var(--line);overflow:visible}
+details.panel>summary{padding:13px 16px;font-size:14px;font-weight:700;color:var(--ink);gap:8px}
+details.panel>summary:hover{background:#EEF2F6}
+details.panel>summary::after{content:"";width:7px;height:7px;border-right:1.75px solid var(--muted);border-bottom:1.75px solid var(--muted);transform:rotate(-45deg);flex:none;margin-right:3px;transition:transform .15s}
+details.panel[open]>summary::after{content:"";transform:rotate(45deg)}
+details.panel>.body{padding:0 16px 16px}
+.angs{gap:6px}
+.ang{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.ang .n{font-size:12px;font-weight:600;color:var(--muted)}
+.ang .v{font-family:var(--num);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.L{color:var(--Lc)}.R{color:var(--Rc)}.C{color:var(--ok)}
+.metric{background:transparent;border-radius:0;border-bottom:1px solid var(--line2);padding:8px 0;margin:0;font-weight:500;font-size:13px;color:var(--muted)}
+.metric b{font-family:var(--num),"Noto Sans TC",sans-serif;font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+label.f{font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+input[type=text],input[type=number],input[type=url],.drawer select{font-size:15px;border-radius:8px;border:1px solid var(--line);min-height:40px;padding:7px 10px}
+.pbtn{font-size:13px;font-weight:600;border-radius:8px;padding:8px 12px;background:#fff;border:1px solid var(--line);box-shadow:none;color:var(--ink);margin:6px 6px 0 0}
+.pbtn.mint,.pbtn.blue,.pbtn.peach,.pbtn.lav{background:#fff}
+.pbtn.off{background:#fff;color:var(--faint)}
+.pbtn:hover{border-color:#AEB7C4;background:#F4F6F9}
+#btnReport,#rpPrint,#btnScan,#btnCalib{background:var(--ink)!important;color:#fff!important;border-color:var(--ink)!important}
+#btnReport:hover,#rpPrint:hover,#btnScan:hover,#btnCalib:hover{background:#2C3749!important}
+.chip{font-size:13px;font-weight:500;padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);display:inline-block}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .x{color:var(--alert)}
+.note{background:#F1F5F8;border-radius:0 6px 6px 0;border-left:3px solid var(--faint);color:var(--ink);font-size:13px}
+.note.warn{background:#FCEFF1;border-left-color:var(--alert);color:#7A2333}
+.small{font-size:12px;color:var(--muted);line-height:1.55}
+th,td{border-bottom:1px solid var(--line2)}
+th{background:#F1F4F7;font-weight:600;color:var(--muted);font-size:12px}
+.statline div{background:#fff;border:1px solid var(--line);border-radius:6px;font-family:var(--num);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.legend{font-weight:500;font-size:12px;color:var(--muted)}
+.stage{border-radius:10px;border:none;box-shadow:none;background:var(--stage)}
+.ph{color:#8D99AB;font-weight:500;font-size:15px} .ph .big{font-size:36px;opacity:.5}
+.countdown{font-family:var(--num);font-weight:600;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.55)}
+#chart{border:1px solid var(--line);border-radius:10px}
+.actionbar{border-radius:12px;box-shadow:none;border:1px solid var(--line);padding:6px 8px;gap:4px}
+.abtn{min-width:62px;height:56px;border-radius:10px;background:transparent;box-shadow:none;font-weight:600;font-size:12px;color:var(--ink);gap:3px;border:1px solid transparent}
+.abtn .ic{line-height:0;font-size:0}
+.abtn .ic svg{width:22px;height:22px}
+.abtn:hover{background:#F1F4F7}
+.abtn:active{transform:none;box-shadow:none;background:#E6EBF1}
+.abtn.big{background:var(--ink);color:#fff;min-width:84px}
+.abtn.big:hover{background:#2C3749}
+.abtn.pink,.abtn.blue,.abtn.lav,.abtn.peach,.abtn.white{background:transparent}
+.abtn.off{background:transparent;color:var(--faint)}
+.abtn.rec{background:var(--alert);color:#fff}
+.abtn.rec .ic svg circle{fill:#fff}
+#delClip{color:var(--alert)}
+.sel{height:44px;border-radius:8px;border:1px solid var(--line);font-size:14px;font-weight:500;padding:0 8px}
+.sep{width:1px;height:30px;background:var(--line)}
+.scorehud{background:#fff;border:1px solid var(--line);border-radius:10px}
+.scorehud .num{font-family:var(--num);font-weight:600;font-variant-numeric:tabular-nums}
+.scorehud .stars{display:none}
+.scorehud .tip{font-size:14px;font-weight:600}
+.dcap{text-align:left;font-size:15px;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;min-height:34px;display:flex;align-items:center}
+.dcap:empty{display:none}
+#dHead{font-size:22px!important;font-weight:700!important;color:var(--ink)!important;letter-spacing:.01em}
+#dWarn{color:var(--alert)!important;font-weight:600!important;font-size:14px!important}
+#dWarn div{border-left:3px solid var(--alert);padding-left:8px;margin-top:4px}
+#cvFro,#cvSag,#c3d{background:#F4F6F9!important;border-radius:8px!important;border:1px solid var(--line)}
+#skelCv{border:1px solid var(--line)!important;border-radius:8px!important}
+.chkrow{font-weight:500;border-radius:6px} .chkrow:hover{background:#FCEFF1}
+.rpt th,.rpt td,.rpt2 th,.rpt2 td{font-variant-numeric:tabular-nums}
+#reportWrap{background:#2A3240}
+#reportSheet .rp-score .grade{color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--Rc);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:760px){ .brand .small{display:none} .modes button{padding:6px 10px} .abtn{min-width:54px} }
 </style>
 </head>
 <body data-mode="mirror">
@@ -299,7 +397,7 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
       <details class="panel">
         <summary>🔄 轉身掃描（3D）</summary>
         <div class="body">
-          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後<b>原地跟著畫面右上角的黃點慢慢轉一圈（約 12 秒）</b>。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
+          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後<b>原地跟著畫面右上角的白點慢慢轉一圈（約 12 秒）</b>。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
           <button class="pbtn peach" id="btnScan" style="margin-top:6px">🔄 開始轉身掃描（倒數 3 秒＋轉 14 秒）</button>
           <button class="pbtn" id="btnScanDel">🗑️ 刪除掃描</button>
           <div class="tw" style="margin-top:6px"><table id="scanTable"></table></div>
@@ -589,7 +687,7 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
         <div class="body">
           <select id="series"></select>
           <div class="statline" id="stats"></div>
-          <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。曲線上方的色帶是每個時間點的動作（綠＝站立、黃＝微蹲、橘＝半蹲、深橘＝深蹲），紅色細線＝出現提醒；淡紫色區塊＝偵測到的每一下。</div>
+          <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。上方色帶是每個時間點的動作（灰＝站立、淺黃＝微蹲、橙＝半蹲、深橙＝深蹲），紅線＝出現提醒；淡灰區塊＝偵測到的每一下。</div>
         </div>
       </details>
       <details class="panel" open data-modes="review">
@@ -669,7 +767,7 @@ const CONN=[
 const POSE_HAND_PTS={L:[17,19,21], R:[18,20,22]};
 const HAND_CONN=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
 const FINGER_COLOR=["#FFB86B","#FFB86B","#FFB86B","#FFB86B","#B18CFF","#B18CFF","#B18CFF","#B18CFF","#6FD3A8","#6FD3A8","#6FD3A8","#6FD3A8","#FF9EC4","#FF9EC4","#FF9EC4","#FF9EC4","#7CC4FF","#7CC4FF","#7CC4FF","#7CC4FF"];
-const COLORS={L:"#FF8FA8",R:"#6DB8FF",C:"#5ED6A2",joint:"#FFFFFF",com:"#FFC93C"};
+const COLORS={L:"#FF6B4F",R:"#3D8BFF",C:"#C9D2DE",joint:"#FFFFFF",com:"#FFC23D"};
 
 const ANGLES=[
   {k:"elbowL",n:"左肘",j:"elbow",a:11,b:13,c:15},{k:"elbowR",n:"右肘",j:"elbow",a:12,b:14,c:16},
@@ -742,6 +840,38 @@ const G=9.81;
 
 /* ===================== 小工具 ===================== */
 const $=id=>document.getElementById(id);
+/* ===================== 介面：線條圖示與去除 emoji ===================== */
+const svgI=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICON={
+  cam:svgI('<rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/>'),
+  stop:svgI('<rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/>'),
+  flip:svgI('<path d="M4.5 9.5A8 8 0 0 1 18 6.5l2 1.8"/><path d="M20 4v4.3h-4.3"/><path d="M19.5 14.5A8 8 0 0 1 6 17.5l-2-1.8"/><path d="M4 20v-4.3h4.3"/>'),
+  mirror:svgI('<path d="M12 3v18" stroke-dasharray="2 2.6"/><path d="M9 7L4 17h5z"/><path d="M15 7l5 10h-5z"/>'),
+  rec:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="#C8364E"/></svg>',
+  snap:svgI('<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>'),
+  play:svgI('<path d="M8 5.5l11 6.5-11 6.5z" fill="currentColor"/>'),
+  back:svgI('<path d="M6 5v14"/><path d="M18 6.5l-8 5.5 8 5.5z"/>'),
+  fwd:svgI('<path d="M18 5v14"/><path d="M6 6.5l8 5.5-8 5.5z"/>'),
+  pin:svgI('<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>'),
+  doc:svgI('<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 17h5"/>'),
+  filter:svgI('<path d="M3 12c1.2-4 2.4-4 3.6 0s2.4 4 3.6 0 2.4-4 3.6 0 2.4 4 3.6 0 2.4-4 3.6 0" opacity=".35"/><path d="M3 12c3-2.6 6-2.6 9 0s6 2.6 9 0"/>'),
+  film:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>'),
+  trash:svgI('<path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6 7l1 13h10l1-13"/>'),
+  sliders:svgI('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
+  panel:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14.5 4v16"/><path d="M17 8.5h1.5M17 11.5h1.5M17 14.5h1.5"/>')
+};
+const EMOJI2ICON={"▶️":"cam","⏹️":"stop","🔄":"flip","🪞":"mirror","🔴":"rec","📸":"snap","⏯️":"play","⏪":"back","⏩":"fwd","📌":"pin","📄":"doc","🧹":"filter","🎞️":"film","🗑️":"trash"};
+document.querySelectorAll(".abtn .ic").forEach(s=>{ const k=EMOJI2ICON[s.textContent.trim()]; if(k) s.innerHTML=ICON[k]; });
+{ const a=document.getElementById("tgLeft"), b=document.getElementById("tgRight"); if(a) a.innerHTML=ICON.sliders; if(b) b.innerHTML=ICON.panel; }
+const EMO=/(?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}\u{3297}\u{3299}][\u{FE0F}\u{200D}]?)+[\u{FE0F}]?\s?/gu;
+function stripEmoji(n){
+  if(n.nodeType===3){ const t=n.nodeValue, u=t.replace(EMO,""); if(u!==t) n.nodeValue=u; return; }
+  if(n.nodeType!==1||/^(SCRIPT|STYLE|CANVAS|svg|TEXTAREA)$/i.test(n.nodeName)||n.classList?.contains("ic")) return;
+  for(const c of n.childNodes) stripEmoji(c);
+}
+stripEmoji(document.body);
+new MutationObserver(ms=>{ for(const m of ms){ if(m.type==="characterData") stripEmoji(m.target); else m.addedNodes.forEach(stripEmoji); } }).observe(document.body,{subtree:true,childList:true,characterData:true});
+
 const store={
   get(k,d){ try{ const v=localStorage.getItem("mm_"+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem("mm_"+k,JSON.stringify(v)); }catch(e){} }
@@ -982,41 +1112,47 @@ class Kin{
 
 /* ===================== 繪圖 ===================== */
 function drawFrame(ctx,video,W,H,mirror){ ctx.save(); if(mirror){ctx.translate(W,0);ctx.scale(-1,1);} ctx.drawImage(video,0,0,W,H); ctx.restore(); }
-function pill(ctx,text,x,y,fs,bg,fg){
-  ctx.font=`800 ${fs}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
-  const w=ctx.measureText(text).width+fs*.9,h=fs*1.45;
-  ctx.fillStyle=bg; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x-w/2,y-h/2,w,h,h/2); else ctx.rect(x-w/2,y-h/2,w,h); ctx.fill();
-  ctx.fillStyle=fg; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(text,x,y+1);
+function pill(ctx,text,x,y,fs,bg,fg){ // 深色半透明標籤＋左側色條（fg＝色條顏色）；數字用窄體等寬
+  const num=/^[-\d.]+°?%?$/.test(text);
+  ctx.font=num?`600 ${fs*1.12}px "Barlow Semi Condensed","Bahnschrift","DIN Alternate","Roboto Condensed",sans-serif`:`600 ${fs*.86}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`;
+  const tw=ctx.measureText(text).width, bar=Math.max(2.5,fs*.16), w=tw+fs*.85+bar, h=fs*1.42, x0=x-w/2;
+  ctx.save(); ctx.fillStyle="rgba(16,21,30,.78)"; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x0,y-h/2,w,h,fs*.22); else ctx.rect(x0,y-h/2,w,h); ctx.fill();
+  ctx.fillStyle=fg; ctx.fillRect(x0,y-h/2+fs*.22,bar,h-fs*.44);
+  ctx.fillStyle="#fff"; ctx.textAlign="left"; ctx.textBaseline="middle"; ctx.fillText(text,x0+bar+fs*.42,y+fs*.04); ctx.restore();
 }
-function star(ctx,x,y,R,r){ ctx.save(); ctx.fillStyle=COLORS.com; ctx.strokeStyle="#fff"; ctx.lineWidth=R*.18; ctx.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5,rad=i%2?r:R; ctx.lineTo(x+Math.cos(a)*rad,y+Math.sin(a)*rad);} ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+function star(ctx,x,y,R){ // 重心：準星
+  ctx.save(); ctx.lineWidth=Math.max(1.5,R*.16); ctx.strokeStyle="rgba(16,21,30,.6)"; ctx.beginPath(); ctx.arc(x,y,R*.62,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle=COLORS.com; ctx.lineWidth=Math.max(1.2,R*.11); ctx.beginPath(); ctx.arc(x,y,R*.62,0,Math.PI*2); ctx.moveTo(x-R,y); ctx.lineTo(x-R*.3,y); ctx.moveTo(x+R*.3,y); ctx.lineTo(x+R,y); ctx.moveTo(x,y-R); ctx.lineTo(x,y-R*.3); ctx.moveTo(x,y+R*.3); ctx.lineTo(x,y+R); ctx.stroke();
+  ctx.fillStyle=COLORS.com; ctx.beginPath(); ctx.arc(x,y,R*.12,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
 function drawPose(ctx,lms,W,H,mirror,M,hands){
   if(!lms) return;
   const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
-  const lw=Math.max(4,Math.min(W,H)/90);
+  const lw=Math.max(2.5,Math.min(W,H)/150);
   const skip=new Set(); if(hands){ if(hands.L) POSE_HAND_PTS.L.forEach(i=>skip.add(i)); if(hands.R) POSE_HAND_PTS.R.forEach(i=>skip.add(i)); }
-  ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round"; ctx.shadowColor="rgba(255,255,255,.9)"; ctx.shadowBlur=lw*1.6;
-  for(const [a,b,s] of CONN){
+  ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round";
+  for(const pass of [0,1]) for(const [a,b,s] of CONN){
     if(skip.has(a)||skip.has(b)) continue;
     const A=lms[a],B=lms[b]; if((A.visibility??1)<.35||(B.visibility??1)<.35) continue;
-    ctx.setLineDash((A.src>0||B.src>0)?[lw*1.2,lw*.9]:[]);
-    ctx.strokeStyle=COLORS[s]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(A),Y(A)); ctx.lineTo(X(B),Y(B)); ctx.stroke();
+    ctx.setLineDash((A.src>0||B.src>0)?[lw*1.6,lw*1.2]:[]);
+    ctx.strokeStyle=pass?COLORS[s]:"rgba(16,21,30,.55)"; ctx.lineWidth=pass?lw:lw*2.1; ctx.beginPath(); ctx.moveTo(X(A),Y(A)); ctx.lineTo(X(B),Y(B)); ctx.stroke();
   }
-  ctx.shadowBlur=0; ctx.setLineDash([]);
+  ctx.setLineDash([]);
   for(let i=settings.showFace?0:11;i<33;i++){
     if(skip.has(i)) continue;
     const l=lms[i]; if((l.visibility??1)<.35) continue;
-    const side=i<11?"C":(i%2?"L":"R"), r=i<11?lw*.6:(i>=17&&i<=22?lw*.7:lw*1.15);
+    const side=i<11?"C":(i%2?"L":"R"), r=i<11?lw*.5:(i>=17&&i<=22?lw*.6:lw*1.05);
     ctx.setLineDash([]);
     if(l.src>0){ ctx.fillStyle="rgba(255,255,255,.15)"; ctx.strokeStyle=SRC_COLOR[l.src]; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(l),Y(l),r*1.25,0,Math.PI*2); ctx.fill(); ctx.stroke(); continue; }
-    ctx.fillStyle=COLORS.joint; ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw*.55; ctx.beginPath(); ctx.arc(X(l),Y(l),r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=COLORS[side]; ctx.strokeStyle="#fff"; ctx.lineWidth=Math.max(1.2,lw*.42); ctx.beginPath(); ctx.arc(X(l),Y(l),r,0,Math.PI*2); ctx.fill(); ctx.stroke();
   }
-  if(!settings.showFace){ const n=lms[0],e1=lms[7],e2=lms[8]; if((n.visibility??1)>.4){ const rr=Math.max(lw*2.2,Math.hypot((e1.x-e2.x)*W,(e1.y-e2.y)*H)*.7); ctx.strokeStyle=COLORS.C; ctx.lineWidth=lw*.8; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); } }
+  if(!settings.showFace){ const n=lms[0],e1=lms[7],e2=lms[8]; if((n.visibility??1)>.4){ const rr=Math.max(lw*2.2,Math.hypot((e1.x-e2.x)*W,(e1.y-e2.y)*H)*.7); ctx.strokeStyle="rgba(16,21,30,.5)"; ctx.lineWidth=lw*1.6; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); ctx.strokeStyle=COLORS.C; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); } }
   if(M){
-    const fs=Math.max(14,Math.min(W,H)/28);
+    const fs=Math.max(13,Math.min(W,H)/34);
     if(settings.showAngles) for(const d of ANGLES){
       const v=M.angles[d.k]; if(v==null) continue;
       const l=lms[d.b], side=d.k.endsWith("L")?"L":"R", off=(side==="L")!==mirror?fs*1.6:-fs*1.6;
-      pill(ctx,Math.round(v)+"°",X(l)+off,Y(l),fs,"rgba(255,255,255,.88)",side==="L"?"#E0587A":"#2E86D9");
+      pill(ctx,Math.round(v)+"°",X(l)+off,Y(l),fs,"",COLORS[side]);
     }
     if(M.est&&settings.showCom){
       for(const [pt,lab] of [[M.est.xyph,"劍突(估)"],[M.est.omph,"肚臍(估)"]]){
@@ -1032,8 +1168,8 @@ function drawPose(ctx,lms,W,H,mirror,M,hands){
     }
     if(settings.showCom&&M.com){
       const cx=mirror?W-M.com.x:M.com.x, cy=M.com.y;
-      if(M.footY!=null){ ctx.setLineDash([lw*1.2,lw*1.2]); ctx.strokeStyle="rgba(229,165,17,.85)"; ctx.lineWidth=lw*.5; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,M.footY); ctx.stroke(); ctx.setLineDash([]); }
-      star(ctx,cx,cy,lw*2.6,lw*1.2);
+      if(M.footY!=null){ ctx.setLineDash([lw*1.2,lw*1.2]); ctx.strokeStyle="rgba(255,194,61,.7)"; ctx.lineWidth=Math.max(1,lw*.4); ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,M.footY); ctx.stroke(); ctx.setLineDash([]); }
+      star(ctx,cx,cy,lw*3.4);
     }
   }
   ctx.restore();
@@ -1045,11 +1181,11 @@ function drawHands(ctx,hands,W,H,mirror){
   ctx.save(); ctx.lineCap="round";
   for(const side of ["L","R"]){
     const h=hands[side]; if(!h) continue; const L=h.lms;
-    ctx.shadowColor="rgba(255,255,255,.9)"; ctx.shadowBlur=lw*2;
+    for(const [a,b] of HAND_CONN){ ctx.strokeStyle="rgba(16,21,30,.5)"; ctx.lineWidth=lw*2; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
     for(const [a,b] of HAND_CONN){ ctx.strokeStyle=FINGER_COLOR[Math.max(a,b)-1]||COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
     ctx.shadowBlur=0;
     L.forEach((p,i)=>{ ctx.fillStyle="#fff"; ctx.strokeStyle=i===0?COLORS[side]:(FINGER_COLOR[i-1]); ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(p),Y(p),i%4===0&&i>0?lw*1.4:lw*1.1,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
-    if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`✊ ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"rgba(255,255,255,.88)",side==="L"?"#E0587A":"#2E86D9"); }
+    if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`握 ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"",COLORS[side]); }
   }
   ctx.restore();
 }
@@ -1314,11 +1450,12 @@ function startScan(){
 function drawScanGuide(ctx,W,H){
   if(!scanRun) return;
   const t=(performance.now()-scanRun.t0)/1000, th=Math.min(1,t/SCAN_REV)*Math.PI*2, R=Math.min(W,H)*.09, cx=W-R*1.6, cy=R*1.6;
-  ctx.save(); ctx.lineWidth=R*.16; ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle="#6DB8FF"; ctx.beginPath(); ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+th); ctx.stroke();
-  ctx.fillStyle="#FFC93C"; ctx.beginPath(); ctx.arc(cx+R*Math.cos(-Math.PI/2+th),cy+R*Math.sin(-Math.PI/2+th),R*.22,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle="#fff"; ctx.font=`900 ${R*.42}px system-ui`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(Math.round(th*180/Math.PI)+"°",cx,cy);
-  ctx.font=`800 ${R*.3}px system-ui`; ctx.fillText(t<SCAN_REV?"跟著黃點慢慢轉":"轉回正面停住",cx,cy+R*1.45); ctx.restore();
+  ctx.save(); ctx.fillStyle="rgba(16,21,30,.62)"; ctx.beginPath(); ctx.arc(cx,cy,R*1.32,0,Math.PI*2); ctx.fill();
+  ctx.lineWidth=R*.08; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle="#3D8BFF"; ctx.lineWidth=R*.1; ctx.lineCap="round"; ctx.beginPath(); ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+th); ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(cx+R*Math.cos(-Math.PI/2+th),cy+R*Math.sin(-Math.PI/2+th),R*.13,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#fff"; ctx.font=`600 ${R*.48}px "Barlow Semi Condensed","Bahnschrift",sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(Math.round(th*180/Math.PI)+"°",cx,cy);
+  ctx.font=`600 ${R*.26}px "Noto Sans TC",sans-serif`; ctx.fillText(t<SCAN_REV?"跟著白點慢慢轉":"轉回正面停住",cx,cy+R*1.62); ctx.restore();
 }
 function scanFrame(lms,W,H){
   if(!scanRun||!lms) return;
@@ -1576,7 +1713,7 @@ let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
 let liveRes=null, liveWorld=null, liveM=null, liveHands=null;
 const kin=new Kin();
 let fpsCount=0,fps=0,fpsT=performance.now();
-function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ic}</span>${label}`; }
+function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||""}</span>${label}`; }
 async function startCam(){
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
   stopCam();
@@ -1739,16 +1876,16 @@ const SERIES=[
   ...["L","R"].flatMap(s=>FINGERS.map(f=>({k:`f${s}_${f.k}`,n:`${s==="L"?"左":"右"}${f.n}總彎曲`,u:"°",grp:"手指",get:r=>{ const h=r["h"+s]; const v=h?.f?.[f.k]; return v&&v.every(x=>x!=null)?v[0]+v[1]+v[2]:null; }})))
 ];
 { const s=$("series"); let g=null, og=null; for(const o of SERIES){ if(o.grp!==g){ g=o.grp; og=document.createElement("optgroup"); og.label=g; s.appendChild(og); } const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; og.appendChild(e); } s.value="P_kneeFlex"; s.onchange=drawChart; }
-const POSE_COLOR={"站立":"#CDEFE0","微蹲":"#FFE9B8","半蹲":"#FFD08A","深蹲":"#FFAE7A","彎腰前彎":"#E4D6FF"};
+const POSE_COLOR={"站立":"#DCE3EA","微蹲":"#F2DDB3","半蹲":"#E7B567","深蹲":"#C5862C","彎腰前彎":"#BBC4E6"};
 const poseBase=p=>p?(p.startsWith("單腳")?"單腳站":p.startsWith("弓箭步")?"弓箭步":p):null;
-const POSE_COLOR2=p=>POSE_COLOR[p]||(p==="單腳站"?"#C9E6FF":p==="弓箭步"?"#FFC9D6":"#EEE");
+const POSE_COLOR2=p=>POSE_COLOR[p]||(p==="單腳站"?"#A9D2E4":p==="弓箭步"?"#E3B9C2":"#E6EAF0");
 function drawChart(){
   const cv=$("chart"),dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w) return;
   cv.width=w*dpr; cv.height=h*dpr;
   const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   const S=SERIES.find(z=>z.k===$("series").value)||SERIES[0];
-  c.font='700 13px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
-  const msg=t=>{ c.fillStyle="#8C8299"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(t,w/2,h/2); $("stats").innerHTML=""; renderReport(); };
+  c.font='500 12px "Barlow Semi Condensed","Bahnschrift","Noto Sans TC",sans-serif';
+  const msg=t=>{ c.fillStyle="#5B6678"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(t,w/2,h/2); $("stats").innerHTML=""; renderReport(); };
   if(!curClip||!curClip.data.length) return msg("錄影之後，這裡會出現「"+S.n+"」的曲線 📈");
   const D=curClip.data, T=D[D.length-1].t||1, gets=S.pair||[S.get];
   const lines=gets.map(g=>D.map(r=>[r.t,g(r)]).filter(p=>p[1]!=null&&isFinite(p[1])));
@@ -1756,19 +1893,19 @@ function drawChart(){
   let lo=Math.min(...all.map(p=>p[1])),hi=Math.max(...all.map(p=>p[1])); if(hi-lo<1e-6){hi+=1;lo-=1;} const pad=(hi-lo)*.1; lo-=pad; hi+=pad;
   const L=52,R=14,Tp=22,B=26,pw=w-L-R,ph=h-Tp-B, xs=t=>L+t/T*pw, ys=v=>Tp+(1-(v-lo)/(hi-lo))*ph;
   // 上方色帶：每個時間點的動作；紅色刻度：出現提醒
-  for(let i=0;i<D.length;i++){ const p=poseBase(D[i].d?.p); if(!p) continue; const x0=xs(D[i].t), x1=xs(D[i+1]?.t??T); c.fillStyle=POSE_COLOR2(p); c.fillRect(x0,2,Math.max(1,x1-x0+.5),12); if(D[i].d.w?.length){ c.fillStyle="#E0526F"; c.fillRect(x0,14,Math.max(1.5,x1-x0+.5),4); } }
-  c.strokeStyle="#F1E4D4"; c.lineWidth=1.5; c.fillStyle="#8C8299"; c.textAlign="right"; c.textBaseline="middle";
+  for(let i=0;i<D.length;i++){ const p=poseBase(D[i].d?.p); if(!p) continue; const x0=xs(D[i].t), x1=xs(D[i+1]?.t??T); c.fillStyle=POSE_COLOR2(p); c.fillRect(x0,2,Math.max(1,x1-x0+.5),12); if(D[i].d.w?.length){ c.fillStyle="#C8364E"; c.fillRect(x0,14,Math.max(1.5,x1-x0+.5),4); } }
+  c.strokeStyle="#E6EAF0"; c.lineWidth=1; c.fillStyle="#5B6678"; c.textAlign="right"; c.textBaseline="middle";
   for(let i=0;i<=4;i++){ const v=lo+(hi-lo)*i/4,y=ys(v); c.beginPath(); c.moveTo(L,y); c.lineTo(w-R,y); c.stroke(); c.fillText(v.toFixed(S.d??0),L-6,y); }
   c.textAlign="center"; c.textBaseline="top"; for(let i=0;i<=5;i++){ const t=T*i/5; c.fillText(t.toFixed(1)+"s",xs(t),h-B+6); }
   // 次數區間
-  for(const rp of (curClip._rep||analyzeClip(curClip)).reps){ c.fillStyle="rgba(142,111,234,.07)"; c.fillRect(xs(rp.t0),Tp,xs(rp.t1)-xs(rp.t0),ph); c.fillStyle="#8E6FEA"; c.textAlign="center"; c.textBaseline="top"; c.fillText("第"+rp.n+"下",(xs(rp.t0)+xs(rp.t1))/2,Tp+2); }
+  for(const rp of (curClip._rep||analyzeClip(curClip)).reps){ c.fillStyle="rgba(27,34,48,.045)"; c.fillRect(xs(rp.t0),Tp,xs(rp.t1)-xs(rp.t0),ph); c.fillStyle="#5B6678"; c.textAlign="center"; c.textBaseline="top"; c.fillText("第"+rp.n+"下",(xs(rp.t0)+xs(rp.t1))/2,Tp+2); }
   const isL=/L$|^fL|^gL/.test(S.k), isR=/R$|^fR|^gR/.test(S.k);
-  const cols=S.pair?["#F27E98","#4FA3EE"]:[isL?"#F27E98":isR?"#4FA3EE":"#8E6FEA"];
-  lines.forEach((pts,li)=>{ c.strokeStyle=cols[li]; c.lineWidth=3; c.lineJoin="round"; c.beginPath(); let pt=-1; for(const [t,v] of pts){ if(pt<0||t-pt>.3) c.moveTo(xs(t),ys(v)); else c.lineTo(xs(t),ys(v)); pt=t; } c.stroke(); });
+  const cols=S.pair?["#E4573D","#2F7DE1"]:[isL?"#E4573D":isR?"#2F7DE1":"#1B2230"];
+  lines.forEach((pts,li)=>{ c.strokeStyle=cols[li]; c.lineWidth=2.25; c.lineJoin="round"; c.beginPath(); let pt=-1; for(const [t,v] of pts){ if(pt<0||t-pt>.3) c.moveTo(xs(t),ys(v)); else c.lineTo(xs(t),ys(v)); pt=t; } c.stroke(); });
   const ct=isFinite(rv.currentTime)?rv.currentTime:0;
-  c.strokeStyle="#E5A511"; c.lineWidth=3; c.beginPath(); c.moveTo(xs(Math.min(ct,T)),Tp); c.lineTo(xs(Math.min(ct,T)),Tp+ph); c.stroke();
+  c.strokeStyle="#1B2230"; c.lineWidth=1.5; c.beginPath(); c.moveTo(xs(Math.min(ct,T)),Tp); c.lineTo(xs(Math.min(ct,T)),Tp+ph); c.stroke();
   const d=S.d??0, st=(pts,lab,cl)=>{ if(!pts.length) return ""; const vals=pts.map(p=>p[1]),mx=Math.max(...vals),mn=Math.min(...vals),near=pts.reduce((b,p)=>Math.abs(p[0]-ct)<Math.abs(b[0]-ct)?p:b,pts[0]); return `<div${cl?` style="color:${cl}"`:""}>${lab}現在 ${near[1].toFixed(d)}${S.u}</div><div${cl?` style="color:${cl}"`:""}>${lab}最大 ${mx.toFixed(d)}${S.u}</div><div${cl?` style="color:${cl}"`:""}>${lab}最小 ${mn.toFixed(d)}${S.u}</div>`; };
-  $("stats").innerHTML=S.pair?st(lines[0],"左・","#D2557A")+st(lines[1],"右・","#2F7FCC"):st(lines[0],"");
+  $("stats").innerHTML=S.pair?st(lines[0],"左・","#E4573D")+st(lines[1],"右・","#2F7FCC"):st(lines[0],"");
   cv._map={L,pw,T};
   renderReport();
 }
@@ -1926,7 +2063,7 @@ function renderSkel(target){
   const ar=clip.ar||16/9, fg=r=>view==="side"?figSide(r):fig2D(r,ar), ks=keyFrames(clip);
   if(mode==="key"){
     const m=ks.length, cw=w/m, sc=Math.min(cw*.3,h*.21);
-    ks.forEach((k,i)=>{ const cx=cw*(i+.5), cy=h*.42; c.fillStyle=i%2?"#FAF7FF":"#fff"; c.fillRect(cw*i,0,cw,h); drawFig(c,fg(k.r),cx,cy,sc,null,Math.max(2,sc*.07));
+    ks.forEach((k,i)=>{ const cx=cw*(i+.5), cy=h*.42; c.fillStyle=i%2?"#F4F6F9":"#fff"; c.fillRect(cw*i,0,cw,h); drawFig(c,fg(k.r),cx,cy,sc,null,Math.max(2,sc*.07));
       c.fillStyle="#4b3f72"; c.fillText(k.lab,cx,h-fs*2.1); c.fillStyle="#8C8299"; c.fillText(k.r.t.toFixed(1)+"s",cx,h-fs*.7); });
     cv._keys={ks,cw};
   } else {
@@ -2022,7 +2159,7 @@ function openReport(){
   const sexTxt={F:"女",M:"男"}[settings.sex]||"未填";
   const repRows=A.reps.map(r=>`<tr><td>${r.n}</td><td>${r0(r.depth)}°</td><td>${r.down.toFixed(1)}</td><td>${r.up.toFixed(1)}</td><td>${r0(r.valL)}°</td><td>${r0(r.valR)}°</td><td>${r0(r.trunk)}°</td><td>${r0(r.asym)}°</td><td class="sm">${esc(r.warns.join("、"))||"—"}</td></tr>`).join("");
   const histRows=hist.map(h=>`<tr><td>${h.date.slice(0,10).replace(/-/g,".")}</td><td>${h.reps}</td><td>${r0(h.knee)}°</td><td>${r0(h.valL)}° / ${r0(h.valR)}°</td><td>${r0(h.trunk)}°</td><td><b>${h.score}</b></td></tr>`).join("");
-  const histSvg=hist.length>1?(()=>{ const W=300,Hh=70,xs=i=>10+i*(W-20)/(hist.length-1),ys=v=>Hh-8-(v/100)*(Hh-16); return `<svg width="${W}" height="${Hh}"><polyline fill="none" stroke="#6A4FD8" stroke-width="2.5" points="${hist.map((h,i)=>xs(i)+","+ys(h.score)).join(" ")}"/>${hist.map((h,i)=>`<circle cx="${xs(i)}" cy="${ys(h.score)}" r="3.5" fill="#6A4FD8"/><text x="${xs(i)}" y="${ys(h.score)-6}" font-size="10" text-anchor="middle">${h.score}</text>`).join("")}</svg>`; })():"";
+  const histSvg=hist.length>1?(()=>{ const W=300,Hh=70,xs=i=>10+i*(W-20)/(hist.length-1),ys=v=>Hh-8-(v/100)*(Hh-16); return `<svg width="${W}" height="${Hh}"><polyline fill="none" stroke="#1B2230" stroke-width="2.5" points="${hist.map((h,i)=>xs(i)+","+ys(h.score)).join(" ")}"/>${hist.map((h,i)=>`<circle cx="${xs(i)}" cy="${ys(h.score)}" r="3.5" fill="#1B2230"/><text x="${xs(i)}" y="${ys(h.score)-6}" font-size="10" text-anchor="middle">${h.score}</text>`).join("")}</svg>`; })():"";
   const refRows=Object.entries(REF).filter(([k,r])=>r.task).map(([k,r])=>{ const t=taskRange(k); return `<tr><td>${r.n}</td><td>${r.pl}</td><td>${r.rom}</td><td>${t.lo}～${t.hi}</td><td>${r.src}</td></tr>`; }).join("");
   $("reportSheet").innerHTML=`
   <div class="rp-top"><div><div class="rp-title">動作分析報告</div><div class="rp-sub">動作學習系統・蹲類動作</div></div><div class="rp-date">${dstr}</div></div>
@@ -2306,7 +2443,8 @@ if(window.innerWidth>860){ document.body.classList.add("right-open"); } else { $
 let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
-applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable(); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror");
+applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/現在在做什麼|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror");
 requestAnimationFrame(loop);
 loadModels();
 </script>
