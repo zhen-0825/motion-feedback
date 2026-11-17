@@ -285,7 +285,7 @@ th{background:#F1F4F7;font-weight:600;color:var(--muted);font-size:12px}
 #dHead{font-size:22px!important;font-weight:700!important;color:var(--ink)!important;letter-spacing:.01em}
 #dWarn{color:var(--alert)!important;font-weight:600!important;font-size:14px!important}
 #dWarn div{border-left:3px solid var(--alert);padding-left:8px;margin-top:4px}
-#cvFro,#cvSag,#c3d{background:#F4F6F9!important;border-radius:8px!important;border:1px solid var(--line)}
+#cvFro,#cvSag{background:#F4F6F9!important;border-radius:8px!important;border:1px solid var(--line)}
 #skelCv{border:1px solid var(--line)!important;border-radius:8px!important}
 .chkrow{font-weight:500;border-radius:6px} .chkrow:hover{background:#FCEFF1}
 .rpt th,.rpt td,.rpt2 th,.rpt2 td{font-variant-numeric:tabular-nums}
@@ -338,7 +338,7 @@ body[data-page=settings] #left details.panel{display:block;break-inside:avoid;ba
 body:not([data-page=settings]) .setHead{display:none}
 #setDone{background:var(--ink);color:#fff;border-color:var(--ink);padding:10px 16px;font-size:14px}
 /* 畫面內控制列：需要時展開、閒置自動收起 */
-.stage .actionbar{position:absolute;left:50%;bottom:14px;transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;background:rgba(16,21,30,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);color:#fff;flex-wrap:nowrap;max-width:calc(100% - 24px);overflow-x:auto;z-index:4;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.stage .actionbar{position:absolute;left:50%;bottom:14px;transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;background:rgba(16,21,30,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);color:#fff;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 24px);overflow:visible;z-index:4;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .stage.tb-open .actionbar{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .tbToggle{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;height:40px;padding:0 16px;border-radius:20px;background:rgba(16,21,30,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);display:flex;gap:7px;align-items:center;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
 .tbToggle svg{width:18px;height:18px}
@@ -374,6 +374,45 @@ body:not([data-page=settings]) .setHead{display:none}
   body[data-page=settings] #left .inner{columns:1;padding:16px}
   .hwrap{padding:24px 16px 40px}
 }
+
+/* 3D 舞台 */
+.s3d{background:#141B26;touch-action:none;cursor:grab}
+.s3d canvas{position:absolute;inset:0;width:100%;height:100%}
+.s3dlab{position:absolute;top:12px;left:12px;background:rgba(16,21,30,.74);color:#fff;border-radius:8px;padding:7px 12px;font-size:15px;display:flex;gap:10px;align-items:baseline;z-index:2}
+.s3dlab span{font-size:12px;color:#8D99AB}
+.s3dbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:2;flex-wrap:wrap;justify-content:flex-end}
+.s3dbar .seg{display:flex;background:rgba(16,21,30,.74);border-radius:8px;padding:3px}
+.s3dbar .seg button,.s3dbtn{border:none;background:transparent;color:#C9D2DE;font-size:13px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;min-height:32px}
+.s3dbar .seg button.on{background:#fff;color:var(--ink)}
+.s3dbtn{background:rgba(16,21,30,.74);border-radius:8px}
+.s3dbtn.on{background:#fff;color:var(--ink)}
+.s3dhint{position:absolute;bottom:12px;right:14px;font-size:12px;color:#5B6678;z-index:2}
+body.no3d #box3d{display:none!important}
+body.scanning .s3dbar,body.scanning .s3dlab,body.scanning .s3dhint{display:none}
+@media (max-width:860px){ body[data-mode=mirror] .stageArea{height:auto;flex-direction:column} body[data-mode=mirror] .stageArea .stagebox{height:56vh;flex:none} }
+#history{display:none;overflow:auto;min-height:0}
+body[data-page=history] #history{display:block}
+body[data-page=history] .main{display:none}
+body[data-page=history] #modes,body[data-page=history] #tgRight{visibility:hidden}
+.pgHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;border-bottom:2px solid var(--ink);padding-bottom:12px;flex-wrap:wrap}
+.pgHead h2{margin:0;font-size:26px;font-weight:700}
+.pgHead p{margin:4px 0 0;max-width:62ch}
+.hxtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.hxtop .sel{min-width:200px}
+#hxSum{font-family:var(--num),"Noto Sans TC",sans-serif;color:var(--muted);font-size:14px;margin-left:6px}
+#history h3{font-size:15px;margin:22px 0 8px}
+table.cmp{background:#fff;border:1px solid var(--line)}
+table.cmp th{white-space:nowrap}
+table.cmp td{font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cmp td.c{font-weight:700} table.cmp td.r{color:#2E8B62}
+table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{color:#C8364E} .d.n{color:#8D99AB}
+.hxcharts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:16px}
+.tc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px 4px}
+.tct{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.lg{font-size:11px;font-weight:600;color:var(--muted);display:flex;gap:10px;align-items:center}
+.lg i{display:inline-block;width:14px;height:3px;margin-right:4px;vertical-align:middle}
+#reportSheet .cmp{font-size:10px;border:1px solid #bbb} #reportSheet .cmp th,#reportSheet .cmp td{padding:2px 3px;border-bottom:1px solid #eee}
+#reportSheet .tc{border:none;padding:0;margin-top:4px} #reportSheet .tct{font-size:11px}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -397,6 +436,14 @@ body:not([data-page=settings]) .setHead{display:none}
     <button class="iconbtn" id="tgRight" title="數據面板">📊</button>
   
   </header>
+  <section id="history"><div class="hwrap">
+    <div class="pgHead"><div><h2>受試者紀錄</h2><p class="small">每次錄影結束後自動儲存摘要數據（不含影片），可比較各次的變化。資料存在這台裝置的瀏覽器；換裝置或清除瀏覽資料前，請先「匯出備份」。</p></div>
+      <div class="hxtop"><button class="pbtn" id="hxExport">匯出備份</button><button class="pbtn" id="hxImport">匯入備份</button><input type="file" id="hxFile" accept=".json,application/json" hidden></div></div>
+    <div class="hxtop"><select id="hxName" class="sel" aria-label="受試者"></select><button class="pbtn" id="hxUse">設為目前學員</button><button class="pbtn" id="hxCsv">下載 CSV</button><button class="pbtn" id="hxDelAll" style="color:var(--alert)">刪除此受試者紀錄</button><span id="hxSum"></span></div>
+    <div id="hxCmp"></div>
+    <div class="hxcharts" id="hxCharts"></div>
+    <div id="hxTable"></div>
+  </div></section>
   <section id="home"><div class="hwrap">
     <div class="hhead"><h1>動作學習系統</h1><p>以單一鏡頭進行即時姿勢估計、雙平面關節角度分析與動作判讀，錄影後可回放並匯出報告。</p></div>
     <div class="hstat">
@@ -411,7 +458,7 @@ body:not([data-page=settings]) .setHead{display:none}
       <button class="tile" data-go="review"><span class="tic" data-ic="film"></span><h3>回顧與報告</h3><p>逐格回放、角度曲線、肢段參考圖、資料檢查與報告匯出。</p></button>
       <button class="tile" data-go="follow"><span class="tic" data-ic="mirror"></span><h3>示範比對</h3><p>對照示範影片或目標姿勢，計算姿勢相似度。</p></button>
       <button class="tile" data-go="settings"><span class="tic" data-ic="sliders"></span><h3>設定與校正</h3><p>學員資料、AI 模型、靜態校正、轉身掃描與參考區間。</p></button>
-      <button class="tile" data-go="report"><span class="tic" data-ic="doc"></span><h3>參考資料</h3><p>關節角度參考區間、計算方法與文獻。</p></button>
+      <button class="tile" data-go="history"><span class="tic" data-ic="doc"></span><h3>受試者紀錄</h3><p>歷次數據自動保存，與前次比較並以趨勢圖呈現變化。</p></button>
     </div>
     <div class="hflow"><span><b>1</b>設定學員資料</span><span><b>2</b>靜態校正／轉身掃描</span><span><b>3</b>即時分析與錄影</span><span><b>4</b>回顧與報告</span></div>
   </div></section>
@@ -498,7 +545,7 @@ body:not([data-page=settings]) .setHead{display:none}
       <details class="panel">
         <summary>🔄 轉身掃描（3D）</summary>
         <div class="body">
-          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後<b>原地跟著畫面右上角的白點慢慢轉一圈（約 12 秒）</b>。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
+          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後跟著畫面右側的示範人形和提示音，<b>向左原地慢慢轉一圈</b>（約 12 秒；每 30° 一聲嗶、每 90° 有語音，背對鏡頭時也能跟上）。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
           <button class="pbtn peach" id="btnScan" style="margin-top:6px">🔄 開始轉身掃描（倒數 3 秒＋轉 14 秒）</button>
           <button class="pbtn" id="btnScanDel">🗑️ 刪除掃描</button>
           <div class="tw" style="margin-top:6px"><table id="scanTable"></table></div>
@@ -599,6 +646,18 @@ body:not([data-page=settings]) .setHead{display:none}
           </div>
           <div class="dcap" id="dCap" data-modes="mirror follow"></div>
         </div>
+        <div class="stagebox" data-modes="mirror" id="box3d">
+          <div class="stage s3d" id="stage3d">
+            <canvas id="c3d"></canvas>
+            <div class="s3dlab"><b>3D 骨架</b><span id="q3d">—</span></div>
+            <div class="s3dbar">
+              <div class="seg" id="v3dSeg"><button data-v="front">正面</button><button data-v="side">側面</button><button data-v="obl" class="on">斜向</button><button data-v="top">俯視</button></div>
+              <button class="s3dbtn" id="b3dAuto">自動旋轉</button>
+              <button class="s3dbtn" id="b3dSrc">即時</button>
+            </div>
+            <div class="s3dhint">拖曳可旋轉視角</div>
+          </div>
+        </div>
         <div class="reviewCol" data-modes="review">
           <div class="stage">
             <div class="ph" id="rvPh">尚無錄影<br><span class="small">在「即時分析」中按「錄影」，完成後會自動回到這裡</span></div>
@@ -615,6 +674,7 @@ body:not([data-page=settings]) .setHead{display:none}
         <button class="abtn blue" id="btnFlip"><span class="ic">🔄</span>前／後</button>
         <select class="sel" id="camSel" aria-label="選擇相機" title="選擇相機（例如 Camo）"><option value="">📷 預設相機</option></select>
         <button class="abtn lav" id="btnMirror"><span class="ic">🪞</span>鏡像：開</button>
+        <button class="abtn" id="btn3d"><span class="ic"></span>3D 視圖</button>
         <div class="sep"></div>
         <button class="abtn pink" id="btnRec"><span class="ic">🔴</span>錄影</button>
         <select class="sel" id="recLen" aria-label="錄影長度">
@@ -701,7 +761,7 @@ body:not([data-page=settings]) .setHead{display:none}
         </div>
       </details>
 
-      <details class="panel" open data-modes="mirror follow">
+      <details class="panel" open data-modes="follow">
         <summary>📐 關節角度</summary>
         <div class="body">
           <div class="angs" id="angleCards"></div>
@@ -710,7 +770,7 @@ body:not([data-page=settings]) .setHead{display:none}
           <div class="small">180° 為伸直；左右指被拍者自己的左右。</div>
         </div>
       </details>
-      <details class="panel" open data-modes="mirror follow" id="planePanel">
+      <details class="panel" open data-modes="follow" id="planePanel">
         <summary>📐 雙平面角度（矢狀面＋冠狀面）</summary>
         <div class="body">
           <div style="display:flex;gap:6px">
@@ -724,20 +784,7 @@ body:not([data-page=settings]) .setHead{display:none}
           <div class="small">角度以「學員自己的身體」為基準（髖連線定左右、鉛垂線定上下），學員轉向斜角也能分出兩個平面。最準的做法：要看矢狀面就側拍、要看冠狀面就正拍；先做「🔄 轉身掃描」可以讓深度推算更準。</div>
         </div>
       </details>
-      <details class="panel" open data-modes="mirror follow">
-        <summary>🧊 3D 骨架</summary>
-        <div class="body">
-          <canvas id="c3d" style="width:100%;height:240px;background:#F4F8FF;border-radius:16px;touch-action:none;cursor:grab"></canvas>
-          <div style="margin-top:6px">
-            <button class="pbtn mint" id="b3dAuto">🔁 自動旋轉：開</button>
-            <button class="pbtn mint" id="b3dSrc">👁️ 顯示：即時</button>
-            <button class="pbtn mint" id="b3dView">🎥 換視角</button>
-          </div>
-          <div class="metric"><span>肢段長度來源</span><b id="q3d">—</b></div>
-          <div class="small">用手指拖曳可以轉動。黃線是鏡頭方向。即時 3D 的深度是推算的，正面拍攝時「手往前伸還是往後擺」最容易判斷錯。</div>
-        </div>
-      </details>
-      <details class="panel" open data-modes="mirror follow">
+      <details class="panel" open data-modes="follow">
         <summary>✋ 手指角度</summary>
         <div class="body">
           <div class="hands">
@@ -747,7 +794,7 @@ body:not([data-page=settings]) .setHead{display:none}
           <div class="small">彎曲角度：0° 伸直；三欄依序為根部（MCP）、中間（PIP）、末端（DIP）關節。拇指為 CMC、MCP、IP 關節。</div>
         </div>
       </details>
-      <details class="panel" open data-modes="mirror follow">
+      <details class="panel" open data-modes="follow">
         <summary>🛠️ 資料品質</summary>
         <div class="body">
           <div class="metric"><span>AI 直接量測</span><b id="qMeas">—</b></div>
@@ -758,7 +805,7 @@ body:not([data-page=settings]) .setHead{display:none}
           <div class="legend" style="margin-top:6px"><span style="color:#B18CFF">剛體叢集</span><span style="color:#FFB86B">肢段長度</span><span style="color:#7CC4FF">時間預測</span><span style="color:#6FD3A8">手部模型</span></div>
         </div>
       </details>
-      <details class="panel" open data-modes="mirror follow">
+      <details class="panel" open data-modes="follow">
         <summary>🌀 軀幹扭轉與頭頸</summary>
         <div class="body">
           <div class="metric"><span>肩髖分離角（X-factor）</span><b id="mXf">—</b></div>
@@ -770,7 +817,7 @@ body:not([data-page=settings]) .setHead{display:none}
           <div class="small" id="viewHint">頭頸角度需要側拍：0° 代表頭和軀幹成一直線，數字越大代表頭越往前伸。</div>
         </div>
       </details>
-      <details class="panel" data-modes="mirror follow">
+      <details class="panel" open data-modes="mirror follow">
         <summary>⚖️ 重心與力學（估計）</summary>
         <div class="body">
           <div class="metric"><span>重心離地高度</span><b id="mH">—</b></div>
@@ -957,6 +1004,8 @@ const ICON={
   film:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>'),
   trash:svgI('<path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6 7l1 13h10l1-13"/>'),
   sliders:svgI('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
+  cube:svgI('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>'),
+  "3d":svgI('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>'),
   panel:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14.5 4v16"/><path d="M17 8.5h1.5M17 11.5h1.5M17 14.5h1.5"/>')
 };
 const EMOJI2ICON={"▶️":"cam","⏹️":"stop","🔄":"flip","🪞":"mirror","🔴":"rec","📸":"snap","⏯️":"play","⏪":"back","⏩":"fwd","📌":"pin","📄":"doc","🧹":"filter","🎞️":"film","🗑️":"trash"};
@@ -992,7 +1041,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,sex:"",camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,sex:"",view3d:window.innerWidth>1000,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1543,20 +1592,63 @@ function startScan(){
   if(document.body.dataset.page!=="app"){ goPage("app"); setMode("mirror"); }
   if(!liveOn) return alert("請先開鏡頭");
   if(!liveLM) return alert("AI 還沒準備好");
-  let n=3; const cd=$("countdown"); cd.textContent=n;
-  const tm=setInterval(()=>{ n--; if(n>0){ cd.textContent=n; return; } clearInterval(tm); cd.textContent="";
-    scanRun={frames:[],t0:performance.now()}; lifter.reset();
+  cue.init(); scanPrep={t0:performance.now()}; document.body.classList.add("scanning"); cue.say("準備轉身掃描。雙手微張，面向鏡頭站好。");
+  let n=3; const cd=$("countdown"); cd.textContent=n; cue.beep(660,.08);
+  const tm=setInterval(()=>{ n--; if(n>0){ cd.textContent=n; cue.beep(660,.08); return; } clearInterval(tm); cd.textContent="";
+    scanPrep=null; scanRun={frames:[],t0:performance.now(),q:0,tick:0}; lifter.reset(); cue.beep(990,.18); cue.say("開始，向左慢慢轉");
     setTimeout(finishScan,SCAN_SEC*1000); },1000);
 }
-function drawScanGuide(ctx,W,H){
-  if(!scanRun) return;
-  const t=(performance.now()-scanRun.t0)/1000, th=Math.min(1,t/SCAN_REV)*Math.PI*2, R=Math.min(W,H)*.09, cx=W-R*1.6, cy=R*1.6;
-  ctx.save(); ctx.fillStyle="rgba(16,21,30,.62)"; ctx.beginPath(); ctx.arc(cx,cy,R*1.32,0,Math.PI*2); ctx.fill();
-  ctx.lineWidth=R*.08; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle="#3D8BFF"; ctx.lineWidth=R*.1; ctx.lineCap="round"; ctx.beginPath(); ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+th); ctx.stroke();
-  ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(cx+R*Math.cos(-Math.PI/2+th),cy+R*Math.sin(-Math.PI/2+th),R*.13,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle="#fff"; ctx.font=`600 ${R*.48}px "Barlow Semi Condensed","Bahnschrift",sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(Math.round(th*180/Math.PI)+"°",cx,cy);
-  ctx.font=`600 ${R*.26}px "Noto Sans TC",sans-serif`; ctx.fillText(t<SCAN_REV?"跟著白點慢慢轉":"轉回正面停住",cx,cy+R*1.62); ctx.restore();
+/* 提示音與語音：背對鏡頭時看不到螢幕，靠聲音引導 */
+const cue={ ac:null,
+  init(){ try{ this.ac=this.ac||new (window.AudioContext||window.webkitAudioContext)(); this.ac.resume?.(); }catch(e){} },
+  beep(f=880,d=.06,v=.18){ const a=this.ac; if(!a) return; const o=a.createOscillator(), g=a.createGain(); o.frequency.value=f; o.type="sine"; g.gain.setValueAtTime(v,a.currentTime); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime+d+.02); },
+  say(t){ if(!window.speechSynthesis) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="zh-TW"; u.rate=1.05; speechSynthesis.speak(u); }
+};
+let scanPrep=null;
+// 示範人形（身體座標：m＝左、a＝前、u＝上，公尺，髖中點為原點）
+const FIGJ={hd:[0,.02,.68],ns:[0,.13,.66],nk:[0,0,.53],sL:[.19,0,.5],sR:[-.19,0,.5],eL:[.26,-.01,.22],eR:[-.26,-.01,.22],wL:[.31,.03,-.02],wR:[-.31,.03,-.02],hL:[.1,0,0],hR:[-.1,0,0],kL:[.11,.03,-.43],kR:[-.11,.03,-.43],aL:[.11,0,-.85],aR:[-.11,0,-.85],tL:[.13,.16,-.9],tR:[-.13,.16,-.9],cL:[.11,-.06,-.9],cR:[-.11,-.06,-.9]};
+const FIGB=[["sL","sR","C"],["hL","hR","C"],["nk","hd","C"],["sL","hL","L"],["sR","hR","R"],["sL","eL","L"],["eL","wL","L"],["sR","eR","R"],["eR","wR","R"],["hL","kL","L"],["kL","aL","L"],["hR","kR","R"],["kR","aR","R"],["aL","tL","L"],["aL","cL","L"],["cL","tL","L"],["aR","tR","R"],["aR","cR","R"],["cR","tR","R"]];
+function scanTarget(th){ const d=((th*180/Math.PI)%360+360)%360;
+  return d<25?["開始向左轉","面向鏡頭 → 向左轉"]:d<65?["繼續向左轉","轉到右側朝鏡頭"]:d<115?["右側朝鏡頭","繼續慢慢轉"]:d<155?["繼續轉","轉到背對鏡頭"]:d<205?["背對鏡頭","繼續慢慢轉"]:d<245?["繼續轉","轉到左側朝鏡頭"]:d<295?["左側朝鏡頭","繼續慢慢轉"]:d<335?["繼續轉","回到正面"]:["回到正面","面向鏡頭停住"]; }
+function drawScanGuide(ctx,W,H,full){
+  if(!scanRun&&!scanPrep) return;
+  const now=performance.now(), t=scanRun?(now-scanRun.t0)/1000:0, done=scanRun&&t>=SCAN_REV, th=scanRun?Math.min(1,t/SCAN_REV)*Math.PI*2:0, deg=Math.round(th*180/Math.PI);
+  // 聲音：每 30° 一聲、每 90° 高音＋語音
+  if(scanRun){ const k=Math.floor(deg/30); if(k>scanRun.tick&&deg<360){ scanRun.tick=k; if(k%3===0){ cue.beep(1320,.12,.22); cue.say(["","右側朝鏡頭","背對鏡頭","左側朝鏡頭"][k/3]||""); } else cue.beep(880,.05); }
+    if(done&&!scanRun.end){ scanRun.end=1; cue.beep(1320,.25,.22); cue.say("回到正面，停住"); } }
+  const U=Math.min(W,H)*(full?.82:1), pw=full?W:Math.min(W*.3,U*.62), ph=full?H:H*.88, x0=full?0:W-pw-U*.03, y0=full?0:(H-ph)/2, cx=x0+pw/2, mir=liveMirror;
+  ctx.save();
+  ctx.fillStyle=full?"#141B26":"rgba(16,21,30,.8)"; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x0,y0,pw,ph,full?0:U*.02):ctx.rect(x0,y0,pw,ph); ctx.fill();
+  const f=(w,s)=>`${w} ${s}px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif`, fn=(w,s)=>`${w} ${s}px "Barlow Semi Condensed","Bahnschrift",sans-serif`;
+  ctx.textAlign="left"; ctx.textBaseline="top"; ctx.fillStyle="#8D99AB"; ctx.font=f(600,U*.026); ctx.fillText("轉身掃描",x0+pw*.07,y0+ph*.035);
+  ctx.textAlign="right"; ctx.fillStyle="#fff"; ctx.font=fn(600,U*.03); ctx.fillText(scanPrep?"準備":done?"完成":`${Math.max(0,Math.ceil(SCAN_REV-t))} 秒`,x0+pw*.93,y0+ph*.03);
+  // ── 示範人形：依目標角度轉動（和學員應有的朝向一致）
+  const s=Math.min(ph*.21,pw*.38), gy=y0+ph*.62, c=Math.cos(th), sn=Math.sin(th);
+  const pj=k=>{ const [m,a,u]=FIGJ[k], X=m*c+a*sn, Z=m*sn-a*c; return {x:cx+(mir?-X:X)*s, y:gy-(u+.9)*s, z:Z}; };
+  // 地面轉盤（橢圓）與旋轉方向箭頭
+  const rx=Math.min(pw*.32,s*.75), ry=rx*.22; ctx.strokeStyle="rgba(255,255,255,.22)"; ctx.lineWidth=U*.004; ctx.beginPath(); ctx.ellipse(cx,gy,rx,ry,0,0,Math.PI*2); ctx.stroke();
+  { const dir=mir?-1:1, a0=Math.PI*.25, a1=Math.PI*.75; ctx.strokeStyle="#3D8BFF"; ctx.lineWidth=U*.007; ctx.lineCap="round"; ctx.beginPath(); ctx.ellipse(cx,gy,rx*1.12,ry*1.12,0,a0,a1); ctx.stroke();
+    const ae=dir>0?a0:a1, ex=cx+rx*1.12*Math.cos(ae), ey=gy+ry*1.12*Math.sin(ae), tx=dir>0?1:-1; ctx.fillStyle="#3D8BFF"; ctx.beginPath(); ctx.moveTo(ex+tx*U*.022,ey-U*.006); ctx.lineTo(ex-tx*U*.004,ey-U*.018); ctx.lineTo(ex-tx*U*.004,ey+U*.008); ctx.closePath(); ctx.fill(); }
+  const bones=FIGB.map(b=>{ const A=pj(b[0]),B=pj(b[1]); return {A,B,s:b[2],z:(A.z+B.z)/2}; }).sort((p,q)=>q.z-p.z);
+  ctx.lineCap="round";
+  for(const b of bones){ const far=b.z>0.03; ctx.globalAlpha=far?.45:1; ctx.strokeStyle=COLORS[b.s]; ctx.lineWidth=U*(far?.009:.012); ctx.beginPath(); ctx.moveTo(b.A.x,b.A.y); ctx.lineTo(b.B.x,b.B.y); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  { const h=pj("hd"), n=pj("ns"); ctx.fillStyle="#18202C"; ctx.strokeStyle="#C9D2DE"; ctx.lineWidth=U*.006; ctx.beginPath(); ctx.arc(h.x,h.y,s*.11,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    if(n.z<.02){ ctx.fillStyle="#FFC23D"; ctx.beginPath(); ctx.arc(h.x+(n.x-h.x)*.75,h.y+(n.y-h.y)*.6,s*.03,0,Math.PI*2); ctx.fill(); } } // 黃點＝臉的方向
+  // ── 俯視轉盤：目前應轉到的角度
+  const R=Math.min(pw*.2,ph*.085), dy=y0+ph*.82;
+  ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=U*.008; ctx.beginPath(); ctx.arc(cx,dy,R,0,Math.PI*2); ctx.stroke();
+  const ang=a=>-Math.PI/2+(mir?-1:1)*a; // 俯視：上＝朝向鏡頭；標記＝身體正前方的方向（向左轉→正前方移向鏡頭右側）
+  ctx.strokeStyle="#3D8BFF"; ctx.lineWidth=U*.01; ctx.beginPath(); ctx.arc(cx,dy,R,ang(0),ang(th),mir); ctx.stroke();
+  ctx.fillStyle="#8D99AB"; ctx.font=f(600,U*(full?.026:.019)); ctx.textAlign="center"; ctx.textBaseline="middle";
+  [["正面",0],["右側",Math.PI/2],["背面",Math.PI],["左側",Math.PI*1.5]].forEach(([l,a])=>{ const q=ang(a); ctx.fillText(l,cx+Math.cos(q)*R*1.45,dy+Math.sin(q)*R*1.45); });
+  { const q=ang(th); ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(cx+Math.cos(q)*R,dy+Math.sin(q)*R,U*.014,0,Math.PI*2); ctx.fill(); }
+  ctx.fillStyle="#fff"; ctx.font=fn(600,U*.045); ctx.fillText(deg+"°",cx,dy);
+  // ── 指示文字
+  const [a1,a2]=scanPrep?["面向鏡頭站好","雙手微張，聽到嗶聲後向左轉"]:done?["停住","面向鏡頭，等待計算"]:scanTarget(th);
+  ctx.fillStyle="#fff"; ctx.font=f(700,U*.04); ctx.fillText(a1,cx,y0+ph*.12);
+  ctx.fillStyle="#C9D2DE"; ctx.font=f(500,U*.024); ctx.fillText(a2,cx,y0+ph*.175);
+  ctx.restore();
 }
 function scanFrame(lms,W,H){
   if(!scanRun||!lms) return;
@@ -1576,6 +1668,7 @@ function fitTemplate(F,th,wts){
 }
 function totalRes(F,th){ const {res}=fitTemplate(F,th); let s=0,n=0; for(const r of res) if(r) for(const x of r) if(x!=null){ s+=x*x; n++; } return n?Math.sqrt(s/n):1e9; }
 function finishScan(){
+  document.body.classList.remove("scanning");
   const run=scanRun; scanRun=null;
   if(!run||run.frames.length<60) return alert("掃描時偵測到的畫面太少，請確認全身入鏡、光線充足後再試一次。");
   const Hm=bodyH();
@@ -1619,36 +1712,52 @@ function renderScan(){
 }
 
 /* ----- 3D 檢視器（拖曳旋轉） ----- */
-const view3d={yaw:-.6,pitch:.25,auto:true,src:"live",drag:null};
+const view3d={yaw:-.75,pitch:.2,auto:false,src:"live",drag:null};
 function draw3D(){
   const cv=$("c3d"); if(!cv||cv.offsetParent===null) return;
-  const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1; if(cv.width!==Math.round(r.width*dpr)){ cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); }
+  const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1; if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){ cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); }
   const ctx=cv.getContext("2d"), W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
-  let P=null, note="";
-  if(view3d.src==="scan"&&settings.scan){ P=settings.scan.pts.map(p=>p&&{x:p[0],y:p[1],z:p[2],visibility:1}); note="轉身掃描模型（靜態）"; }
-  else if(liveLift){ P=liveLift; note=settings.scan?"即時重建（掃描長度）":"即時重建（身高比例）"; }
-  if(view3d.auto&&!view3d.drag) view3d.yaw+=.01;
-  const cy=Math.cos(view3d.yaw), sy=Math.sin(view3d.yaw), cp=Math.cos(view3d.pitch), sp=Math.sin(view3d.pitch), sc=H/2.3;
-  const proj=(x,y,z)=>{ const X=x*cy-z*sy, Z=x*sy+z*cy, Y=y*cp-Z*sp; return [W/2+X*sc, H*.42+Y*sc]; };
-  // 地板格線（腳底高度）
-  let fy=.95; if(P){ const ys=[27,28,29,30,31,32].map(i=>P[i]?.y).filter(v=>v!=null); if(ys.length) fy=Math.max(...ys); }
-  ctx.strokeStyle="rgba(120,140,170,.25)"; ctx.lineWidth=1*dpr;
-  for(let g=-1;g<=1.001;g+=.25){ let a=proj(g,fy,-1),b=proj(g,fy,1); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); a=proj(-1,fy,g); b=proj(1,fy,g); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }
-  { const a=proj(0,fy,0), b=proj(0,fy,-.4); ctx.strokeStyle="#FFC93C"; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); } // 黃線＝鏡頭方向
-  ctx.fillStyle="#7a8aa6"; ctx.font=`800 ${11*dpr}px system-ui`; ctx.fillText(note||"沒有資料：請開鏡頭或做轉身掃描",8*dpr,16*dpr);
-  if(!P) return;
+  if(scanRun||scanPrep){ drawScanGuide(ctx,W,H,true); return; }
+  let P=null;
+  if(view3d.src==="scan"&&settings.scan) P=settings.scan.pts.map(p=>p&&{x:p[0],y:p[1],z:p[2],visibility:1});
+  else if(liveLift) P=liveLift;
+  if(view3d.auto&&!view3d.drag) view3d.yaw+=.008;
+  const mir=liveMirror?-1:1, cy=Math.cos(view3d.yaw), sy=Math.sin(view3d.yaw), cp=Math.cos(view3d.pitch), sp=Math.sin(view3d.pitch), sc=Math.min(H/2.25,W/1.6);
+  const proj=(x,y,z)=>{ x*=mir; const X=x*cy-z*sy, Z=x*sy+z*cy, Y=y*cp-Z*sp; return [W/2+X*sc, H*.44+Y*sc, Z*cp+y*sp]; };
+  if(!P){ ctx.fillStyle="#8D99AB"; ctx.font=`500 ${14*dpr}px "Noto Sans TC",sans-serif`; ctx.textAlign="center"; ctx.fillText(liveOn?"等待偵測到完整身體":"開啟鏡頭後顯示即時 3D 骨架",W/2,H/2); return; }
+  let fy=.92; if(P){ const ys=[27,28,29,30,31,32].map(i=>P[i]?.y).filter(v=>v!=null); if(ys.length) fy=Math.max(...ys); }
+  // 地板格線（50 cm 間距）與鏡頭方向
+  ctx.lineWidth=1*dpr;
+  for(let g=-1;g<=1.001;g+=.25){ const major=Math.abs(g)<1e-6; ctx.strokeStyle=major?"rgba(255,255,255,.22)":"rgba(255,255,255,.08)"; let a=proj(g,fy,-1),b=proj(g,fy,1); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); a=proj(-1,fy,g); b=proj(1,fy,g); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+  { const a=proj(0,fy,-.6), b=proj(0,fy,-1); ctx.strokeStyle="#FFC23D"; ctx.lineWidth=2*dpr; ctx.setLineDash([4*dpr,4*dpr]); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle="#FFC23D"; ctx.font=`600 ${11*dpr}px "Noto Sans TC",sans-serif`; ctx.textAlign="center"; ctx.fillText("鏡頭",b[0],b[1]-6*dpr); }
+  if(!P){ ctx.fillStyle="#8D99AB"; ctx.font=`500 ${14*dpr}px "Noto Sans TC",sans-serif`; ctx.textAlign="center"; ctx.fillText(liveOn?"等待偵測到完整身體":"開啟鏡頭後顯示即時 3D 骨架",W/2,H/2); return; }
+  // 重心投影（地面）
+  const lw=Math.max(2.5*dpr,H/150);
+  const segs=CONN.filter(([a,b])=>!(a<11&&b<11)||settings.showFace).map(([a,b,s])=>{ const A=P[a],B=P[b]; if(!A||!B||(A.visibility??1)<.35||(B.visibility??1)<.35) return null; const pa=proj(A.x,A.y,A.z), pb=proj(B.x,B.y,B.z); return {pa,pb,s,z:(pa[2]+pb[2])/2}; }).filter(Boolean).sort((p,q)=>q.z-p.z);
   ctx.lineCap="round";
-  for(const [a,b,s] of CONN){ const A=P[a],B=P[b]; if(!A||!B||a<11&&b<11&&!settings.showFace) continue; if((A.visibility??1)<.35||(B.visibility??1)<.35) continue; ctx.strokeStyle=COLORS[s]; ctx.lineWidth=4*dpr; ctx.beginPath(); ctx.moveTo(...proj(A.x,A.y,A.z)); ctx.lineTo(...proj(B.x,B.y,B.z)); ctx.stroke(); }
-  for(let i=0;i<33;i++){ const p=P[i]; if(!p||(p.visibility??1)<.35) continue; const q=proj(p.x,p.y,p.z); ctx.fillStyle="#fff"; ctx.strokeStyle=COLORS[i<11?"C":(i%2?"L":"R")]; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.arc(q[0],q[1],(i<11?2.5:4)*dpr,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+  for(const g of segs){ ctx.strokeStyle="rgba(0,0,0,.45)"; ctx.lineWidth=lw*2; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); ctx.strokeStyle=COLORS[g.s]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); }
+  for(let i=11;i<33;i++){ const p=P[i]; if(!p||(p.visibility??1)<.35||(i>=17&&i<=22)) continue; const q=proj(p.x,p.y,p.z); ctx.fillStyle=COLORS[i%2?"L":"R"]; ctx.strokeStyle="#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(q[0],q[1],lw*1.05,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+  { const n=P[0], e1=P[7], e2=P[8]; if(n&&(n.visibility??1)>.4){ const q=proj(n.x,n.y,n.z), rr=Math.max(lw*2.5,Math.hypot(e1.x-e2.x,e1.y-e2.y,(e1.z||0)-(e2.z||0))*sc*.7); ctx.strokeStyle="#C9D2DE"; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(q[0],q[1],rr,0,Math.PI*2); ctx.stroke(); } }
+  // 主要關節角度（雙平面）
+  if(livePl&&view3d.src==="live"){ const fs=Math.max(12*dpr,H/36);
+    for(const [s,o] of [["L",0],["R",1]]){ const r=livePl[s]; const k=P[25+o], h=P[23+o];
+      if(k&&r.kneeFlex!=null){ const q=proj(k.x,k.y,k.z); pill(ctx,Math.round(r.kneeFlex)+"°",q[0]+(s==="L"?1:-1)*mir*fs*1.8,q[1],fs,"",COLORS[s]); }
+      if(h&&r.hipFlex!=null){ const q=proj(h.x,h.y,h.z); pill(ctx,Math.round(r.hipFlex)+"°",q[0]+(s==="L"?1:-1)*mir*fs*1.8,q[1],fs,"",COLORS[s]); } } }
 }
 function bind3D(){
   const cv=$("c3d");
   cv.onpointerdown=e=>{ view3d.drag={x:e.clientX,y:e.clientY,yaw:view3d.yaw,pitch:view3d.pitch}; cv.setPointerCapture(e.pointerId); };
   cv.onpointermove=e=>{ const d=view3d.drag; if(!d) return; view3d.yaw=d.yaw+(e.clientX-d.x)*.01; view3d.pitch=Math.max(-1.2,Math.min(1.2,d.pitch+(e.clientY-d.y)*.01)); };
   cv.onpointerup=cv.onpointercancel=()=>view3d.drag=null;
-  $("b3dAuto").onclick=()=>{ view3d.auto=!view3d.auto; $("b3dAuto").textContent="🔁 自動旋轉："+(view3d.auto?"開":"關"); };
-  $("b3dSrc").onclick=()=>{ view3d.src=view3d.src==="live"?"scan":"live"; $("b3dSrc").textContent=view3d.src==="live"?"👁️ 顯示：即時":"👁️ 顯示：掃描模型"; };
-  $("b3dView").onclick=()=>{ const v=[[0,0],[-Math.PI/2,0],[-.6,.25],[0,1.2]], i=((view3d.vi??2)+1)%v.length; view3d.vi=i; [view3d.yaw,view3d.pitch]=v[i]; view3d.auto=false; $("b3dAuto").textContent="🔁 自動旋轉：關"; };
+  const V3={front:[0,0],side:[-Math.PI/2,0],obl:[-.75,.2],top:[0,1.35]};
+  const setV=v=>{ [view3d.yaw,view3d.pitch]=V3[v]; view3d.auto=false; $("b3dAuto").classList.remove("on"); document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); };
+  document.querySelectorAll("#v3dSeg button").forEach(b=>b.onclick=()=>setV(b.dataset.v));
+  $("b3dAuto").onclick=()=>{ view3d.auto=!view3d.auto; $("b3dAuto").classList.toggle("on",view3d.auto); if(view3d.auto) document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); };
+  $("b3dSrc").onclick=()=>{ view3d.src=view3d.src==="live"?"scan":"live"; $("b3dSrc").textContent=view3d.src==="live"?"即時":"掃描模型"; $("b3dSrc").classList.toggle("on",view3d.src==="scan"); };
+  const upd3d=()=>{ document.body.classList.toggle("no3d",!settings.view3d); setAbtn("btn3d","3d","3D 視圖："+(settings.view3d?"開":"關")); $("btn3d").classList.toggle("off",!settings.view3d); };
+  $("btn3d").onclick=()=>{ settings.view3d=!settings.view3d; saveSettings(); upd3d(); }; upd3d();
+  cv.addEventListener("pointerdown",()=>{ document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); });
   $("btnScan").onclick=startScan;
   $("btnScanDel").onclick=()=>{ if(confirm("刪除這台裝置上的轉身掃描資料？")){ settings.scan=null; saveSettings(); lifter.reset(); renderScan(); } };
 }
@@ -1807,7 +1916,7 @@ let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
 let liveRes=null, liveWorld=null, liveM=null, liveHands=null;
 const kin=new Kin();
 let fpsCount=0,fps=0,fpsT=performance.now();
-function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||""}</span>${label}`; }
+function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||ICON[ic]||""}</span>${label}`; }
 async function startCam(){
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
   stopCam();
@@ -1881,7 +1990,7 @@ function processLive(now){
   drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
   drawHands(lctx,liveHands,W,H,liveMirror);
   if(settings.vm) drawVM(lctx,liveVM,W,H,liveMirror);
-  drawScanGuide(lctx,W,H);
+  if(!(settings.view3d&&document.body.dataset.mode==="mirror")) drawScanGuide(lctx,W,H);
 }
 
 /* ===================== 錄影 ===================== */
@@ -1914,8 +2023,9 @@ function stopRecording(){
 function finishRecording(){
   const r=rec; rec=null; if(!r) return;
   const blob=new Blob(r.chunks,{type:r.mime});
-  const clip={id:++clipSeq,name:`${settings.name||"錄影"} ${clipSeq}`,blob,url:URL.createObjectURL(blob),ext:r.mime.includes("mp4")?"mp4":"webm",data:r.data,ar:liveCanvas.width/(liveCanvas.height||1),mass:bodyM(),height:bodyH(),segModel:segModelName()};
+  const clip={id:++clipSeq,uid:Date.now(),date:new Date().toISOString(),subject:settings.name||"（未命名）",name:`${settings.name||"錄影"} ${clipSeq}`,blob,url:URL.createObjectURL(blob),ext:r.mime.includes("mp4")?"mp4":"webm",data:r.data,ar:liveCanvas.width/(liveCanvas.height||1),mass:bodyM(),height:bodyH(),segModel:segModelName()};
   clips.push(clip); renderClips(); selectClip(clip.id); setMode("review");
+  setTimeout(()=>autoSaveClip(clip),200);
 }
 function handRow(h){ return h?{l:h.lms.map(p=>[p.x,p.y,p.z]),f:h.flex,g:h.grip}:null; }
 function pushRecord(now){
@@ -2231,12 +2341,7 @@ function clipSummary(clip){
   const grade=(score>=90?"優秀":score>=75?"良好":score>=60?"尚可":"需加強")+(K.grade==="不佳"?"（資料品質不佳，僅供參考）":"");
   return {R,score,grade,notes,A,K};
 }
-function reportHistory(sum){
-  const key="history", H=store.get(key,[]), name=settings.name||"（未命名）", id=(curClip?.blob?.size||0)+"_"+curClip.data.length;
-  const rec={id,name,date:new Date().toISOString(),dur:+sum.A.dur.toFixed(1),reps:sum.A.reps.length,knee:sum.R.kneeL.v!=null&&sum.R.kneeR.v!=null?(sum.R.kneeL.v+sum.R.kneeR.v)/2:null,valL:sum.R.valL.v,valR:sum.R.valR.v,trunk:sum.R.trunk.v,score:sum.score};
-  const i=H.findIndex(h=>h.id===id&&h.name===name); if(i>=0) H[i]=rec; else H.push(rec); store.set(key,H.slice(-200));
-  return H.filter(h=>h.name===name).slice(-8);
-}
+function reportHistory(sum){ if(!curClip.uid){ curClip.uid=Date.now(); curClip.date=new Date().toISOString(); } const r=upsertHistory(curClip,sum); return histOf(r.name).slice(-12); }
 function openReport(){
   if(!curClip?.data?.length) return alert("請先選一段錄影");
   const sum=clipSummary(curClip), {R,A,K}=sum, hist=reportHistory(sum);
@@ -2284,7 +2389,7 @@ function openReport(){
     <div class="rp-score"><div class="lab">動作分數</div><div class="big">${sum.score}<span>/100</span></div><div class="grade">${sum.grade}</div><div class="sm">教學用自訂分數，未經效度驗證</div></div>
     <div class="rp-box"><div class="h">疊圖比較（各下最低點）</div><img src="${imgO}" style="width:100%"><img src="${imgOS}" style="width:100%"><div class="sm">灰＝開始站姿；彩色＝各下最低點。線條越分散＝每下動作越不一致。</div></div>
     <div class="rp-box"><div class="h">資料品質</div><table class="rp-kv"><tr><td>判定</td><td><b>${K.grade}</b></td></tr><tr><td>推算補點</td><td>${K.reconPct.toFixed(0)}%</td></tr><tr><td>可疑畫面</td><td>${K.badPct.toFixed(1)}%</td></tr><tr><td>可疑片段</td><td>${K.eps.length} 段</td></tr></table>${K.eps.slice(0,4).map(e=>`<div class="sm">${e.t0.toFixed(1)}s：${esc([...e.why].slice(0,2).join("、"))}</div>`).join("")}</div>
-    <div class="rp-box"><div class="h">歷次紀錄</div>${histSvg}<table class="rp-t sm"><tr><th>日期</th><th>次</th><th>膝屈</th><th>內夾 L/R</th><th>前傾</th><th>分</th></tr>${histRows}</table></div>
+    <div class="rp-box"><div class="h">與前次比較</div>${cmpTable(hist[hist.length-2],hist[hist.length-1],true)}</div><div class="rp-box"><div class="h">歷次變化（${hist.length} 次）</div>${trendSet(hist,true)}</div>
    </div>
   </div>
   ${sec("6","建議")}
@@ -2295,6 +2400,85 @@ function openReport(){
   document.body.classList.add("rp"); $("reportWrap").hidden=false; $("reportWrap").scrollTop=0;
 }
 function closeReport(){ document.body.classList.remove("rp"); $("reportWrap").hidden=true; }
+
+/* ===================== 受試者紀錄：自動儲存、與前次比較、趨勢圖 ===================== */
+const HKEY="history";
+const HMET=[ // [key, 名稱, 單位, 參考區間 key, 方向（"range" 越接近區間越好／"up" 越高越好／null 不判斷）]
+  ["score","動作分數","",null,"up"],["reps","次數","下",null,null],["knee","膝屈曲（平均）","°","kneeFlex","range"],["hip","髖屈曲（平均）","°","hipFlex","range"],
+  ["valL","膝外翻 L","°","kneeVal","range"],["valR","膝外翻 R","°","kneeVal","range"],["trunk","軀幹前傾","°","trunkFlex","range"],["lat","軀幹側屈","°","trunkLat","range"],
+  ["asym","左右膝差","°","asym","range"],["cv","深度變異","%","cv","range"]];
+function histAll(){ return store.get(HKEY,[]); }
+function histOf(name){ return histAll().filter(h=>h.name===name).sort((a,b)=>a.date<b.date?-1:1); }
+const avg2=(a,b)=>a!=null&&b!=null?(a+b)/2:(a??b??null);
+function upsertHistory(clip,sum){
+  const {R,A,K}=sum, H=histAll();
+  const rec={id:clip.uid,name:clip.subject||settings.name||"（未命名）",date:clip.date,clip:clip.name,dur:+A.dur.toFixed(1),reps:A.reps.length,score:sum.score,grade:sum.grade.replace(/（.*$/,""),
+    knee:avg2(R.kneeL.v,R.kneeR.v),kneeL:R.kneeL.v,kneeR:R.kneeR.v,hip:avg2(R.hipL.v,R.hipR.v),valL:R.valL.v,valR:R.valR.v,trunk:R.trunk.v,lat:R.lat.v,asym:R.asym.v,cv:R.cv.v,
+    quality:K.grade,sex:settings.sex||"",height:settings.height,weight:settings.weight};
+  for(const k in rec) if(typeof rec[k]==="number") rec[k]=+rec[k].toFixed(2);
+  const i=H.findIndex(h=>h.id===rec.id); if(i>=0) H[i]=rec; else H.push(rec); store.set(HKEY,H.slice(-1000));
+  return rec;
+}
+function autoSaveClip(clip){ try{ if(clip.data.length<20) return; upsertHistory(clip,clipSummary(clip)); }catch(e){ console.warn("自動儲存失敗",e); } }
+const dist=(k,v)=>{ if(v==null||!REF[k]?.task) return null; const t=taskRange(k); return v<t.lo?t.lo-v:v>t.hi?v-t.hi:0; };
+function deltaCell(m,prev,cur){
+  const [k,,u,rk,dir]=m; if(prev?.[k]==null||cur?.[k]==null) return `<td class="d">—</td>`;
+  const d=cur[k]-prev[k]; if(Math.abs(d)<.5) return `<td class="d n">±0${u}</td>`;
+  let cls="n"; if(dir==="up") cls=d>0?"g":"b"; else if(dir==="range"){ const a=dist(rk,prev[k]), b=dist(rk,cur[k]); cls=b<a?"g":b>a?"b":"n"; }
+  return `<td class="d ${cls}">${d>0?"▲":"▼"} ${Math.abs(d).toFixed(k==="cv"||k==="score"||k==="reps"?0:1)}${u}</td>`;
+}
+function cmpTable(prev,cur,compact){
+  const rows=HMET.filter(m=>!compact||["score","knee","valL","valR","trunk","asym"].includes(m[0])).map(m=>{ const [k,n,u,rk]=m, t=rk&&REF[rk]?.task?taskRange(rk):null, f=v=>v==null?"—":(k==="score"||k==="reps"?Math.round(v):Math.round(v))+u;
+    return `<tr><td class="n">${n}</td><td>${f(prev?.[k])}</td><td class="c">${f(cur?.[k])}</td>${deltaCell(m,prev,cur)}${compact?"":`<td class="r">${t?t.lo+"～"+t.hi:"—"}</td>`}</tr>`; }).join("");
+  const dd=d=>d?d.slice(5,10).replace("-","/"):"—";
+  return `<table class="cmp"><tr><th>指標</th><th>前次${compact?"":" "+dd(prev?.date)}</th><th>本次${compact?"":" "+dd(cur?.date)}</th><th>變化</th>${compact?"":"<th>參考</th>"}</tr>${rows}</table>`;
+}
+// InBody 風格趨勢圖：等距排列各次、參考區間綠帶、點上標數值
+function trendSVG(recs,lines,rk,title,unit,W=330,Hh=150){
+  const pts=recs.slice(-12), n=pts.length, L=34,Rr=20,T=22,B=24, pw=W-L-Rr, ph=Hh-T-B;
+  const vals=pts.flatMap(r=>lines.map(l=>r[l.k])).filter(v=>v!=null);
+  const t=rk&&REF[rk]?.task?taskRange(rk):null;
+  if(!vals.length) return `<div class="tc"><div class="tct">${title}</div><div class="small">尚無資料</div></div>`;
+  let lo=Math.min(...vals,t?t.lo:Infinity), hi=Math.max(...vals,t?t.hi:-Infinity); if(hi-lo<1){hi+=1;lo-=1;} const pad=(hi-lo)*.15; lo-=pad; hi+=pad;
+  const x=i=>L+(n<=1?pw/2:i*pw/(n-1)), y=v=>T+(1-(v-lo)/(hi-lo))*ph;
+  let g=`<svg viewBox="0 0 ${W} ${Hh}" width="100%" style="font-family:'Barlow Semi Condensed','Bahnschrift',sans-serif">`;
+  if(t) g+=`<rect x="${L}" y="${y(Math.min(t.hi,hi))}" width="${pw}" height="${Math.max(0,y(Math.max(t.lo,lo))-y(Math.min(t.hi,hi)))}" fill="#DDEFE6"/><text x="${L+pw-2}" y="${y(Math.min(t.hi,hi))+10}" text-anchor="end" font-size="9" fill="#2E8B62">參考 ${t.lo}～${t.hi}</text>`;
+  for(let i=0;i<=3;i++){ const v=lo+(hi-lo)*i/3; g+=`<line x1="${L}" x2="${L+pw}" y1="${y(v)}" y2="${y(v)}" stroke="#E6EAF0"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end" font-size="10" fill="#8D99AB">${Math.round(v)}</text>`; }
+  pts.forEach((r,i)=>{ g+=`<text x="${x(i)}" y="${Hh-8}" text-anchor="middle" font-size="10" fill="#5B6678">${r.date.slice(5,10).replace("-","/")}</text>`; });
+  for(const l of lines){ const P=pts.map((r,i)=>r[l.k]==null?null:[x(i),y(r[l.k]),r[l.k]]); let d=""; P.forEach((p,i)=>{ if(p) d+=(d&&P[i-1]?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1); });
+    g+=`<path d="${d}" fill="none" stroke="${l.c}" stroke-width="2"/>`; P.forEach((p,i)=>{ if(!p) return; const last=i===n-1; g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?4:3}" fill="${last?l.c:"#fff"}" stroke="${l.c}" stroke-width="1.6"/><text x="${p[0]}" y="${p[1]-7}" text-anchor="middle" font-size="10" font-weight="600" fill="${l.c}">${Math.round(p[2])}</text>`; }); }
+  g+=`</svg>`;
+  const leg=lines.length>1?`<span class="lg">${lines.map(l=>`<i style="background:${l.c}"></i>${l.n}`).join("")}</span>`:"";
+  return `<div class="tc"><div class="tct">${title}${unit?`（${unit}）`:""}${leg}</div>${g}</div>`;
+}
+const INK="#1B2230", LC="#E4573D", RC="#2F7DE1";
+function trendSet(recs,compact){
+  const c=[["score","動作分數","分",[{k:"score",c:INK,n:""}],null],["knee","膝屈曲（每下最低點平均）","°",[{k:"kneeL",c:LC,n:"L"},{k:"kneeR",c:RC,n:"R"}],"kneeFlex"],
+    ["val","膝外翻","°",[{k:"valL",c:LC,n:"L"},{k:"valR",c:RC,n:"R"}],"kneeVal"],["trunk","軀幹前傾","°",[{k:"trunk",c:INK,n:""}],"trunkFlex"],
+    ["asym","左右膝屈曲差","°",[{k:"asym",c:INK,n:""}],"asym"],["cv","每下深度變異","%",[{k:"cv",c:INK,n:""}],"cv"],["hip","髖屈曲","°",[{k:"hip",c:INK,n:""}],"hipFlex"]];
+  return c.filter(x=>!compact||["score","knee","val"].includes(x[0])).map(([,t,u,l,rk])=>trendSVG(recs,l,rk,t,u,compact?300:330,compact?118:150)).join("");
+}
+function renderHistory(){
+  const all=histAll(), names=[...new Set(all.map(h=>h.name))];
+  const sel=$("hxName"), cur=settings.name||"（未命名）", want=sel.value||cur;
+  sel.innerHTML=names.length?names.map(n=>`<option${n===want?" selected":""}>${esc(n)}</option>`).join(""):"<option>（尚無紀錄）</option>";
+  const name=names.includes(want)?want:names[0], recs=name?histOf(name):[];
+  $("hxSum").textContent=recs.length?`${recs.length} 次紀錄・${recs[0].date.slice(0,10)} ～ ${recs[recs.length-1].date.slice(0,10)}`:"錄影後會自動儲存每次的摘要數據";
+  const cur2=recs[recs.length-1], prev=recs[recs.length-2];
+  $("hxCmp").innerHTML=recs.length?`<h3>與前次比較</h3>${cmpTable(prev,cur2)}<div class="small">▲▼ 綠色＝更接近參考區間（或分數提高），紅色＝偏離。差異小於量測誤差（約 8°，Munro 2012）時請保守解讀。</div>`:"";
+  $("hxCharts").innerHTML=recs.length?trendSet(recs):"";
+  $("hxTable").innerHTML=recs.length?`<h3>歷次紀錄</h3><div class="tw"><table class="cmp"><tr><th>日期</th><th>錄影</th><th>次數</th><th>分數</th><th>膝屈曲</th><th>膝外翻 L／R</th><th>前傾</th><th>品質</th><th></th></tr>${recs.slice().reverse().map(r=>`<tr><td>${r.date.slice(0,16).replace("T"," ")}</td><td>${esc(r.clip||"")}</td><td>${r.reps}</td><td><b>${r.score}</b></td><td>${Math.round(r.knee??NaN)||"—"}°</td><td>${r.valL==null?"—":Math.round(r.valL)}°／${r.valR==null?"—":Math.round(r.valR)}°</td><td>${r.trunk==null?"—":Math.round(r.trunk)}°</td><td>${r.quality||"—"}</td><td><button class="pbtn hxdel" data-id="${r.id}">刪除</button></td></tr>`).join("")}</table></div>`:"<div class='small'>尚無紀錄。到「即時分析」錄影一次，結束後會自動儲存。</div>";
+  document.querySelectorAll(".hxdel").forEach(b=>b.onclick=()=>{ if(!confirm("刪除這筆紀錄？")) return; store.set(HKEY,histAll().filter(h=>String(h.id)!==b.dataset.id)); renderHistory(); });
+}
+function bindHistory(){
+  $("hxName").onchange=renderHistory;
+  $("hxUse").onclick=()=>{ const n=$("hxName").value, r=histOf(n).pop(); if(!r) return; settings.name=n; if(r.height) settings.height=r.height; if(r.weight) settings.weight=r.weight; if(r.sex!=null) settings.sex=r.sex; saveSettings(); $("inName").value=settings.name; $("inH").value=settings.height; $("inW").value=settings.weight; $("inSex").value=settings.sex||""; alert(`已將「${n}」設為目前學員（身高、體重、性別一併帶入）。`); };
+  $("hxDelAll").onclick=()=>{ const n=$("hxName").value; if(!n||!confirm(`刪除「${n}」的全部紀錄？此動作無法復原。`)) return; store.set(HKEY,histAll().filter(h=>h.name!==n)); renderHistory(); };
+  $("hxExport").onclick=()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify({type:"motion-learning/history",version:1,exported:new Date().toISOString(),records:histAll()},null,1)],{type:"application/json"})); a.download=`動作學習系統_受試者紀錄_${new Date().toISOString().slice(0,10)}.json`; a.click(); };
+  $("hxImport").onclick=()=>$("hxFile").click();
+  $("hxFile").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); const add=(j.records||[]).filter(r=>r&&r.id&&r.name&&r.date); const H=histAll(); let n=0; for(const r of add){ if(!H.some(h=>h.id===r.id)){ H.push(r); n++; } } store.set(HKEY,H); alert(`匯入 ${n} 筆（略過重複 ${add.length-n} 筆）。`); renderHistory(); }catch(err){ alert("無法讀取這個檔案：請選擇從本系統匯出的 .json 備份。"); } e.target.value=""; };
+  $("hxCsv").onclick=()=>{ const n=$("hxName").value, R=histOf(n); if(!R.length) return; const keys=["date","name","clip","dur","reps","score","grade","knee","kneeL","kneeR","hip","valL","valR","trunk","lat","asym","cv","quality","sex","height","weight"]; const q=v=>v==null?"":typeof v==="number"?v:`"${String(v).replace(/"/g,'""')}"`; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+[keys.join(","),...R.map(r=>keys.map(k=>q(r[k])).join(","))].join("\n")],{type:"text/csv"})); a.download=`${n}_歷次紀錄.csv`; a.click(); };
+}
 
 function csvMatrix(clip){
   const head=["time_s",...ANGLES.map(a=>a.k+"_deg"),"trunk_lean_deg","x_factor_deg","shoulder_rot_deg","hip_rot_deg","neck_trunk_deg","ear_shoulder_vertical_deg","com_height_m","com_vx_mps","com_vy_up_mps","vGRF_BW",...PLANE_ROWS.flatMap(d=>["L","R"].map(x=>`${d.p}_${d.k}${x}_deg`)),...PLANE_SINGLE.map(d=>`${d.p}_${d.k}_deg`),"body_heading_deg"];
@@ -2534,10 +2718,12 @@ $("tgRight").onclick=()=>toggleDrawer("right");
 /* ===================== 頁面切換：首頁／分析／設定 ===================== */
 $("btnHome").innerHTML=svgI('<path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/>');
 document.querySelectorAll(".tic").forEach(e=>e.outerHTML=ICON[e.dataset.ic]);
+bindHistory();
 function goPage(p){
   document.body.dataset.page=p;
   $("btnHome").classList.toggle("off",p!=="home"); $("tgLeft").classList.toggle("off",p!=="settings");
   if(p==="home") renderHome();
+  if(p==="history") renderHistory();
   if(p==="settings"){ renderSegTable(); renderRefTable(); }
   setTimeout(()=>{ drawChart(); if(document.body.dataset.mode==="review"){ renderSkel(); renderCheck(); } },60);
 }
@@ -2550,6 +2736,7 @@ function renderHome(){
 }
 document.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{ const g=t.dataset.go;
   if(g==="settings") return goPage("settings");
+  if(g==="history") return goPage("history");
   if(g==="report"){ goPage("settings"); setTimeout(()=>{ const d=[...document.querySelectorAll("#left details")].find(x=>/參考區間/.test(x.querySelector("summary").textContent)); if(d){ d.open=true; d.scrollIntoView({behavior:"smooth"}); } },50); return; }
   goPage("app"); setMode(g); });
 $("btnHome").onclick=()=>goPage("home");
@@ -2593,7 +2780,7 @@ let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
-document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror"); goPage("home");
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror"); goPage("home");
 requestAnimationFrame(loop);
 loadModels();
 </script>
