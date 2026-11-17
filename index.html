@@ -485,6 +485,27 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
   .stage .actionbar .sep{display:none}
   .stage .actionbar{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
 }
+
+@media (max-width:860px), (max-height:520px){
+  .stage .actionbar{scrollbar-width:none;-webkit-mask-image:none!important;mask-image:none!important}
+  .stage .actionbar::-webkit-scrollbar{display:none}
+  #camSlot select{width:100%}
+}
+@media (max-width:860px) and (orientation:portrait){
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+  .stage .actionbar{justify-content:space-between!important;padding:4px 6px max(4px,env(safe-area-inset-bottom))!important;gap:0!important}
+  .stage .abtn{min-width:0!important;flex:1 1 0!important;height:56px!important;padding:2px 1px!important;font-size:11px!important}
+  .stage .abtn.big{flex:1.25 1 0!important}
+  .stage #recLen{flex:0 0 74px;max-width:74px;height:40px;font-size:12px;padding:0 4px}
+  .stage .abtn .ic svg{width:21px;height:21px}
+  #clipSel{flex:0 0 78px!important;max-width:78px} #rvSpeed,#fcSel{flex:0 0 58px!important;max-width:58px;padding:0 2px}
+  body[data-mode=review] .stage .actionbar{overflow-x:auto!important;justify-content:flex-start!important}
+  body[data-mode=review] .stage .abtn{flex:0 0 54px!important}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .stage .abtn{min-width:46px}
+  .stage #recLen{max-width:88px;min-width:84px}
+}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -556,6 +577,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
       <details class="panel" open>
         <summary>⚙️ AI 設定</summary>
         <div class="body">
+          <div id="camSlot"><label class="f" for="camSel">相機（手機上在這裡切換，例如 Camo、外接鏡頭）</label></div>
           <label class="f" for="setModel">身體模型</label>
           <select id="setModel">
             <option value="lite">🐇 輕量（手機、平板）</option>
@@ -1827,8 +1849,8 @@ function bind3D(){
   document.querySelectorAll("#v3dSeg button").forEach(b=>b.onclick=()=>setV(b.dataset.v));
   $("b3dAuto").onclick=()=>{ view3d.auto=!view3d.auto; $("b3dAuto").classList.toggle("on",view3d.auto); if(view3d.auto) document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); };
   $("b3dSrc").onclick=()=>{ view3d.src=view3d.src==="live"?"scan":"live"; $("b3dSrc").textContent=view3d.src==="live"?"顯示：即時動作":"顯示：掃描模型"; $("b3dSrc").classList.toggle("on",view3d.src==="scan"); };
-  const upd3d=()=>{ document.body.classList.toggle("no3d",!settings.view3d); setAbtn("btn3d","3d","3D 視圖："+(settings.view3d?"開":"關")); $("btn3d").classList.toggle("off",!settings.view3d); };
-  $("btn3d").onclick=()=>{ settings.view3d=!settings.view3d; saveSettings(); upd3d(); }; upd3d();
+  window.upd3d=()=>{ document.body.classList.toggle("no3d",!settings.view3d); setAbtn("btn3d","3d",isCompact()?"3D":"3D 視圖："+(settings.view3d?"開":"關")); $("btn3d").classList.toggle("off",!settings.view3d); };
+  $("btn3d").onclick=()=>{ settings.view3d=!settings.view3d; saveSettings(); window.upd3d(); }; window.upd3d();
   cv.addEventListener("pointerdown",()=>{ document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); });
   $("btnScan").onclick=startScan;
   $("btnScanDel").onclick=()=>{ if(confirm("刪除這台裝置上的轉身掃描資料？")){ settings.scan=null; saveSettings(); lifter.reset(); renderScan(); } };
@@ -2031,7 +2053,18 @@ listCams();
 $("btnCam").onclick=()=>liveOn?stopCam():startCam();
 $("btnCam2").onclick=()=>liveOn?stopCam():startCam();
 $("btnFlip").onclick=async()=>{ settings.camId=""; saveSettings(); $("camSel").value=""; facing=facing==="user"?"environment":"user"; liveMirror=facing==="user"; updateMirrorBtn(); if(liveOn) await startCam(); };
-function updateMirrorBtn(){ setAbtn("btnMirror","🪞","鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
+const compactMQ=matchMedia("(max-width:860px), (max-height:520px)");
+function isCompact(){ return compactMQ.matches; }
+function applyCompact(){
+  const c=isCompact(), cs=$("camSel");
+  if(c&&cs.parentElement.id!=="camSlot"){ cs.dataset.home="1"; $("camSlot").appendChild(cs); cs.classList.remove("sel"); }
+  if(!c&&cs.parentElement.id==="camSlot"){ $("btnFlip").after(cs); cs.classList.add("sel"); }
+  $("camSlot").hidden=!c;
+  setAbtn("btnFlip","🔄",c?"翻轉":"前／後");
+  if(typeof updateMirrorBtn==="function") updateMirrorBtn(); if(window.upd3d) window.upd3d();
+}
+compactMQ.addEventListener?.("change",applyCompact);
+function updateMirrorBtn(){ setAbtn("btnMirror","🪞",isCompact()?"鏡像":"鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
 $("btnMirror").onclick=()=>{ liveMirror=!liveMirror; updateMirrorBtn(); };
 $("btnSnap").onclick=()=>{ if(!liveOn) return alert("請先開鏡頭"); const a=document.createElement("a"); a.href=liveCanvas.toDataURL("image/png"); a.download=`動作截圖_${settings.name||"學員"}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.click(); };
 
@@ -2852,7 +2885,7 @@ let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
-document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror"); goPage("home");
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
 requestAnimationFrame(loop);
 loadModels();
 </script>
