@@ -480,7 +480,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 }
 @media (max-width:860px), (max-height:520px){
   .s3dbar{top:auto!important;bottom:8px;left:8px;right:8px;justify-content:center}
-  #btnCam,#btnCam2,#rvPlay{order:1} #btnRec{order:2} #recLen{order:3;max-width:96px} #btnFlip{order:4} #btnMirror{order:5} #btn3d{order:6} #camSel{order:7} #btnSnap{order:8}
+  #btnCam,#btnCam2,#rvPlay{order:1} #btnRec{order:2} #recLen{order:3;max-width:96px} #btnFlip{order:4} #btnMirror{order:5} #btn3d{order:6} #btnAudio{order:7} #camSel{order:8} #btnSnap{order:9}
   #clipSel{order:0;max-width:96px} #rvBack{order:2} #rvFwd{order:3} #rvSpeed{order:4;max-width:72px} #dlCsv{order:5} #fcSel{order:6;max-width:72px} #dlCsvF{order:7} #dlVid{order:8} #delClip{order:9}
   .stage .actionbar .sep{display:none}
   .stage .actionbar{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
@@ -769,6 +769,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
         <select class="sel" id="camSel" aria-label="選擇相機" title="選擇相機（例如 Camo）"><option value="">📷 預設相機</option></select>
         <button class="abtn lav" id="btnMirror"><span class="ic">🪞</span>鏡像：開</button>
         <button class="abtn" id="btn3d"><span class="ic"></span>3D 視圖</button>
+        <button class="abtn" id="btnAudio"><span class="ic"></span>聲音</button>
         <div class="sep"></div>
         <button class="abtn pink" id="btnRec"><span class="ic">🔴</span>錄影</button>
         <select class="sel" id="recLen" aria-label="錄影長度">
@@ -1100,6 +1101,7 @@ const ICON={
   sliders:svgI('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
   cube:svgI('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>'),
   "3d":svgI('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>'),
+  sound:svgI('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>'),
   panel:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14.5 4v16"/><path d="M17 8.5h1.5M17 11.5h1.5M17 14.5h1.5"/>')
 };
 const EMOJI2ICON={"▶️":"cam","⏹️":"stop","🔄":"flip","🪞":"mirror","🔴":"rec","📸":"snap","⏯️":"play","⏪":"back","⏩":"fwd","📌":"pin","📄":"doc","🧹":"filter","🎞️":"film","🗑️":"trash"};
@@ -1135,7 +1137,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,sex:"",view3d:true,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1993,14 +1995,45 @@ class Describer{
 const describer=new Describer(); let liveDesc=null;
 function renderDesc(){
   const d=liveDesc, r=v=>v==null?"—":Math.round(v)+"°";
-  $("dHead").textContent=d?d.head:(liveOn?"未偵測到完整身體：請退後或調整鏡頭":"尚未開啟鏡頭");
+  $("dHead").textContent=d?d.head+(fb.reps?`｜${fb.reps} 下`:""):(liveOn?"未偵測到完整身體：請退後或調整鏡頭":"尚未開啟鏡頭");
   const cap=$("dCap"); cap.innerHTML=d?`<b>${esc(d.head)}</b>${d.warn.length?`<span class="w">${esc(d.warn[0].split("：")[0])}</span>`:""}`:""; cap.hidden=!d;
   $("dItems").innerHTML=d?`<tr><th></th><th class="L">L</th><th class="R">R</th></tr>`+d.items.map(([n,l,rr,p,e])=>`<tr><td>${esc(n)}${e?"<sup>*</sup>":""}</td>${rr===null&&!/膝|髖|肩|肘/.test(n)?`<td colspan="2" class="v">${r(l)}</td>`:`<td class="v L">${r(l)}</td><td class="v R">${r(rr)}</td>`}</tr>`).join(""):"";
   $("dWarn").innerHTML=d?d.warn.map(x=>`<div>${esc(x)}</div>`).join(""):"";
   $("dRel").textContent=d?d.reliable+" 為單鏡頭深度推算，僅供參考":"";
-  if(settings.speak&&d&&d.stable>.8&&window.speechSynthesis){ const now=performance.now()/1000, say=d.pose.replace(/（.*?）/,"")+(d.phase?"，"+d.phase:"")+(d.warn[0]?"。"+d.warn[0].split("：")[0]:"");
-    if(say!==describer.spoken||now-describer.spokenAt>8){ if(now-describer.spokenAt>2.5){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(say); u.lang="zh-TW"; u.rate=1.05; speechSynthesis.speak(u); describer.spoken=say; describer.spokenAt=now; } } }
+  /* 聲音回饋改由 audioFeedback() 處理 */
 }
+/* ===================== 即時聲音回饋 ===================== */
+// 模式：off 關／alert 提醒（只在出錯、到位、完成一下時出聲）／full 完整（另外報次數與動作階段）
+const AUDIO_MODES=["off","alert","full"], AUDIO_NAME={off:"關",alert:"提醒",full:"完整"};
+const fb={ reps:0, st:0, deep:false, lastWarn:{}, warnSeen:{}, lastSay:0, lastPose:"", poseSince:0, unlocked:false };
+function audioUnlock(){ // iOS 需要在使用者點擊時先「解鎖」聲音
+  cue.init(); if(fb.unlocked||!window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); fb.unlocked=true; }catch(e){}
+}
+function say(t,force){ const now=performance.now(); if(!force&&now-fb.lastSay<1800) return false; fb.lastSay=now; cue.say(t); return true; }
+function audioReset(){ fb.hist=[]; fb.reps=0; fb.st=0; fb.deep=false; fb.lastWarn={}; fb.warnSeen={}; }
+function audioFeedback(d,t){
+  const mode=settings.audio||"off";
+  // 次數（現場即時判斷：膝屈曲 ≥45° 再回到 <20° 算一下）
+  if(d){ const kk=d.items.find(x=>x[0]==="膝屈曲"); const k=kk?[kk[1],kk[2]].filter(v=>v!=null):[]; const kv=k.length?k.reduce((a,b)=>a+b)/k.length:null;
+    if(kv!=null){ // 以最近 6 秒的最低值當作「站起」基準（單鏡頭角度可能整體偏移）
+      (fb.hist=fb.hist||[]).push([t,kv]); while(fb.hist.length&&t-fb.hist[0][0]>6) fb.hist.shift();
+      const base=Math.min(...fb.hist.map(x=>x[1]));
+      if(fb.st===0&&kv>=base+30){ fb.st=1; fb.deep=false; }
+      if(fb.st===1&&kv>=REF.kneeFlex.task.lo&&!fb.deep){ fb.deep=true; if(mode!=="off") cue.beep(1175,.09,.2); } // 到達參考深度：清脆一聲
+      if(fb.st===1&&kv<base+12){ fb.st=0; fb.reps++; if(mode!=="off"){ cue.beep(784,.07,.2); setTimeout(()=>cue.beep(1047,.1,.2),90); if(mode==="full") say(String(fb.reps),true); } } } }
+  if(mode==="off"||!d) return;
+  // 警示：同一種警示持續 0.4 秒才出聲，之後 5 秒內不重複
+  const now=t;
+  for(const w of d.warn){ const key=w.split("：")[0]; fb.warnSeen[key]=fb.warnSeen[key]??now;
+    if(now-fb.warnSeen[key]>=.4&&now-(fb.lastWarn[key]??-99)>5){ fb.lastWarn[key]=now; cue.beep(330,.12,.25); setTimeout(()=>cue.beep(262,.16,.25),140); say(key.replace("疑似追蹤錯誤","畫面偵測可能有誤"),true); return; } }
+  for(const k in fb.warnSeen) if(!d.warn.some(w=>w.startsWith(k))) delete fb.warnSeen[k];
+  // 完整模式：姿勢／階段穩定 0.8 秒後報出
+  if(mode==="full"){ if(d.head!==fb.lastPose){ fb.lastPose=d.head; fb.poseSince=now; fb.posed=false; }
+    if(!fb.posed&&now-fb.poseSince>.8){ fb.posed=true; say(d.pose.replace(/（.*?）/,"")+(d.phase?"，"+d.phase:"")); } }
+}
+function updateAudioBtn(){ const m=settings.audio||"off"; setAbtn("btnAudio","sound",isCompact()?"聲音":"聲音："+AUDIO_NAME[m]); $("btnAudio").classList.toggle("off",m==="off"); const b=$("tgSpeak"); if(b) b.textContent="聲音回饋："+AUDIO_NAME[m]; }
+function cycleAudio(){ audioUnlock(); const i=AUDIO_MODES.indexOf(settings.audio||"off"); settings.audio=AUDIO_MODES[(i+1)%3]; saveSettings(); updateAudioBtn(); if(window.speechSynthesis) speechSynthesis.cancel();
+  if(settings.audio!=="off"){ cue.beep(880,.08,.2); say(settings.audio==="alert"?"聲音提醒開啟":"完整聲音回饋開啟",true); } }
 const engine=new MarkerEngine();
 let liveQ=null, liveVM=null;
 
@@ -2012,6 +2045,7 @@ const kin=new Kin();
 let fpsCount=0,fps=0,fpsT=performance.now();
 function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||ICON[ic]||""}</span>${label}`; }
 async function startCam(){
+  audioUnlock(); audioReset();
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
   stopCam();
   try{
@@ -2061,7 +2095,7 @@ function applyCompact(){
   if(!c&&cs.parentElement.id==="camSlot"){ $("btnFlip").after(cs); cs.classList.add("sel"); }
   $("camSlot").hidden=!c;
   setAbtn("btnFlip","🔄",c?"翻轉":"前／後");
-  if(typeof updateMirrorBtn==="function") updateMirrorBtn(); if(window.upd3d) window.upd3d();
+  if(typeof updateMirrorBtn==="function") updateMirrorBtn(); if(window.upd3d) window.upd3d(); if($("btnAudio")&&typeof updateAudioBtn==="function") updateAudioBtn();
 }
 compactMQ.addEventListener?.("change",applyCompact);
 function updateMirrorBtn(){ setAbtn("btnMirror","🪞",isCompact()?"鏡像":"鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
@@ -2081,7 +2115,7 @@ function processLive(now){
     else{ liveQ=null; liveRes=raw; }
     liveLift=liveRes?lifter.lift(liveRes,W,H,liveWorld):null;
     { const src=liveLift||liveWorld; livePl=liveRes&&src?computePlanes(src):null; livePlSrc=liveLift?(settings.scan?"3D 重建（轉身掃描長度）":"3D 重建（身高比例長度）"):"AI 3D 估計"; }
-    liveDesc=describer.update(livePl,now/1000);
+    liveDesc=describer.update(livePl,now/1000); audioFeedback(liveDesc,now/1000);
     if(scanRun) scanFrame(liveRes,W,H);
     liveM=liveRes?computeMetrics(liveRes,(settings.angleMode==="lift"&&liveLift)?liveLift:liveWorld,W,H):null;
     liveVM=liveRes?computeVM(liveRes,W,H,liveHands):null;
@@ -2779,7 +2813,7 @@ function bindSettings(){
   const tg=(id,key,label,after)=>{ const b=$(id),up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{ settings[key]=!settings[key]; saveSettings(); up(); after&&after(); }; };
   tg("tgHands","hands","✋ 手指追蹤",async()=>{ if(settings.hands&&!handLM&&vision){ setStatus("⏳ 載入手指模型…"); await loadHands(); } refreshStatus(); });
   tg("tgAngles","showAngles","🔢 角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
-  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpeak","speak","🔊 朗讀動作",()=>{ if(!settings.speak&&window.speechSynthesis) speechSynthesis.cancel(); }); tg("tgEuro","euro","〰️ 即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
+  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); $("tgSpeak").onclick=cycleAudio; $("btnAudio").onclick=cycleAudio; if(settings.speak&&!settings.audio) settings.audio="full"; updateAudioBtn(); tg("tgEuro","euro","〰️ 即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
   $("btnCalib").onclick=startCalib;
 }
 function updateUI(now){
@@ -2870,9 +2904,9 @@ for(const st of [$("liveStage"),rvStage]){
   tb.onclick=e=>{ e.stopPropagation(); st.classList.add("tb-open"); arm(); };
   st.addEventListener("pointermove",e=>{ if(e.target.closest(".actionbar")) arm(); });
   st.addEventListener("focusin",()=>arm(6000));
-  st.addEventListener("click",e=>{ const bar=e.target.closest(".actionbar");
-    if(bar){ if(e.target.closest(".abtn")) arm(1500); else arm(); return; }
-    if(e.target.closest(".tbToggle,iframe")) return;
+  st.addEventListener("click",e=>{ const path=e.composedPath(), has=sel=>path.some(el=>el.matches?.(sel)); // 按鈕內容可能已被重繪，改看事件路徑
+    if(has(".actionbar")){ if(has("#btnAudio,#btnMirror,#btn3d,#btnFlip")) arm(4000); else if(has(".abtn")) arm(1500); else arm(); return; }
+    if(has(".tbToggle")||has("iframe")) return;
     if(st.classList.contains("tb-open")&&canHide(st)){ st.classList.remove("tb-open"); clearTimeout(o.tmr); } else { st.classList.add("tb-open"); arm(); } });
   st.addEventListener("change",()=>arm(1500));
 }
