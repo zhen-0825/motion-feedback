@@ -1430,16 +1430,30 @@ function drawPose(ctx,lms,W,H,mirror,M,hands){
 function drawHands(ctx,hands,W,H,mirror){
   if(!hands) return;
   const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
-  const lw=Math.max(2.5,Math.min(W,H)/200);
-  ctx.save(); ctx.lineCap="round";
+  ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round";
   for(const side of ["L","R"]){
     const h=hands[side]; if(!h) continue; const L=h.lms;
-    for(const [a,b] of HAND_CONN){ ctx.strokeStyle="rgba(16,21,30,.5)"; ctx.lineWidth=lw*2; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
+    // 線寬依手掌大小（腕→中指根）調整：手靠近鏡頭時線條跟著變粗
+    const palm=Math.hypot(X(L[9])-X(L[0]),Y(L[9])-Y(L[0])), lw=Math.max(2.5,Math.min(W,H)/220,palm/22);
+    // 掌面：半透明填色，看得出手掌範圍與朝向
+    ctx.fillStyle=side==="L"?"rgba(255,107,79,.22)":"rgba(61,139,255,.22)"; ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw*.6;
+    ctx.beginPath(); [0,1,2,5,9,13,17].forEach((i,j)=>j?ctx.lineTo(X(L[i]),Y(L[i])):ctx.moveTo(X(L[i]),Y(L[i]))); ctx.closePath(); ctx.fill(); ctx.stroke();
+    for(const [a,b] of HAND_CONN){ ctx.strokeStyle="rgba(16,21,30,.6)"; ctx.lineWidth=lw*2.1; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
     for(const [a,b] of HAND_CONN){ ctx.strokeStyle=FINGER_COLOR[Math.max(a,b)-1]||COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
-    ctx.shadowBlur=0;
-    L.forEach((p,i)=>{ ctx.fillStyle="#fff"; ctx.strokeStyle=i===0?COLORS[side]:(FINGER_COLOR[i-1]); ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(p),Y(p),i%4===0&&i>0?lw*1.4:lw*1.1,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+    L.forEach((p,i)=>{ const tip=i%4===0&&i>0; ctx.fillStyle=i===0?COLORS[side]:FINGER_COLOR[i-1]; ctx.strokeStyle="#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(X(p),Y(p),tip?lw*1.25:lw*.95,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
     if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`握 ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"",COLORS[side]); }
   }
+  ctx.restore();
+}
+// 沒開手指追蹤時：用身體模型的 4 個手部點畫出簡化手掌，並提示可開啟手指追蹤
+function drawPalmLite(ctx,lms,W,H,mirror){
+  if(!lms||settings.hands) return; const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
+  ctx.save();
+  for(const [s,w,p,ix,th] of [["L",15,17,19,21],["R",16,18,20,22]]){ const P=[w,th,ix,p].map(i=>lms[i]); if(P.some(q=>(q.visibility??1)<.4)) continue;
+    const size=Math.hypot(X(P[2])-X(P[0]),Y(P[2])-Y(P[0])), lw=Math.max(2,size/10);
+    ctx.fillStyle=s==="L"?"rgba(255,107,79,.28)":"rgba(61,139,255,.28)"; ctx.strokeStyle=COLORS[s]; ctx.lineWidth=lw*.6; ctx.setLineDash([lw,lw*.8]);
+    ctx.beginPath(); P.forEach((q,j)=>j?ctx.lineTo(X(q),Y(q)):ctx.moveTo(X(q),Y(q))); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+    if(size>Math.min(W,H)*.12){ const fs=Math.max(11,size/9); pill(ctx,"手指追蹤：關",X(P[0]),Y(P[0])+fs*1.8,fs,"",COLORS[s]); } }
   ctx.restore();
 }
 
@@ -1839,7 +1853,7 @@ function draw3D(){
   if(!P){ ctx.fillStyle="#8D99AB"; ctx.font=`500 ${14*dpr}px "Noto Sans TC",sans-serif`; ctx.textAlign="center"; ctx.fillText(liveOn?"等待偵測到完整身體":"開啟鏡頭後顯示即時 3D 骨架",W/2,H/2); return; }
   // 重心投影（地面）
   const lw0=Math.max(2.5*dpr,H/150), anOn=settings.bone3d||settings.muscle3d, lw=anOn?lw0*.55:lw0;
-  if(anOn||settings.anatSpine) drawAnat(ctx,anatBuild(P),p=>proj(p.x,p.y,p.z),sc,{bone:settings.bone3d,muscle:settings.muscle3d,spine:settings.anatSpine,lw:lw0,dpr,label:settings.anatSpine});
+  if(anOn||settings.anatSpine) drawAnat(ctx,anatBuild(P,view3d.src==="live"?handsToLift(liveHands,liveRes,liveLift,liveCanvas.width,liveCanvas.height):null),p=>proj(p.x,p.y,p.z),sc,{bone:settings.bone3d,muscle:settings.muscle3d,spine:settings.anatSpine,lw:lw0,dpr,label:settings.anatSpine});
   const segs=CONN.filter(([a,b])=>!(a<11&&b<11)||settings.showFace).map(([a,b,s])=>{ const A=P[a],B=P[b]; if(!A||!B||(A.visibility??1)<.35||(B.visibility??1)<.35) return null; const pa=proj(A.x,A.y,A.z), pb=proj(B.x,B.y,B.z); return {pa,pb,s,z:(pa[2]+pb[2])/2}; }).filter(Boolean).sort((p,q)=>q.z-p.z);
   ctx.lineCap="round";
   for(const g of segs){ const ts=settings.anatSpine&&g.s!=="C"&&false; ctx.strokeStyle="rgba(0,0,0,.45)"; ctx.lineWidth=lw*2; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); ctx.strokeStyle=COLORS[g.s]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); }
@@ -2055,7 +2069,7 @@ const A3={add:(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z}),sub:(a,b)=>({x:a.x-b.x,y:
 function catmull(pts,n){ const out=[]; for(let i=0;i<pts.length-1;i++){ const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
   for(let j=0;j<n;j++){ const t=j/n,t2=t*t,t3=t2*t, f=(a,b,c,d)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3); out.push({x:f(p0.x,p1.x,p2.x,p3.x),y:f(p0.y,p1.y,p2.y,p3.y),z:f(p0.z,p1.z,p2.z,p3.z)}); } }
   out.push(pts[pts.length-1]); return out; }
-function anatBuild(P){
+function anatBuild(P,HL){
   if(!P) return null; const ok=i=>P[i]&&(P[i].visibility??1)>.3; if(![11,12,23,24].every(ok)) return null;
   const {add,sub,mul,dot,cross,unit,lerp,len}=A3, k=(bodyH()||1.7)/1.7;
   const hL=P[23],hR=P[24],sL=P[11],sR=P[12],H=lerp(hL,hR,.5),S=lerp(sL,sR,.5), T=len(sub(S,H));
@@ -2091,7 +2105,6 @@ function anatBuild(P){
     const sh=P[11+o],el=P[13+o],wr=P[15+o],hp=P[23+o],kn=P[25+o],an=P[27+o],he=P[29+o],to=P[31+o];
     const troch=add(add(hp,mul(ml,sd*.045*k)),mul(up,-.02*k));
     if(ok(13+o)) bones.push([sh,el,.024]); if(ok(13+o)&&ok(15+o)){ bones.push([el,wr,.016]); const off=mul(ml,sd*.012*k); bones.push([add(el,off),add(wr,off),.011]); }
-    if(ok(15+o)&&ok(19+o)) bones.push([wr,P[19+o],.018]);
     if(ok(25+o)){ bones.push([hp,troch,.022]); bones.push([troch,kn,.028]); joints.push([kn,.034]); }
     if(ok(25+o)&&ok(27+o)){ bones.push([kn,an,.026]); bones.push([add(kn,mul(ml,sd*.035*k)),add(an,mul(ml,sd*.025*k)),.011]); }
     if(ok(27+o)&&ok(29+o)&&ok(31+o)){ bones.push([he,an,.03]); bones.push([an,to,.028]); bones.push([he,to,.024]); }
@@ -2122,7 +2135,45 @@ function anatBuild(P){
     if(V("T4")) M(add(sacrum[0],mul(lat,.0)),add(V("T4"),mul(lat,.03)),.045,"豎脊肌",-1);
     if(V("C4")) M(V("C4"),add(add(P[11+o],mul(up,.02*k)),mul(ap,-.02*k)),.06,"斜方肌",-1);
   }
-  return {vert,curve,sacrum,ribs,clav,stTop,stBot,pelv,bones,joints,skull,mus,H,S,T,up,ap,ml,k};
+  // ── 手部骨骼與肌肉（有手指追蹤用 21 點；沒有則用身體模型的手部 4 點簡化）
+  // 沒有手指追蹤時：用身體模型的手部 4 點（腕、食指、小指、拇指）套用手部比例模板，補出 21 點（估計值）
+  const handTpl=o=>{ if(!(ok(15+o)&&ok(17+o)&&ok(19+o)&&ok(21+o))) return null;
+    const w=P[15+o],pk=P[17+o],ix=P[19+o],th=P[21+o], mid=lerp(ix,pk,.5), d=sub(mid,w), L=Math.hypot(d.x,d.y,d.z)||.08*k, u=unit(d);
+    const mcp=[ix,add(lerp(ix,pk,.33),mul(u,.06*L)),add(lerp(ix,pk,.67),mul(u,.03*L)),pk];
+    const fl=[[.42,.26,.20],[.47,.30,.21],[.44,.29,.20],[.34,.21,.18]];
+    const h=[w,lerp(w,th,.3),lerp(w,th,.58),lerp(w,th,.82),add(th,mul(unit(sub(th,w)),.18*L))];
+    mcp.forEach((m,i)=>{ let q=m; h.push(q); for(const f of fl[i]){ q=add(q,mul(u,f*L)); h.push(q); } });
+    return h; };
+  const handB=(Hp,sd,o)=>{ const h=Hp||handTpl(o); if(!h) return;
+    const cp=lerp(h[0],h[9],.18);
+    joints.push([cp,.02]); // 腕骨
+    for(const m of [1,5,9,13,17]) bones.push([lerp(h[0],h[m],m===1?.15:.22),h[m],m===1?.012:.011]); // 掌骨
+    for(const f of [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]) for(let j=0;j<3;j++) bones.push([h[f[j]],h[f[j+1]],[.0105,.0092,.008][j]]); // 指骨
+    bones.push([h[1],h[2],.011]); bones.push([h[2],h[3],.0095]); bones.push([h[3],h[4],.0085]); // 拇指
+    for(const m of [2,5,6,7,9,10,11,13,14,15,17,18,19,3]) joints.push([h[m],.0068]); // 指關節
+    M(lerp(h[0],h[1],.35),lerp(h[1],h[2],.7),.034,"大魚際肌");
+    M(lerp(h[0],h[17],.22),lerp(h[17],h[18],.15),.028,"小魚際肌");
+    for(const [a,b] of [[5,9],[9,13],[13,17]]) M(lerp(h[0],lerp(h[a],h[b],.5),.35),lerp(h[a],h[b],.5),.013,"骨間肌");
+    for(const f of [[5,8],[9,12],[13,16],[17,20],[2,4]]) M(lerp(h[0],h[f[0]],.5),h[f[1]],.007,"屈指肌腱");
+  };
+  handB(HL?.L,1,0); handB(HL?.R,-1,1);
+  // ── 臉部骨骼：眼眶、鼻骨、顴弓、上頜骨、下頜骨
+  let face=null;
+  if([0,1,2,3,4,5,6,7,8,9,10].every(ok)){
+    const eL=P[2],eR=P[5],nas=lerp(P[1],P[4],.5),nose=P[0],mL=P[9],mR=P[10],mm=lerp(mL,mR,.5);
+    const chin=add(add(mm,mul(up,-.05*k)),mul(ap,.004*k)), angL=add(add(lerp(P[7],lerp(P[7],P[8],.5),.3),mul(up,-.065*k)),mul(ap,.012*k)), angR=add(add(lerp(P[8],lerp(P[7],P[8],.5),.3),mul(up,-.065*k)),mul(ap,.012*k));
+    const eW=Math.hypot(...["x","y","z"].map(c=>eL[c]-eR[c]))||.065*k, zyL=add(add(P[3],mul(ml,.006*k)),mul(up,-.024*k)), zyR=add(add(P[6],mul(ml,-.006*k)),mul(up,-.024*k));
+    const toothY=lerp(nose,mm,.6);
+    face={eW,
+      orbits:[eL,eR].map(e=>add(e,mul(up,.003*k))), // 眼眶
+      outline:[add(eL,mul(up,.03*k)),add(add(P[3],mul(ml,.01*k)),mul(up,.012*k)),zyL,angL,lerp(angL,chin,.6),chin,lerp(angR,chin,.6),angR,zyR,add(add(P[6],mul(ml,-.01*k)),mul(up,.012*k)),add(eR,mul(up,.03*k))], // 顏面輪廓（額骨下緣→顴骨→下頜角→頦）
+      nasal:[lerp(nas,nose,.35),add(add(nose,mul(ml,.011*k)),mul(up,-.012*k)),add(nose,mul(up,-.02*k)),add(add(nose,mul(ml,-.011*k)),mul(up,-.012*k))], // 梨狀孔
+      lines:[[nas,lerp(nas,nose,.4)], // 鼻骨
+        [zyL,lerp(zyL,add(nose,mul(up,-.02*k)),.55)],[zyR,lerp(zyR,add(nose,mul(up,-.02*k)),.55)], // 顴上頜縫
+        [add(lerp(zyL,angL,.25),mul(ml,-.006*k)),lerp(angL,chin,.6)],[add(lerp(zyR,angR,.25),mul(ml,.006*k)),lerp(angR,chin,.6)]], // 下頜枝前緣
+      teeth:{a:add(lerp(toothY,mL,.85),mul(up,0)),b:add(lerp(toothY,mR,.85),mul(up,0)),n:10}};
+  }
+  return {vert,curve,sacrum,ribs,clav,stTop,stBot,pelv,bones,joints,skull,mus,face,H,S,T,up,ap,ml,k};
 }
 const BONE_FILL="#E9E1CC", BONE_LINE="#7E6F52", MUS_FILL="rgba(196,64,72,.62)", MUS_LINE="rgba(110,24,34,.85)", TEN_FILL="rgba(236,224,206,.9)";
 function drawAnat(ctx,A,proj,sc,opt){
@@ -2142,8 +2193,8 @@ function drawAnat(ctx,A,proj,sc,opt){
     for(const arc of A.ribs){ ctx.beginPath(); arc.forEach((p,i)=>{ const q=pr(p); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }); ctx.stroke(); }
     for(const [a,b,w] of [[A.stTop,A.stBot,.022],...A.clav.map(c=>[c[0],c[1],.012])]){ const qa=pr(a),qb=pr(b); ctx.strokeStyle=BONE_LINE; ctx.lineWidth=w*A.k*sc+2*dpr; ctx.beginPath(); ctx.moveTo(qa[0],qa[1]); ctx.lineTo(qb[0],qb[1]); ctx.stroke(); ctx.strokeStyle=BONE_FILL; ctx.lineWidth=w*A.k*sc; ctx.stroke(); }
     // 頭骨
-    if(A.skull){ const c=pr(A.skull.c); ctx.fillStyle="rgba(233,225,204,.9)"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1.4*dpr; ctx.beginPath(); ctx.arc(c[0],c[1],A.skull.r*sc,0,Math.PI*2); ctx.fill(); ctx.stroke();
-      const j=A.skull.jaw.map(pr); ctx.beginPath(); ctx.moveTo(j[0][0],j[0][1]); ctx.quadraticCurveTo(j[1][0],j[1][1]+(j[1][1]-c[1])*.15,j[2][0],j[2][1]); ctx.stroke(); }
+    if(A.skull){ const c=pr(A.skull.c); ctx.fillStyle="rgba(233,225,204,.92)"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1.4*dpr; ctx.beginPath(); ctx.arc(c[0],c[1],A.skull.r*sc,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      if(!A.face){ const j=A.skull.jaw.map(pr); ctx.beginPath(); ctx.moveTo(j[0][0],j[0][1]); ctx.quadraticCurveTo(j[1][0],j[1][1]+(j[1][1]-c[1])*.15,j[2][0],j[2][1]); ctx.stroke(); } }
   }
   // 脊柱（骨骼模式畫椎體；只開脊柱時畫中軸線）
   if(opt.spine||opt.bone){ const cv=A.curve.map(pr);
@@ -2153,6 +2204,16 @@ function drawAnat(ctx,A,proj,sc,opt){
       if(opt.bone){ ctx.fillStyle=BONE_FILL; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.ellipse(q[0],q[1],Math.max(1.5,.009*A.k*sc),Math.max(2,v.w/2*A.k*sc),ang,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
       else { const key=v.n==="C7"||v.n==="T10"||v.n==="L5"; ctx.fillStyle=key?"#fff":"rgba(201,210,222,.9)"; ctx.beginPath(); ctx.arc(q[0],q[1],(key?1.6:1)*Math.max(1.5*dpr,opt.lw*.55),0,Math.PI*2); ctx.fill(); }
     });
+  }
+  if(opt.bone){
+    if(A.face){ const F=A.face, poly=(pts,fill,stroke,lw)=>{ const q=pts.map(pr); ctx.beginPath(); q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} };
+      ctx.lineJoin="round"; poly(F.outline,BONE_FILL,BONE_LINE,1.4*dpr);
+      const er=F.eW*.3*sc; for(const o of F.orbits){ const q=pr(o); ctx.fillStyle="rgba(46,38,26,.82)"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1.2*dpr; ctx.beginPath(); ctx.roundRect?ctx.roundRect(q[0]-er,q[1]-er*.82,er*2,er*1.64,er*.7):ctx.ellipse(q[0],q[1],er,er*.82,0,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+      poly(F.nasal,"rgba(46,38,26,.82)",BONE_LINE,1*dpr);
+      ctx.strokeStyle="rgba(126,111,82,.7)"; ctx.lineWidth=1*dpr; for(const ln of F.lines){ const q=ln.map(pr); ctx.beginPath(); q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); }
+      const ta=pr(F.teeth.a), tb=pr(F.teeth.b), th=Math.max(2,F.eW*.13*sc); ctx.fillStyle="#F4EEDD"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=.8*dpr;
+      for(let i=0;i<F.teeth.n;i++){ const t0=i/F.teeth.n, t1=(i+1)/F.teeth.n, x0=ta[0]+(tb[0]-ta[0])*t0, y0=ta[1]+(tb[1]-ta[1])*t0, x1=ta[0]+(tb[0]-ta[0])*t1, y1=ta[1]+(tb[1]-ta[1])*t1; ctx.beginPath(); ctx.moveTo(x0,y0-th/2); ctx.lineTo(x1,y1-th/2); ctx.lineTo(x1,y1+th/2); ctx.lineTo(x0,y0+th/2); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    }
   }
   if(opt.muscle){
     const L=A.mus.map(m=>{ const pa=pr(m.a),pb=pr(m.b); return {...m,pa,pb,z:(pa[2]+pb[2])/2-m.lay*.02}; }).sort((x,y)=>y.z-x.z);
@@ -2168,10 +2229,17 @@ function drawAnat(ctx,A,proj,sc,opt){
     for(const n of ["C7","T10","L5"]){ const v=A.vert.find(x=>x.n===n); if(!v) continue; const q=pr(v.p), x=q[0]+opt.lw*2.5, w=ctx.measureText(n).width; ctx.fillStyle="rgba(16,21,30,.7)"; ctx.fillRect(x-3,q[1]-fs*.6,w+6,fs*1.2); ctx.fillStyle="#fff"; ctx.fillText(n,x,q[1]); } }
   ctx.restore();
 }
+// 手部 21 點（影像座標）轉成 3D 重建座標（以手腕為基準，深度用手部模型的相對 z）
+function handsToLift(hands,lms,lift,W,H){
+  if(!hands||!lms||!lift) return null; const s=lift.s, Ox=(lms[23].x+lms[24].x)/2*W, Oy=(lms[23].y+lms[24].y)/2*H, out={};
+  for(const [side,wi] of [["L",15],["R",16]]){ const h=hands[side]; if(!h) continue; const L=h.lms, wz=lift[wi]?.z??0, z0=L[0].z||0;
+    out[side]=L.map(p=>({x:(p.x*W-Ox)/s,y:(p.y*H-Oy)/s,z:wz+((p.z||0)-z0)*W/s,visibility:1})); }
+  return out;
+}
 // 影像疊加：用即時 3D 重建點，投影回畫面（x、y 為影像像素）
 function drawAnat2D(ctx,lms,lift,W,H,mirror){
   if(!lift||!lms) return; const sp=settings.anatSpine, bo=settings.bone2d, mu=settings.muscle2d; if(!sp&&!bo&&!mu) return;
-  const A=anatBuild(lift); if(!A) return;
+  const A=anatBuild(lift,handsToLift(liveHands,lms,lift,W,H)); if(!A) return;
   const Ox=(lms[23].x+lms[24].x)/2*W, Oy=(lms[23].y+lms[24].y)/2*H, s=lift.s;
   const proj=p=>{ const x=Ox+p.x*s; return [mirror?W-x:x, Oy+p.y*s, p.z]; };
   drawAnat(ctx,A,proj,s,{bone:bo,muscle:mu,spine:sp,lw:Math.max(2.5,Math.min(W,H)/150),label:sp&&!bo});
@@ -2270,6 +2338,7 @@ function processLive(now){
   drawFrame(lctx,liveVideo,W,H,liveMirror);
   drawAnat2D(lctx,liveRes,liveLift,W,H,liveMirror);
   drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
+  drawPalmLite(lctx,liveRes,W,H,liveMirror);
   drawHands(lctx,liveHands,W,H,liveMirror);
   if(settings.vm) drawVM(lctx,liveVM,W,H,liveMirror);
   if(!(settings.view3d&&document.body.dataset.mode==="mirror")) drawScanGuide(lctx,W,H);
@@ -3040,7 +3109,7 @@ function canHide(st){
   return true;
 }
 for(const st of [$("liveStage"),rvStage]){
-  const tb=document.createElement("button"); tb.className="tbToggle"; tb.type="button"; tb.setAttribute("aria-label","顯示控制列"); tb.innerHTML=ICON.sliders+"控制"; st.appendChild(tb);
+  const tb=document.createElement("button"); tb.className="tbToggle"; tb.type="button"; tb.setAttribute("aria-label","顯示控制列"); const isRv=st===rvStage; tb.innerHTML=(isRv?ICON.play:ICON.cam)+(isRv?"播放與匯出":"鏡頭與錄影"); tb.setAttribute("aria-label",isRv?"顯示播放與匯出工具":"顯示鏡頭與錄影工具"); st.appendChild(tb);
   const o={st,tmr:null}; TB.push(o);
   const arm=(ms=4000)=>{ clearTimeout(o.tmr); o.tmr=setTimeout(()=>{ o.tmr=null; if(canHide(st)) st.classList.remove("tb-open"); else arm(1500); },ms); };
   o.arm=arm;
