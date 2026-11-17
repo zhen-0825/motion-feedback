@@ -309,6 +309,9 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
             <li>Casiez, G., Roussel, N., &amp; Vogel, D. (2012). 1€ Filter: A simple speed-based low-pass filter for noisy input in interactive systems. <i>CHI '12</i>, 2527–2530.</li>
             <li>Robertson, D. G. E., &amp; Dowling, J. J. (2003). Design and responses of Butterworth and critically damped digital filters. <i>J Electromyogr Kinesiol, 13</i>(6), 569–573.</li>
             <li>Falisse, A., Uhlrich, S. D., et al. (2025). Marker data enhancement for markerless motion capture. <i>IEEE Trans Biomed Eng</i>.（未來可用 AI 從關鍵點推算 43 個解剖標記）</li>
+            <li>Wu, G., Siegler, S., et al. (2002). ISB recommendation on definitions of joint coordinate system… Part I: ankle, hip, and spine. <i>J Biomech, 35</i>, 543–548.（雙平面角度的身體座標系參考）</li>
+            <li>Munro, A., Herrington, L., &amp; Carolan, M. (2012). Reliability of 2D video assessment of frontal-plane dynamic knee valgus. <i>J Sport Rehabil, 21</i>(1), 7–11.（膝外翻 FPPA）</li>
+            <li>Taylor, C. J. (2000). Reconstruction of articulated objects from point correspondences in a single uncalibrated image. <i>CVIU, 80</i>, 349–363.（單鏡頭肢段長度 3D 重建）</li>
           </ul>
         </div>
       </details>
@@ -346,6 +349,7 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
       <div class="actionbar" data-modes="mirror">
         <button class="abtn big" id="btnCam"><span class="ic">▶️</span>開鏡頭</button>
         <button class="abtn blue" id="btnFlip"><span class="ic">🔄</span>前／後</button>
+        <select class="sel" id="camSel" aria-label="選擇相機" title="選擇相機（例如 Camo）"><option value="">📷 預設相機</option></select>
         <button class="abtn lav" id="btnMirror"><span class="ic">🪞</span>鏡像：開</button>
         <div class="sep"></div>
         <button class="abtn pink" id="btnRec"><span class="ic">🔴</span>錄影</button>
@@ -431,6 +435,20 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
           <div class="metric"><span>↗️ 軀幹前傾</span><b id="mTrunk">—</b></div>
           <div class="legend" style="margin-top:6px"><span class="L">身體左側</span><span class="R">身體右側</span><span class="C">中線</span><span style="color:var(--yellowD)">重心</span></div>
           <div class="small">180° 為伸直；左右指被拍者自己的左右。</div>
+        </div>
+      </details>
+      <details class="panel" open data-modes="mirror follow" id="planePanel">
+        <summary>📐 雙平面角度（矢狀面＋冠狀面）</summary>
+        <div class="body">
+          <div style="display:flex;gap:6px">
+            <canvas id="cvFro" style="flex:1;min-width:0;height:220px;background:#FFF6F8;border-radius:14px"></canvas>
+            <canvas id="cvSag" style="flex:1;min-width:0;height:220px;background:#F2F8FF;border-radius:14px"></canvas>
+          </div>
+          <div class="metric"><span>身體朝向鏡頭</span><b id="plHead">—</b></div>
+          <div class="metric"><span>3D 來源</span><b id="plSrc">—</b></div>
+          <div class="small" id="plHint"></div>
+          <div class="tw" style="margin-top:6px"><table id="planeTable"></table></div>
+          <div class="small">角度以「學員自己的身體」為基準（髖連線定左右、鉛垂線定上下），學員轉向斜角也能分出兩個平面。最準的做法：要看矢狀面就側拍、要看冠狀面就正拍；先做「🔄 轉身掃描」可以讓深度推算更準。</div>
         </div>
       </details>
       <details class="panel" open data-modes="mirror follow">
@@ -646,7 +664,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1167,7 +1185,7 @@ class Lifter{
     for(const b of BONES){
       const [a,ch]=b, k=BONE_KEY(b), A=px(a), B=px(ch), d2=Math.hypot(B.x-A.x,B.y-A.y)/s, Lk=L[k];
       let dz=Math.sqrt(Math.max(0,Lk*Lk-d2*d2)); if(d2>Lk) flat[k]=1;
-      const wa=wz(a), wb=wz(ch); let sg=this.sign[k]??1;
+      const wa=wz(a), wb=wz(ch); let sg=this.sign[k]??0; // 0＝前後無法判斷時先當作在影像平面上，避免整個人系統性往前或往後倒
       if(wa!=null&&wb!=null){ const dw=wb-wa; if(Math.abs(dw)>Math.max(.03,.25*dz)) sg=Math.sign(dw); }
       this.sign[k]=sg;
       out[ch]={x:(B.x-O.x)/s,y:(B.y-O.y)/s,z:out[a].z+sg*dz};
@@ -1297,6 +1315,84 @@ function bind3D(){
   $("btnScan").onclick=startScan;
   $("btnScanDel").onclick=()=>{ if(confirm("刪除這台裝置上的轉身掃描資料？")){ settings.scan=null; saveSettings(); lifter.reset(); renderScan(); } };
 }
+/* ===================== 雙平面（矢狀面＋冠狀面）關節角度 ===================== */
+// 身體座標系：上＝鉛垂線（假設鏡頭水平）；左右軸＝左髖−右髖投影到水平面；前後軸＝上 × 左（指向身體前方）
+// 這樣不管學員面向哪裡，角度都是「學員自己的」矢狀面／冠狀面，不是鏡頭平面。
+const PLANE_ROWS=[
+  {k:"hipFlex",n:"髖屈曲",p:"sag",u:"+屈曲／−伸展"},{k:"kneeFlex",n:"膝屈曲",p:"sag",u:"0＝伸直"},{k:"ankDF",n:"踝背屈",p:"sag",u:"+背屈／−蹠屈（站立≈0）"},{k:"shFlex",n:"肩屈曲",p:"sag",u:"+前舉／−後伸"},
+  {k:"hipAbd",n:"髖外展",p:"fro",u:"+外展／−內收"},{k:"kneeVal",n:"膝外翻",p:"fro",u:"+外翻（膝內夾）／−內翻"},{k:"shAbd",n:"肩外展",p:"fro",u:"+側舉"},
+  {k:"elbFlex",n:"肘屈曲",p:"3d",u:"3D，不分平面"}
+];
+const PLANE_SINGLE=[{k:"trunkFlex",n:"軀幹前傾",p:"sag",u:"+前傾"},{k:"trunkLat",n:"軀幹側彎",p:"fro",u:"+向左"},{k:"pelvObl",n:"骨盆傾斜",p:"fro",u:"+左髖較高"},{k:"shTilt",n:"肩線傾斜",p:"fro",u:"+左肩較高"}];
+const PLANE_NAME={sag:"矢狀面",fro:"冠狀面","3d":"3D"};
+function computePlanes(W3){
+  if(!W3) return null;
+  const V=i=>{ const p=W3[i]; return {x:p.x,y:-p.y,z:p.z,v:p.visibility??1}; }; // 轉成 y 向上
+  const avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2,v:Math.min(a.v,b.v)});
+  const sb=(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}), dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z, nrm=a=>Math.hypot(a.x,a.y,a.z);
+  const hL=V(23),hR=V(24),sL=V(11),sR=V(12); if(Math.min(hL.v,hR.v)<.5) return null;
+  let ml=sb(hL,hR); ml.y=0; let n=nrm(ml);
+  if(n<1e-4){ ml=sb(sL,sR); ml.y=0; n=nrm(ml); } if(n<1e-4) return null;
+  ml={x:ml.x/n,y:0,z:ml.z/n}; const up={x:0,y:1,z:0}, ap={x:ml.z,y:0,z:-ml.x}; // 前方（正面對鏡頭時＝朝鏡頭，z 為負）
+  const H=avg(hL,hR), S=avg(sL,sR);
+  const sag=v=>[dot(v,ap),v.y], fro=v=>[dot(v,ml),v.y];
+  const sa=(r,t)=>{ const c=r[0]*t[1]-r[1]*t[0], d=r[0]*t[0]+r[1]*t[1]; return (Math.hypot(r[0],r[1])<1e-6||Math.hypot(t[0],t[1])<1e-6)?null:Math.atan2(c,d)*180/Math.PI; };
+  const ok=(...ix)=>ix.every(i=>V(i).v>=.5);
+  const trunkDown=sb(H,S), trunkUp=sb(S,H);
+  const out={L:{},R:{},one:{}};
+  for(const [s,sg,o] of [["L",1,0],["R",-1,1]]){
+    const hip=23+o,kne=25+o,ank=27+o,hee=29+o,toe=31+o,sh=11+o,elb=13+o,wr=15+o, r=out[s];
+    if(ok(hip,kne)){ const th=sb(V(kne),V(hip)); r.hipFlex=sa(sag(trunkDown),sag(th)); const a=sa(fro(trunkDown),fro(th)); r.hipAbd=a==null?null:sg*a; }
+    if(ok(hip,kne,ank)){ const th=sb(V(kne),V(hip)), shk=sb(V(ank),V(kne)); const f=sa(sag(th),sag(shk)); r.kneeFlex=f==null?null:-f; const v=sa(fro(th),fro(shk)); r.kneeVal=v==null?null:sg*v; }
+    if(ok(kne,ank,hee,toe)){ const shk=sb(V(ank),V(kne)), ft=sb(V(toe),V(hee)); const a=sa(sag(shk),sag(ft)); r.ankDF=a==null?null:a-90; }
+    if(ok(sh,elb)){ const hu=sb(V(elb),V(sh)); r.shFlex=sa(sag(trunkDown),sag(hu)); const a=sa(fro(trunkDown),fro(hu)); r.shAbd=a==null?null:sg*a; }
+    if(ok(sh,elb,wr)){ const u=sb(V(sh),V(elb)), f=sb(V(wr),V(elb)), c=dot(u,f)/(nrm(u)*nrm(f)); r.elbFlex=180-Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI; }
+  }
+  if(S.v>=.5){ const f=sa(sag(up),sag(trunkUp)); out.one.trunkFlex=f==null?null:-f; const l=sa(fro(up),fro(trunkUp)); out.one.trunkLat=l==null?null:-l; }
+  { const d=sb(hL,hR), m=dot(d,ml); out.one.pelvObl=Math.atan2(d.y,Math.abs(m)||1e-6)*180/Math.PI; }
+  if(Math.min(sL.v,sR.v)>=.5){ const d=sb(sL,sR), m=dot(d,ml); out.one.shTilt=Math.atan2(d.y,Math.abs(m)||1e-6)*180/Math.PI; }
+  // 身體朝向：0°＝正面對鏡頭，±90°＝側面（鏡頭在 −z 方向）
+  out.heading=Math.atan2(ap.x,-ap.z)*180/Math.PI;
+  // 畫圖用：每個點在身體座標系的 (左右, 前後, 上下)
+  out.pts=W3.map((p,i)=>{ const v=sb(V(i),H); return {m:dot(v,ml),a:dot(v,ap),u:v.y,v:V(i).v}; });
+  return out;
+}
+let livePl=null, livePlSrc="";
+function drawPlaneView(id,Pl,kind){
+  const cv=$(id); if(!cv||cv.offsetParent===null) return;
+  const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1; if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){ cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); }
+  const ctx=cv.getContext("2d"), W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#7a8aa6"; ctx.font=`900 ${12*dpr}px system-ui`; ctx.fillText(kind==="fro"?"冠狀面（正面看）":"矢狀面（右側看）",6*dpr,15*dpr);
+  ctx.font=`700 ${10*dpr}px system-ui`; ctx.fillText(kind==="fro"?"← 學員右　學員左 →":"← 後　前 →",6*dpr,H-6*dpr);
+  if(!Pl) return;
+  const P=Pl.pts, sc=H/2.2, ox=W/2, oy=H*.42, X=p=>ox+(kind==="fro"?p.m:p.a)*sc, Y=p=>oy-p.u*sc;
+  ctx.strokeStyle="rgba(120,140,170,.35)"; ctx.setLineDash([4*dpr,4*dpr]); ctx.lineWidth=dpr; ctx.beginPath(); ctx.moveTo(ox,8*dpr); ctx.lineTo(ox,H-16*dpr); ctx.stroke(); ctx.setLineDash([]); // 鉛垂線
+  ctx.lineCap="round";
+  // 側面看時，靠近觀看者（右側）的肢段畫在上層、遠側畫淡一點
+  const order=kind==="sag"?[...CONN].sort((x,y)=>(x[2]==="L"?0:x[2]==="C"?1:2)-(y[2]==="L"?0:y[2]==="C"?1:2)):CONN;
+  for(const [a,b,s] of order){ if(a<11||b<11) continue; const A=P[a],B=P[b]; if(A.v<.35||B.v<.35) continue; ctx.globalAlpha=kind==="sag"&&s==="L"?.45:1; ctx.strokeStyle=COLORS[s]; ctx.lineWidth=3.5*dpr; ctx.beginPath(); ctx.moveTo(X(A),Y(A)); ctx.lineTo(X(B),Y(B)); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  { const n=P[0]; if(n.v>=.35){ ctx.fillStyle="#fff"; ctx.strokeStyle=COLORS.C; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.arc(X(n),Y(n),6*dpr,0,Math.PI*2); ctx.fill(); ctx.stroke(); } }
+  // 在主要關節旁標角度
+  const lab=(i,txt,s)=>{ const p=P[i]; if(!txt||p.v<.35) return; ctx.font=`900 ${10*dpr}px system-ui`; const w=ctx.measureText(txt).width+6*dpr, x=X(p)+(s==="L"?(kind==="fro"?4:4):-w-4)*1, y=Y(p)-7*dpr; ctx.fillStyle="rgba(255,255,255,.85)"; ctx.fillRect(x,y-9*dpr,w,13*dpr); ctx.fillStyle=COLORS[s]; ctx.fillText(txt,x+3*dpr,y+1*dpr); };
+  const f=v=>v==null?"":Math.round(v)+"°";
+  for(const [s,o] of [["L",0],["R",1]]){ const r=Pl[s];
+    if(kind==="sag"){ lab(23+o,f(r.hipFlex),s); lab(25+o,f(r.kneeFlex),s); lab(11+o,f(r.shFlex),s); }
+    else { lab(23+o,f(r.hipAbd),s); lab(25+o,f(r.kneeVal),s); lab(11+o,f(r.shAbd),s); } }
+}
+function renderPlaneTable(){
+  const Pl=livePl, f=v=>v==null?"—":Math.round(v)+"°";
+  let h=`<tr><th>平面</th><th>關節</th><th class="L">左</th><th class="R">右</th></tr>`;
+  for(const d of PLANE_ROWS) h+=`<tr><td>${PLANE_NAME[d.p]}</td><td>${d.n}<div class="small">${d.u}</div></td><td class="L">${f(Pl?.L[d.k])}</td><td class="R">${f(Pl?.R[d.k])}</td></tr>`;
+  for(const d of PLANE_SINGLE) h+=`<tr><td>${PLANE_NAME[d.p]}</td><td>${d.n}<div class="small">${d.u}</div></td><td colspan="2" style="text-align:center">${f(Pl?.one[d.k])}</td></tr>`;
+  h+=`<tr><td>水平面</td><td>肩髖分離角<div class="small">X-factor</div></td><td colspan="2" style="text-align:center">${f(liveM?.xf)}</td></tr>`;
+  $("planeTable").innerHTML=h;
+  const hd=Pl?.heading;
+  $("plHead").textContent=hd==null?"—":`${Math.round(Math.abs(hd))}°（${Math.abs(hd)<30?"正面":Math.abs(hd)>60&&Math.abs(hd)<120?"側面":Math.abs(hd)>=150?"背面":"斜向"}）`;
+  $("plSrc").textContent=Pl?livePlSrc:"—";
+  const a=hd==null?null:Math.abs(hd);
+  $("plHint").innerHTML=a==null?"":a<30||a>150?"📷 正面／背面拍攝：<b>冠狀面</b>角度最可靠；矢狀面要靠深度推算，誤差較大。":a>60&&a<120?"📷 側面拍攝：<b>矢狀面</b>角度最可靠；冠狀面要靠深度推算，誤差較大。":"📷 斜向拍攝：兩個平面都部分依賴深度推算，建議改成正面或側面。";
+}
 const engine=new MarkerEngine();
 let liveQ=null, liveVM=null;
 
@@ -1311,7 +1407,13 @@ async function startCam(){
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
   stopCam();
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false});
+    const vc={width:{ideal:1280},height:{ideal:720}};
+    if(settings.camId) vc.deviceId={exact:settings.camId}; else vc.facingMode=facing;
+    try{ stream=await navigator.mediaDevices.getUserMedia({video:vc,audio:false}); }
+    catch(e){ if(!settings.camId||e.name==="NotAllowedError") throw e; // 選的相機不見了（例如 Camo 沒開）→ 改用預設相機
+      alert("找不到選擇的相機（如果是 Camo，請確認電腦上的 Camo Studio 和手機上的 Camo 都已開啟並連線）。先改用預設相機。");
+      settings.camId=""; saveSettings(); stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false}); }
+    listCams();
     liveVideo.srcObject=stream; await liveVideo.play();
     liveOn=true; kin.reset();
     $("livePh").hidden=true; liveCanvas.hidden=false;
@@ -1329,9 +1431,20 @@ function stopCam(){
   liveCanvas.hidden=true; $("livePh").hidden=false;
   setAbtn("btnCam","▶️","開鏡頭"); setAbtn("btnCam2","▶️","開鏡頭");
 }
+async function listCams(){
+  if(!navigator.mediaDevices?.enumerateDevices) return;
+  const sel=$("camSel"), cams=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+  const cur=stream?.getVideoTracks()[0]?.getSettings?.().deviceId;
+  sel.innerHTML='<option value="">📷 預設相機</option>'+cams.map((d,i)=>`<option value="${esc(d.deviceId)}">${/camo/i.test(d.label)?"📱 ":"📷 "}${esc(d.label||("相機 "+(i+1)))}</option>`).join("");
+  sel.value=settings.camId&&cams.some(d=>d.deviceId===settings.camId)?settings.camId:(settings.camId?"":"");
+  sel.title=cur?"目前使用："+(cams.find(d=>d.deviceId===cur)?.label||"相機"):"選擇相機";
+}
+$("camSel").onchange=async e=>{ settings.camId=e.target.value; saveSettings(); kin.reset(); engine.reset(); lifter.reset(); if(liveOn) await startCam(); };
+navigator.mediaDevices?.addEventListener?.("devicechange",()=>listCams());
+listCams();
 $("btnCam").onclick=()=>liveOn?stopCam():startCam();
 $("btnCam2").onclick=()=>liveOn?stopCam():startCam();
-$("btnFlip").onclick=async()=>{ facing=facing==="user"?"environment":"user"; liveMirror=facing==="user"; updateMirrorBtn(); if(liveOn) await startCam(); };
+$("btnFlip").onclick=async()=>{ settings.camId=""; saveSettings(); $("camSel").value=""; facing=facing==="user"?"environment":"user"; liveMirror=facing==="user"; updateMirrorBtn(); if(liveOn) await startCam(); };
 function updateMirrorBtn(){ setAbtn("btnMirror","🪞","鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
 $("btnMirror").onclick=()=>{ liveMirror=!liveMirror; updateMirrorBtn(); };
 $("btnSnap").onclick=()=>{ if(!liveOn) return alert("請先開鏡頭"); const a=document.createElement("a"); a.href=liveCanvas.toDataURL("image/png"); a.download=`動作截圖_${settings.name||"學員"}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.click(); };
@@ -1348,6 +1461,7 @@ function processLive(now){
     if(raw&&settings.fill){ liveQ=engine.process(raw,W,H,now/1000,liveHands,{euro:settings.euro}); liveRes=liveQ.lms; }
     else{ liveQ=null; liveRes=raw; }
     liveLift=liveRes?lifter.lift(liveRes,W,H,liveWorld):null;
+    { const src=liveLift||liveWorld; livePl=liveRes&&src?computePlanes(src):null; livePlSrc=liveLift?(settings.scan?"3D 重建（轉身掃描長度）":"3D 重建（身高比例長度）"):"AI 3D 估計"; }
     if(scanRun) scanFrame(liveRes,W,H);
     liveM=liveRes?computeMetrics(liveRes,(settings.angleMode==="lift"&&liveLift)?liveLift:liveWorld,W,H):null;
     liveVM=liveRes?computeVM(liveRes,W,H,liveHands):null;
@@ -1401,7 +1515,7 @@ function handRow(h){ return h?{l:h.lms.map(p=>[p.x,p.y,p.z]),f:h.flex,g:h.grip}:
 function pushRecord(now){
   const t=(now-rec.t0)/1000; $("recTime").textContent=t.toFixed(1);
   rec.data.push({t,a:liveM?{...liveM.angles}:{},trunk:liveM?.trunk??null,xf:liveM?.xf??null,shRot:liveM?.shRot??null,hipRot:liveM?.hipRot??null,neckT:liveM?.neckT??null,neckV:liveM?.neckV??null,h:kin.h,vx:kin.v.x,vy:-kin.v.y,F:kin.Fbw,
-    l:liveRes?liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]):null, src:liveRes?liveRes.map(p=>p.src??0):null, p3:liveLift?liveLift.map(p=>[p.x,-p.y,-p.z]):null, vm:liveVM?VM_KEYS.map(k=>liveVM[k]?[liveVM[k].x,liveVM[k].y]:null):null, hL:handRow(liveHands?.L), hR:handRow(liveHands?.R)});
+    l:liveRes?liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]):null, src:liveRes?liveRes.map(p=>p.src??0):null, p3:liveLift?liveLift.map(p=>[p.x,-p.y,-p.z]):null, pl:livePl?{L:{...livePl.L},R:{...livePl.R},one:{...livePl.one},hd:livePl.heading}:null, vm:liveVM?VM_KEYS.map(k=>liveVM[k]?[liveVM[k].x,liveVM[k].y]:null):null, hL:handRow(liveHands?.L), hR:handRow(liveHands?.R)});
 }
 
 /* ===================== 回顧 ===================== */
@@ -1474,7 +1588,7 @@ rv.addEventListener("timeupdate",drawChart); rv.addEventListener("seeked",drawCh
 new ResizeObserver(()=>drawChart()).observe($("chart"));
 
 function csvMatrix(clip){
-  const head=["time_s",...ANGLES.map(a=>a.k+"_deg"),"trunk_lean_deg","x_factor_deg","shoulder_rot_deg","hip_rot_deg","neck_trunk_deg","ear_shoulder_vertical_deg","com_height_m","com_vx_mps","com_vy_up_mps","vGRF_BW"];
+  const head=["time_s",...ANGLES.map(a=>a.k+"_deg"),"trunk_lean_deg","x_factor_deg","shoulder_rot_deg","hip_rot_deg","neck_trunk_deg","ear_shoulder_vertical_deg","com_height_m","com_vx_mps","com_vy_up_mps","vGRF_BW",...PLANE_ROWS.flatMap(d=>["L","R"].map(x=>`${d.p}_${d.k}${x}_deg`)),...PLANE_SINGLE.map(d=>`${d.p}_${d.k}_deg`),"body_heading_deg"];
   const nf=new Set([0]); // 不做濾波的欄位（時間、可信度、來源代碼）
   for(const l of LM){ head.push(l[0]+"_x",l[0]+"_y",l[0]+"_z",l[0]+"_vis"); nf.add(head.length-1); }
   for(const l of LM){ head.push(l[0]+"_src"); nf.add(head.length-1); }
@@ -1486,7 +1600,7 @@ function csvMatrix(clip){
     for(const h of HAND_LM) head.push(`hand${s}_${h[0]}_x`,`hand${s}_${h[0]}_y`,`hand${s}_${h[0]}_z`);
   }
   const rows=clip.data.map(r=>{
-    const row=[r.t,...ANGLES.map(a=>r.a?.[a.k]),r.trunk,r.xf,r.shRot,r.hipRot,r.neckT,r.neckV,r.h,r.vx,r.vy,r.F];
+    const row=[r.t,...ANGLES.map(a=>r.a?.[a.k]),r.trunk,r.xf,r.shRot,r.hipRot,r.neckT,r.neckV,r.h,r.vx,r.vy,r.F,...PLANE_ROWS.flatMap(d=>[r.pl?.L[d.k],r.pl?.R[d.k]]),...PLANE_SINGLE.map(d=>r.pl?.one[d.k]),r.pl?.hd];
     if(r.l) for(const p of r.l) row.push(p[0],p[1],p[2],p[3]); else for(let i=0;i<33*4;i++) row.push(null);
     for(let i=0;i<33;i++) row.push(r.src?r.src[i]:null);
     for(let i=0;i<33;i++){ const q=r.p3?.[i]; row.push(q?q[0]:null,q?q[1]:null,q?q[2]:null); }
@@ -1691,6 +1805,7 @@ function updateUI(now){
   if(liveQ){ const c=liveQ.counts; $("qMeas").textContent=`${c[0]} / 22 點`; $("qFill").textContent=`${c[1]}／${c[2]}／${c[3]}／${c[4]}`; $("qRej").textContent=engine.rejected;
     $("qList").textContent=liveQ.filled.length?"補點中："+liveQ.filled.map(i=>LM[i][1]+"（"+SRC_NAME[liveRes[i].src]+"）").join("、"):(liveQ.missing?`遺失 ${liveQ.missing} 點`:"所有身體點都由 AI 直接量測 ✅"); }
   else{ $("qMeas").textContent=liveM?"補點已關閉":"—"; $("qFill").textContent="—"; $("qList").textContent=""; }
+  if(!document.querySelector('#planePanel')?.hidden) renderPlaneTable();
   updateScore();
   if(document.body.classList.contains("left-open")) renderSegTable();
 }
@@ -1709,7 +1824,7 @@ if(window.innerWidth>860){ document.body.classList.add("right-open"); } else { $
 
 /* ===================== 主迴圈 ===================== */
 let lastUI=0;
-function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
+function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror");
 requestAnimationFrame(loop);
