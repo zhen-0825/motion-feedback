@@ -294,31 +294,132 @@ th{background:#F1F4F7;font-weight:600;color:var(--muted);font-size:12px}
 button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--Rc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (max-width:760px){ .brand .small{display:none} .modes button{padding:6px 10px} .abtn{min-width:54px} }
+/* ===================== 頁面：首頁／分析／設定 ===================== */
+#home{display:none;overflow:auto;min-height:0}
+body[data-page=home] #home{display:block}
+body[data-page=home] .main{display:none}
+body[data-page=home] #modes,body[data-page=home] #tgRight,body[data-page=settings] #modes,body[data-page=settings] #tgRight{visibility:hidden}
+.hwrap{max-width:1040px;margin:0 auto;padding:40px 28px 56px}
+.hhead h1{font-size:30px;font-weight:700;margin:0;letter-spacing:.02em}
+.hhead p{margin:6px 0 0;color:var(--muted);font-size:15px;max-width:60ch}
+.hstat{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:28px 0 20px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.hstat div{padding:10px 12px 12px 0}
+.hstat span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.hstat b{display:block;font-size:16px;font-weight:600;margin-top:2px;font-family:var(--num),"Noto Sans TC",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htiles{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto auto;gap:14px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:6px;min-height:150px;transition:border-color .15s,background .15s}
+.tile:hover{border-color:#9AA5B4}
+.tile:focus-visible{outline:2px solid var(--Rc);outline-offset:2px}
+.tile svg{width:28px;height:28px;color:var(--ink);margin-bottom:auto}
+.tile h3{margin:14px 0 0;font-size:18px;font-weight:700}
+.tile p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+.tile.primary{grid-row:span 2;background:var(--ink);border-color:var(--ink);color:#fff;min-height:314px}
+.tile.primary svg{color:#fff;width:34px;height:34px}
+.tile.primary h3{font-size:24px}
+.tile.primary p{color:#C9D2DE;font-size:14px}
+.tile.primary:hover{background:#2C3749}
+.tile .go{margin-top:14px;font-size:13px;font-weight:600;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:8px 12px;align-self:flex-start}
+.hflow{margin-top:22px;display:flex;gap:0;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.hflow span{padding:6px 12px;border:1px solid var(--line);background:#fff;margin:0 -1px 0 0}
+.hflow span:first-child{border-radius:8px 0 0 8px}.hflow span:last-child{border-radius:0 8px 8px 0}
+.hflow b{color:var(--ink);font-family:var(--num);margin-right:6px}
+/* 設定頁 */
+body:not([data-page=settings]) #left{display:none}
+body[data-page=app] .main{grid-template-columns:1fr 0}
+body[data-page=app].right-open .main{grid-template-columns:1fr var(--rw)}
+body[data-page=settings] .main{grid-template-columns:1fr!important}
+body[data-page=settings] #center,body[data-page=settings] #right{display:none!important}
+body[data-page=settings] #left{display:block;border:none;background:var(--bg)}
+body[data-page=settings] #left .inner{width:auto;max-width:1120px;margin:0 auto;padding:28px 24px 64px;columns:2 440px;column-gap:18px}
+body[data-page=settings] #left details.panel{display:block;break-inside:avoid;background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 0 16px}
+.setHead{column-span:all;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;border-bottom:2px solid var(--ink);padding-bottom:12px}
+.setHead h2{margin:0;font-size:26px;font-weight:700}
+.setHead p{margin:4px 0 0}
+body:not([data-page=settings]) .setHead{display:none}
+#setDone{background:var(--ink);color:#fff;border-color:var(--ink);padding:10px 16px;font-size:14px}
+/* 畫面內控制列：需要時展開、閒置自動收起 */
+.stage .actionbar{position:absolute;left:50%;bottom:14px;transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;background:rgba(16,21,30,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);color:#fff;flex-wrap:nowrap;max-width:calc(100% - 24px);overflow-x:auto;z-index:4;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.stage.tb-open .actionbar{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.tbToggle{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;height:40px;padding:0 16px;border-radius:20px;background:rgba(16,21,30,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);display:flex;gap:7px;align-items:center;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.tbToggle svg{width:18px;height:18px}
+.stage.tb-open .tbToggle{opacity:0;pointer-events:none}
+.stage .abtn{color:#E8ECF2;white-space:nowrap;min-width:66px}
+.stage .abtn:hover{background:rgba(255,255,255,.1)}
+.stage .abtn:active{background:rgba(255,255,255,.16)}
+.stage .abtn.big{background:#fff;color:var(--ink)}
+.stage .abtn.big:hover{background:#E6EBF1}
+.stage .abtn.off{color:#8D99AB}
+.stage .abtn.rec{background:var(--alert);color:#fff}
+.stage #delClip{color:#FF8A9C}
+.stage .sel{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+.stage .sel option{color:#1B2230}
+.stage .sep{background:rgba(255,255,255,.2)}
+.stage .scorehud{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#fff}
+/* 畫面內動作判讀標題 */
+.stage .dcap{position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);background:rgba(16,21,30,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;border:none;z-index:2;font-size:15px;min-height:0;padding:7px 12px}
+.stage .dcap b{font-weight:700}
+.dcap .w{margin-left:12px;padding-left:12px;border-left:2px solid #FF8A9C;color:#FFB3C0;font-weight:600}
+/* 動作判讀面板 */
+.dhead{font-size:21px;font-weight:700;letter-spacing:.01em}
+.dwarn div{border-left:3px solid var(--alert);padding:2px 0 2px 9px;margin-top:6px;color:var(--alert);font-size:13.5px;font-weight:600}
+.ditems{margin-top:10px}
+.ditems th{background:transparent;text-align:right;font-size:11px;padding:2px 6px}
+.ditems td{padding:5px 6px;font-size:13px}
+.ditems td.v{text-align:right;font-family:var(--num);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;width:56px}
+.ditems sup{color:var(--warn);font-weight:700}
+.dfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.dfoot .pbtn{margin:0;flex:none}
+@media (max-width:860px){
+  .hstat{grid-template-columns:repeat(2,1fr)} .htiles{grid-template-columns:1fr} .tile.primary{grid-row:auto;min-height:180px}
+  body[data-page=settings] #left .inner{columns:1;padding:16px}
+  .hwrap{padding:24px 16px 40px}
+}
 </style>
 </head>
-<body data-mode="mirror">
+<body data-mode="mirror" data-page="home">
 <video id="liveVideo" class="hidden-video" playsinline muted autoplay></video>
 <video id="refVideo" class="hidden-video" playsinline muted loop></video>
 
 <div id="app">
   <header class="topbar">
-    <button class="iconbtn off" id="tgLeft" title="設定與資料">⚙️</button>
+    <button class="iconbtn off" id="btnHome" title="首頁" aria-label="首頁"></button>
+    <button class="iconbtn off" id="tgLeft" title="設定" aria-label="設定"></button>
     <div class="brand"><span class="egg">🏃</span>動作學習系統<span class="small" style="font-weight:700">AI 動作分析與回饋</span></div>
     <div class="modes" id="modes">
-      <button data-mode="mirror" class="on">📷 鏡子</button>
-      <button data-mode="follow">🎬 跟練</button>
-      <button data-mode="review">📼 回顧</button>
+      <button data-mode="mirror" class="on">即時分析</button>
+      <button data-mode="follow">示範比對</button>
+      <button data-mode="review">回顧</button>
     </div>
     <div class="spacer"></div>
     <span class="hud" id="recChip" hidden>● 錄影中 <span id="recTime">0.0</span>s</span>
     <span class="hud" id="fpsChip">— fps</span>
     <button class="hud" id="status">⏳ AI 準備中…</button>
     <button class="iconbtn" id="tgRight" title="數據面板">📊</button>
+  
   </header>
+  <section id="home"><div class="hwrap">
+    <div class="hhead"><h1>動作學習系統</h1><p>以單一鏡頭進行即時姿勢估計、雙平面關節角度分析與動作判讀，錄影後可回放並匯出報告。</p></div>
+    <div class="hstat">
+      <div><span>學員</span><b id="hName">—</b></div>
+      <div><span>身高／體重</span><b id="hBody">—</b></div>
+      <div><span>AI 模型</span><b id="hAI">—</b></div>
+      <div><span>個人化校正</span><b id="hCal">—</b></div>
+      <div><span>本次錄影</span><b id="hClips">0 段</b></div>
+    </div>
+    <div class="htiles">
+      <button class="tile primary" data-go="mirror"><span class="tic" data-ic="cam"></span><h3>即時分析</h3><p>鏡頭即時辨識骨架，顯示矢狀面與冠狀面關節角度、姿勢分類與判讀。</p><span class="go">開始</span></button>
+      <button class="tile" data-go="review"><span class="tic" data-ic="film"></span><h3>回顧與報告</h3><p>逐格回放、角度曲線、肢段參考圖、資料檢查與報告匯出。</p></button>
+      <button class="tile" data-go="follow"><span class="tic" data-ic="mirror"></span><h3>示範比對</h3><p>對照示範影片或目標姿勢，計算姿勢相似度。</p></button>
+      <button class="tile" data-go="settings"><span class="tic" data-ic="sliders"></span><h3>設定與校正</h3><p>學員資料、AI 模型、靜態校正、轉身掃描與參考區間。</p></button>
+      <button class="tile" data-go="report"><span class="tic" data-ic="doc"></span><h3>參考資料</h3><p>關節角度參考區間、計算方法與文獻。</p></button>
+    </div>
+    <div class="hflow"><span><b>1</b>設定學員資料</span><span><b>2</b>靜態校正／轉身掃描</span><span><b>3</b>即時分析與錄影</span><span><b>4</b>回顧與報告</span></div>
+  </div></section>
 
   <div class="main">
     <!-- ================= 左側：設定與資料 ================= -->
     <aside class="drawer" id="left"><div class="inner">
+      <div class="setHead"><div><h2>設定</h2><p class="small">學員資料、AI 模型、個人化校正與參考資料。設定會保存在這台裝置。</p></div><button class="pbtn" id="setDone">完成，回到分析</button></div>
       <details class="panel" open>
         <summary>🧒 學員資料</summary>
         <div class="body">
@@ -492,7 +593,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
         <div class="stagebox" data-modes="mirror follow">
           <div class="stagetitle" data-modes="follow">🙋 我</div>
           <div class="stage" id="liveStage">
-            <div class="ph" id="livePh"><div class="big">🪞</div>按下方「開鏡頭」，就像照鏡子一樣！</div>
+            <div class="ph" id="livePh">點下方「開鏡頭」開始即時分析<br><span class="small">學員全身入鏡，距離鏡頭約 2–3 公尺</span></div>
             <canvas id="liveCanvas" hidden></canvas>
             <div class="countdown" id="countdown"></div>
           </div>
@@ -500,7 +601,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
         </div>
         <div class="reviewCol" data-modes="review">
           <div class="stage">
-            <div class="ph" id="rvPh"><div class="big">📼</div>還沒有錄影，到「📷 鏡子」按 🔴 錄影</div>
+            <div class="ph" id="rvPh">尚無錄影<br><span class="small">在「即時分析」中按「錄影」，完成後會自動回到這裡</span></div>
             <video id="reviewVideo" playsinline hidden></video>
           </div>
           <div class="dcap" id="rvCap"></div>
@@ -567,14 +668,12 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
     <!-- ================= 右側：數據 ================= -->
     <aside class="drawer" id="right"><div class="inner">
       <details class="panel" open data-modes="mirror follow">
-        <summary>🗣️ 現在在做什麼</summary>
+        <summary>動作判讀</summary>
         <div class="body">
-          <div id="dHead" style="font-size:22px;font-weight:900;color:var(--ink,#3b3355);line-height:1.3">開鏡頭後會描述動作</div>
-          <div id="dWarn" style="margin-top:6px;font-weight:800;color:#C0567A;font-size:15px;line-height:1.5"></div>
-          <div id="dItems" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
-          <div class="small" id="dRel" style="margin-top:6px"></div>
-          <button class="pbtn mint" id="tgSpeak" style="margin-top:6px">🔊 朗讀動作：關</button>
-          <div class="small">依各關節角度的門檻自動判讀（例如兩膝平均彎曲 20°／50°／90° 分成微蹲／半蹲／深蹲；膝內夾 10° 以上提醒）。門檻是教學用的經驗值，不是診斷標準。</div>
+          <div id="dHead" class="dhead">尚未開啟鏡頭</div>
+          <div id="dWarn" class="dwarn"></div>
+          <table id="dItems" class="ditems"></table>
+          <div class="dfoot"><span class="small" id="dRel"></span><button class="pbtn" id="tgSpeak">朗讀動作：關</button></div>
         </div>
       </details>
       <details class="panel" open data-modes="follow">
@@ -687,7 +786,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
         <div class="body">
           <select id="series"></select>
           <div class="statline" id="stats"></div>
-          <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。上方色帶是每個時間點的動作（灰＝站立、淺黃＝微蹲、橙＝半蹲、深橙＝深蹲），紅線＝出現提醒；淡灰區塊＝偵測到的每一下。</div>
+          <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。上方色帶為各時間點的姿勢分類（灰：站姿、淺黃：淺蹲、橙：半蹲、深橙：深蹲），紅線：判讀警示；灰底區塊：偵測到的反覆次。</div>
         </div>
       </details>
       <details class="panel" open data-modes="review">
@@ -1345,6 +1444,7 @@ function drawVM(ctx,vm,W,H,mirror){
 /* ===================== 靜態校正 ===================== */
 let calibRun=null;
 function startCalib(){
+  if(document.body.dataset.page!=="app"){ goPage("app"); setMode("mirror"); }
   if(!liveOn) return alert("請先開鏡頭");
   let n=3; const cd=$("countdown"); cd.textContent=n;
   const tm=setInterval(()=>{ n--; if(n>0){ cd.textContent=n; return; } clearInterval(tm); cd.textContent="站好不動 🧍"; calibRun={frames:[],t0:performance.now()};
@@ -1440,6 +1540,7 @@ const lifter=new Lifter(); let liveLift=null;
 const SCAN_SEC=14, SCAN_REV=12; // 錄 14 秒，引導速度 12 秒一圈
 let scanRun=null;
 function startScan(){
+  if(document.body.dataset.page!=="app"){ goPage("app"); setMode("mirror"); }
   if(!liveOn) return alert("請先開鏡頭");
   if(!liveLM) return alert("AI 還沒準備好");
   let n=3; const cd=$("countdown"); cd.textContent=n;
@@ -1650,59 +1751,52 @@ class Describer{
     // 哪個平面比較可信（單鏡頭）
     const hd=Math.abs(Pl.heading??0), froOK=hd<35||hd>145, sagOK=hd>55&&hd<125, est=p=>(p==="sag"&&!sagOK)||(p==="fro"&&!froOK)?"（推算）":"";
     const P=Pl.pts, up=i=>P[i]?.u, ap=i=>P[i]?.a;
-    // ---- 整體姿勢 ----
-    let pose="站立", poseIc="🧍";
+    // ---- 姿勢分類（依膝屈曲平均；單腳支撐、弓箭步以踝高度差／前後距判定）----
+    let pose="站姿";
     const ankDiff=(up(27)!=null&&up(28)!=null)?up(27)-up(28):0, footAP=(ap(27)!=null&&ap(28)!=null)?ap(27)-ap(28):0;
-    if(Math.abs(ankDiff)>.10){ pose=`單腳站（抬${ankDiff>0?"左":"右"}腳）`; poseIc="🦩"; }
-    else if(k!=null&&Math.abs(footAP)>.35&&Math.max(kL??0,kR??0)>50){ pose=`弓箭步（${footAP>0?"左":"右"}腳在前）`; poseIc="🤺"; }
-    else if(k!=null&&k>=DESC_TH.half){ pose="深蹲"; poseIc="🏋️"; }
-    else if(k!=null&&k>=DESC_TH.mild){ pose="半蹲"; poseIc="🏋️"; }
-    else if(k!=null&&k>=DESC_TH.stand){ pose="微蹲"; poseIc="🧎"; }
-    else if(tf!=null&&tf>=DESC_TH.trunkBig){ pose="彎腰前彎"; poseIc="🙇"; }
+    if(Math.abs(ankDiff)>.10) pose=`單腳支撐（${ankDiff>0?"右":"左"}側）`;
+    else if(k!=null&&Math.abs(footAP)>.35&&Math.max(kL??0,kR??0)>50) pose=`弓箭步（${footAP>0?"左":"右"}前）`;
+    else if(k!=null&&k>=DESC_TH.half) pose="深蹲";
+    else if(k!=null&&k>=DESC_TH.mild) pose="半蹲";
+    else if(k!=null&&k>=DESC_TH.stand) pose="淺蹲";
+    else if(tf!=null&&tf>=DESC_TH.trunkBig) pose="軀幹前屈";
     let phase="";
-    if(k!=null&&k>12){ if(this.vK>DESC_TH.vel) phase="正在往下蹲 ⬇️"; else if(this.vK<-DESC_TH.vel) phase="正在站起來 ⬆️"; else if(k>=DESC_TH.stand&&/蹲|弓箭步/.test(pose)) phase="停在低點"; }
-    // ---- 各部位 ----
-    const items=[], warn=[], r=v=>Math.round(v), side=(l,rr,f)=>{ const a=f(l),b=f(rr); if(a&&b&&a===b) return [["雙",a]]; return [["左",a],["右",b]].filter(x=>x[1]); };
-    // 膝
-    const kneeWord=v=>v==null?null:v<DESC_TH.stand?"伸直":v<DESC_TH.mild?"微彎":v<DESC_TH.half?"彎曲（半蹲深度）":"深彎（低於大腿水平）";
-    for(const [s,w] of side(kL,kR,kneeWord)) items.push(`${s}膝${w}${s==="雙"?"":"："+r(s==="左"?kL:kR)+"°"}${s==="雙"?"："+r(kL)+"°／"+r(kR)+"°":""}${est("sag")}`);
-    // 髖
-    const hipWord=v=>v==null?null:v>=60?"大腿往前抬高":v>=25?"髖往前折（屁股往後坐）":v<=-10?"大腿往後伸":null;
-    for(const [s,w] of side(hL,hR,hipWord)) items.push(`${s}髖：${w}${est("sag")}`);
-    const abdWord=v=>v==null?null:v>=DESC_TH.hipAbd?"腿往外打開":v<=-10?"腿往內收（交叉）":null;
-    for(const [s,w] of side(aL,aR,abdWord)) items.push(`${s}腿：${w}${est("fro")}`);
-    // 膝內夾／外開
-    const valWord=v=>v==null?null:v>=valgTh()?"往內夾（外翻）":v<=DESC_TH.varus?"往外開（內翻）":null;
-    for(const [s,w] of side(vL,vR,valWord)){ const txt=`${s}膝蓋${w}`; items.push(txt+est("fro")); if(w.includes("內夾")&&k!=null&&k>=DESC_TH.stand) warn.push(`⚠️ ${s}膝蓋往內夾：蹲下時膝蓋要對準腳尖方向${est("fro")}`); }
-    // 軀幹
-    if(tf!=null){ if(tf>=DESC_TH.trunkBig) items.push(`上身大幅前彎 ${r(tf)}°${est("sag")}`); else if(tf>=DESC_TH.trunkF) items.push(`上身前傾 ${r(tf)}°${est("sag")}`); else if(tf<=DESC_TH.trunkBack) items.push(`上身後仰 ${r(-tf)}°${est("sag")}`); else items.push("上身直立"); }
-    if(tl!=null&&Math.abs(tl)>=DESC_TH.lat){ items.push(`上身往${tl>0?"左":"右"}側彎 ${r(Math.abs(tl))}°${est("fro")}`); if(pose.includes("蹲")||pose.includes("單腳")) warn.push(`⚠️ 上身往${tl>0?"左":"右"}歪：保持身體正中${est("fro")}`); }
-    if(po!=null&&Math.abs(po)>=DESC_TH.pelv) items.push(`骨盆${po>0?"左":"右"}邊較高${est("fro")}`);
-    if(tf!=null&&k!=null&&k>=DESC_TH.mild&&tf>=DESC_TH.trunkBig) warn.push(`⚠️ 蹲的時候上身太往前倒：胸口抬起來${est("sag")}`);
-    // 手臂
-    const armWord=(f,a)=>{ if(f==null&&a==null) return null; if((f??0)>=DESC_TH.armUp||(a??0)>=DESC_TH.armUp) return "手舉過頭"; if((f??0)>=DESC_TH.armFwd&&(f??0)>=(a??0)) return "手往前舉"; if((a??0)>=DESC_TH.armSide) return "手往側邊平舉"; if((f??0)<=-25) return "手往後擺"; return null; };
-    for(const [s,w] of side([sfL,saL],[sfR,saR],x=>armWord(x[0],x[1]))) items.push(`${s}${w.replace("手","手")}${est(w.includes("前")||w.includes("後")?"sag":"fro")}`);
-    const elbWord=v=>v==null?null:v>=DESC_TH.elb?"手肘彎曲":null;
-    for(const [s,w] of side(eL,eR,elbWord)) items.push(`${s}${w}`);
-    // 左右不對稱
-    if(kL!=null&&kR!=null&&!pose.includes("單腳")&&!pose.includes("弓箭步")&&Math.abs(kL-kR)>15&&k>=DESC_TH.stand) warn.push(`⚠️ 左右膝彎曲差 ${r(Math.abs(kL-kR))}°：重心偏${kL>kR?"左":"右"}邊`);
-    for(const [nm,v,k] of [["左膝",kL,"kneeFlex"],["右膝",kR,"kneeFlex"],["左髖",hL,"hipFlex"],["右髖",hR,"hipFlex"],["左膝內夾",vL,"kneeVal"],["右膝內夾",vR,"kneeVal"],["左肘",eL,"elbFlex"],["右肘",eR,"elbFlex"],["上身前傾",tf,"trunkFlex"]]){ const e=REF[k]?.err; if(e&&v!=null&&(v<e[0]||v>e[1])){ warn.push(`🔍 ${nm} ${Math.round(v)}° 超出人體正常範圍：可能是點跑錯，請檢查畫面`); break; } }
-    const head=`${poseIc} ${pose}${phase?"・"+phase:""}`;
+    if(k!=null&&k>12){ if(this.vK>DESC_TH.vel) phase="離心期"; else if(this.vK<-DESC_TH.vel) phase="向心期"; else if(k>=DESC_TH.stand&&/蹲|弓箭步/.test(pose)) phase="底部停留"; }
+    // ---- 運動學指標：[名稱, 左, 右, 平面]；單一值放在左欄 ----
+    const items=[], warn=[], r=v=>v==null?"—":Math.round(v), mk=e=>e?"*":"";
+    const add=(n,l,rr,p,cond=true)=>{ if(cond&&(l!=null||rr!=null)) items.push([n,l,rr,p,!!est(p)]); };
+    add("膝屈曲",kL,kR,"sag");
+    add("髖屈曲",hL,hR,"sag");
+    add("膝外翻",vL,vR,"fro",Math.max(Math.abs(vL??0),Math.abs(vR??0))>=5);
+    add("髖外展",aL,aR,"fro",Math.max(Math.abs(aL??0),Math.abs(aR??0))>=10);
+    add("肩屈曲",sfL,sfR,"sag",Math.max(sfL??0,sfR??0)>=45);
+    add("肩外展",saL,saR,"fro",Math.max(saL??0,saR??0)>=45);
+    add("肘屈曲",eL,eR,"3d",Math.max(eL??0,eR??0)>=30);
+    if(tf!=null) items.push(["軀幹前傾",tf,null,"sag",!!est("sag")]);
+    if(tl!=null&&Math.abs(tl)>=5) items.push([`軀幹側屈（${tl>0?"左":"右"}）`,Math.abs(tl),null,"fro",!!est("fro")]);
+    if(po!=null&&Math.abs(po)>=5) items.push([`骨盆傾斜（${po>0?"左":"右"}高）`,Math.abs(po),null,"fro",!!est("fro")]);
+    // ---- 判讀（依參考區間）----
+    const th=valgTh(), vs=[["L",vL],["R",vR]].filter(x=>x[1]!=null&&x[1]>th);
+    if(vs.length&&k!=null&&k>=DESC_TH.stand) warn.push(`膝外翻過大：${vs.map(x=>x[0]+" "+r(x[1])+"°").join("、")}（參考 ≤${th}°）${mk(est("fro"))}`);
+    if(tf!=null&&k!=null&&k>=DESC_TH.mild&&tf>REF.trunkFlex.task.hi) warn.push(`軀幹前傾過大：${r(tf)}°（參考 ≤${REF.trunkFlex.task.hi}°）${mk(est("sag"))}`);
+    if(tl!=null&&Math.abs(tl)>REF.trunkLat.task.hi&&(/蹲|單腳/.test(pose))) warn.push(`軀幹側屈：${tl>0?"左":"右"} ${r(Math.abs(tl))}°（參考 ±${REF.trunkLat.task.hi}°）${mk(est("fro"))}`);
+    if(kL!=null&&kR!=null&&!/單腳|弓箭步/.test(pose)&&Math.abs(kL-kR)>REF.asym.task.hi&&k>=DESC_TH.stand) warn.push(`膝屈曲不對稱：差 ${r(Math.abs(kL-kR))}°，${kL>kR?"左":"右"}側較深（參考 ≤${REF.asym.task.hi}°）`);
+    for(const [nm,v,kk] of [["左膝屈曲",kL,"kneeFlex"],["右膝屈曲",kR,"kneeFlex"],["左髖屈曲",hL,"hipFlex"],["右髖屈曲",hR,"hipFlex"],["左膝外翻",vL,"kneeVal"],["右膝外翻",vR,"kneeVal"],["左肘屈曲",eL,"elbFlex"],["右肘屈曲",eR,"elbFlex"],["軀幹前傾",tf,"trunkFlex"]]){ const e=REF[kk]?.err; if(e&&v!=null&&(v<e[0]||v>e[1])){ warn.push(`疑似追蹤錯誤：${nm} ${r(v)}° 超出生理範圍`); break; } }
+    const head=`${pose}${phase?"｜"+phase:""}`;
     if(head!==this.lastHead){ this.lastHead=head; this.headSince=t; }
-    return {head,pose,phase,items,warn,stable:t-this.headSince,reliable:froOK?"正面拍：冠狀面為量測、矢狀面為推算":sagOK?"側面拍：矢狀面為量測、冠狀面為推算":"斜向拍：兩個平面都含推算"};
+    return {head,pose,phase,items,warn,stable:t-this.headSince,reliable:froOK?"冠狀面：量測｜矢狀面：推算*":sagOK?"矢狀面：量測｜冠狀面：推算*":"斜向：兩平面皆含推算*"};
   }
 }
 const describer=new Describer(); let liveDesc=null;
 function renderDesc(){
-  const d=liveDesc;
-  $("dHead").textContent=d?d.head:(liveOn?"看不到全身，請退後一點":"開鏡頭後會描述動作");
-  $("dCap").textContent=d?d.head+(d.warn.length?"　"+d.warn[0].replace(/（推算）/g,""):""):"";
-  $("dItems").innerHTML=d?d.items.map(x=>`<span class="chip">${esc(x)}</span>`).join(""):"";
+  const d=liveDesc, r=v=>v==null?"—":Math.round(v)+"°";
+  $("dHead").textContent=d?d.head:(liveOn?"未偵測到完整身體：請退後或調整鏡頭":"尚未開啟鏡頭");
+  const cap=$("dCap"); cap.innerHTML=d?`<b>${esc(d.head)}</b>${d.warn.length?`<span class="w">${esc(d.warn[0].split("：")[0])}</span>`:""}`:""; cap.hidden=!d;
+  $("dItems").innerHTML=d?`<tr><th></th><th class="L">L</th><th class="R">R</th></tr>`+d.items.map(([n,l,rr,p,e])=>`<tr><td>${esc(n)}${e?"<sup>*</sup>":""}</td>${rr===null&&!/膝|髖|肩|肘/.test(n)?`<td colspan="2" class="v">${r(l)}</td>`:`<td class="v L">${r(l)}</td><td class="v R">${r(rr)}</td>`}</tr>`).join(""):"";
   $("dWarn").innerHTML=d?d.warn.map(x=>`<div>${esc(x)}</div>`).join(""):"";
-  $("dRel").textContent=d?d.reliable+"；標「推算」的項目僅供參考。":"";
-  // 朗讀：姿勢穩定 0.8 秒才念，同一句 4 秒內不重複
-  if(settings.speak&&d&&d.stable>.8&&window.speechSynthesis){ const now=performance.now()/1000, say=d.pose+(d.phase?"，"+d.phase.replace(/[⬇️⬆️]/g,""):"")+(d.warn[0]?"。"+d.warn[0].replace(/⚠️|（推算）/g,"").split("：")[0]:"");
-    if(say!==describer.spoken||now-describer.spokenAt>8){ if(say!==describer.spoken||!speechSynthesis.speaking){ if(now-describer.spokenAt>2.5){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(say); u.lang="zh-TW"; u.rate=1.05; speechSynthesis.speak(u); describer.spoken=say; describer.spokenAt=now; } } } }
+  $("dRel").textContent=d?d.reliable+" 為單鏡頭深度推算，僅供參考":"";
+  if(settings.speak&&d&&d.stable>.8&&window.speechSynthesis){ const now=performance.now()/1000, say=d.pose.replace(/（.*?）/,"")+(d.phase?"，"+d.phase:"")+(d.warn[0]?"。"+d.warn[0].split("：")[0]:"");
+    if(say!==describer.spoken||now-describer.spokenAt>8){ if(now-describer.spokenAt>2.5){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(say); u.lang="zh-TW"; u.rate=1.05; speechSynthesis.speak(u); describer.spoken=say; describer.spokenAt=now; } } }
 }
 const engine=new MarkerEngine();
 let liveQ=null, liveVM=null;
@@ -1876,9 +1970,9 @@ const SERIES=[
   ...["L","R"].flatMap(s=>FINGERS.map(f=>({k:`f${s}_${f.k}`,n:`${s==="L"?"左":"右"}${f.n}總彎曲`,u:"°",grp:"手指",get:r=>{ const h=r["h"+s]; const v=h?.f?.[f.k]; return v&&v.every(x=>x!=null)?v[0]+v[1]+v[2]:null; }})))
 ];
 { const s=$("series"); let g=null, og=null; for(const o of SERIES){ if(o.grp!==g){ g=o.grp; og=document.createElement("optgroup"); og.label=g; s.appendChild(og); } const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; og.appendChild(e); } s.value="P_kneeFlex"; s.onchange=drawChart; }
-const POSE_COLOR={"站立":"#DCE3EA","微蹲":"#F2DDB3","半蹲":"#E7B567","深蹲":"#C5862C","彎腰前彎":"#BBC4E6"};
-const poseBase=p=>p?(p.startsWith("單腳")?"單腳站":p.startsWith("弓箭步")?"弓箭步":p):null;
-const POSE_COLOR2=p=>POSE_COLOR[p]||(p==="單腳站"?"#A9D2E4":p==="弓箭步"?"#E3B9C2":"#E6EAF0");
+const POSE_COLOR={"站姿":"#DCE3EA","淺蹲":"#F2DDB3","半蹲":"#E7B567","深蹲":"#C5862C","軀幹前屈":"#BBC4E6"};
+const poseBase=p=>p?(p.startsWith("單腳")?"單腳支撐":p.startsWith("弓箭步")?"弓箭步":p):null;
+const POSE_COLOR2=p=>POSE_COLOR[p]||(p==="單腳支撐"?"#A9D2E4":p==="弓箭步"?"#E3B9C2":"#E6EAF0");
 function drawChart(){
   const cv=$("chart"),dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w) return;
   cv.width=w*dpr; cv.height=h*dpr;
@@ -2424,7 +2518,7 @@ function updateUI(now){
   if(!document.querySelector('#planePanel')?.hidden) renderPlaneTable();
   renderDesc();
   updateScore();
-  if(document.body.classList.contains("left-open")) renderSegTable();
+  if(document.body.dataset.page==="settings") renderSegTable();
 }
 
 /* ===================== 模式與面板開關 ===================== */
@@ -2436,7 +2530,62 @@ function setMode(m){
 }
 document.querySelectorAll("#modes button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 function toggleDrawer(side){ const c=side+"-open"; document.body.classList.toggle(c); $(side==="left"?"tgLeft":"tgRight").classList.toggle("off",!document.body.classList.contains(c)); setTimeout(drawChart,280); }
-$("tgLeft").onclick=()=>toggleDrawer("left"); $("tgRight").onclick=()=>toggleDrawer("right");
+$("tgRight").onclick=()=>toggleDrawer("right");
+/* ===================== 頁面切換：首頁／分析／設定 ===================== */
+$("btnHome").innerHTML=svgI('<path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/>');
+document.querySelectorAll(".tic").forEach(e=>e.outerHTML=ICON[e.dataset.ic]);
+function goPage(p){
+  document.body.dataset.page=p;
+  $("btnHome").classList.toggle("off",p!=="home"); $("tgLeft").classList.toggle("off",p!=="settings");
+  if(p==="home") renderHome();
+  if(p==="settings"){ renderSegTable(); renderRefTable(); }
+  setTimeout(()=>{ drawChart(); if(document.body.dataset.mode==="review"){ renderSkel(); renderCheck(); } },60);
+}
+function renderHome(){
+  $("hName").textContent=settings.name||"未填";
+  $("hBody").textContent=`${settings.height||"—"} cm／${settings.weight||"—"} kg${settings.sex?"／"+({F:"女",M:"男"}[settings.sex]):""}`;
+  const st=$("status"); $("hAI").textContent=st.classList.contains("ok")?"已載入":st.classList.contains("err")?"載入失敗":"載入中";
+  $("hCal").textContent=[settings.calib?"靜態校正":"",settings.scan?"轉身掃描":""].filter(Boolean).join("＋")||"未校正";
+  $("hClips").textContent=`${clips.length} 段`;
+}
+document.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{ const g=t.dataset.go;
+  if(g==="settings") return goPage("settings");
+  if(g==="report"){ goPage("settings"); setTimeout(()=>{ const d=[...document.querySelectorAll("#left details")].find(x=>/參考區間/.test(x.querySelector("summary").textContent)); if(d){ d.open=true; d.scrollIntoView({behavior:"smooth"}); } },50); return; }
+  goPage("app"); setMode(g); });
+$("btnHome").onclick=()=>goPage("home");
+$("tgLeft").onclick=()=>goPage(document.body.dataset.page==="settings"?"app":"settings");
+$("setDone").onclick=()=>goPage("app");
+document.querySelector(".brand").style.cursor="pointer"; document.querySelector(".brand").onclick=()=>goPage("home");
+setInterval(()=>{ if(document.body.dataset.page==="home") renderHome(); },1500);
+
+/* ===================== 畫面內控制列：需要時展開，閒置自動收起 ===================== */
+const rvStage=document.querySelector(".reviewCol .stage");
+{ const bars=[...document.querySelectorAll(".actionbar")];
+  for(const b of bars){ const m=b.dataset.modes; (m==="review"?rvStage:$("liveStage")).appendChild(b); }
+  $("liveStage").appendChild($("dCap")); rvStage.appendChild($("rvCap")); }
+const TB=[];
+function canHide(st){
+  if(st===$("liveStage")&&!liveOn) return false;
+  if(st===rvStage&&!curClip) return false;
+  const a=document.activeElement; if(a&&st.contains(a)&&a.tagName==="SELECT") return false;
+  return true;
+}
+for(const st of [$("liveStage"),rvStage]){
+  const tb=document.createElement("button"); tb.className="tbToggle"; tb.type="button"; tb.setAttribute("aria-label","顯示控制列"); tb.innerHTML=ICON.sliders+"控制"; st.appendChild(tb);
+  const o={st,tmr:null}; TB.push(o);
+  const arm=(ms=4000)=>{ clearTimeout(o.tmr); o.tmr=setTimeout(()=>{ o.tmr=null; if(canHide(st)) st.classList.remove("tb-open"); else arm(1500); },ms); };
+  o.arm=arm;
+  tb.onclick=e=>{ e.stopPropagation(); st.classList.add("tb-open"); arm(); };
+  st.addEventListener("pointermove",e=>{ if(e.target.closest(".actionbar")) arm(); });
+  st.addEventListener("focusin",()=>arm(6000));
+  st.addEventListener("click",e=>{ const bar=e.target.closest(".actionbar");
+    if(bar){ if(e.target.closest(".abtn")) arm(1500); else arm(); return; }
+    if(e.target.closest(".tbToggle,iframe")) return;
+    if(st.classList.contains("tb-open")&&canHide(st)){ st.classList.remove("tb-open"); clearTimeout(o.tmr); } else { st.classList.add("tb-open"); arm(); } });
+  st.addEventListener("change",()=>arm(1500));
+}
+setInterval(()=>{ for(const o of TB){ if(!canHide(o.st)){ o.st.classList.add("tb-open"); } else if(o.st.classList.contains("tb-open")&&!o.tmr) o.arm(3000); } },500);
+
 if(window.innerWidth>860){ document.body.classList.add("right-open"); } else { $("tgRight").classList.add("off"); }
 
 /* ===================== 主迴圈 ===================== */
@@ -2444,7 +2593,7 @@ let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
-document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/現在在做什麼|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror");
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateMirrorBtn(); setMode("mirror"); goPage("home");
 requestAnimationFrame(loop);
 loadModels();
 </script>
