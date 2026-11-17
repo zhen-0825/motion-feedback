@@ -48,6 +48,8 @@ body:not(.left-open) #left, body:not(.right-open) #right{border:none}
 #center{display:flex;flex-direction:column;min-width:0;min-height:0;padding:10px;gap:10px}
 .stageArea{flex:1;min-height:0;display:flex;gap:10px}
 .stagebox{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px}
+.chip{display:inline-block;background:#F3EEFF;border:2px solid #E2D8FF;border-radius:999px;padding:3px 10px;font-weight:800;font-size:14px;color:#4b3f72}
+.dcap{min-height:30px;font-weight:900;font-size:18px;color:#3b3355;text-align:center;padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stagetitle{font-weight:900;font-size:15px;color:var(--muted);padding-left:8px}
 .stage{position:relative;flex:1;min-height:0;background:var(--stage);border-radius:22px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:5px solid #fff;box-shadow:0 6px 0 var(--line)}
 .stage canvas,.stage video{width:100%;height:100%;object-fit:contain;display:block}
@@ -335,6 +337,7 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
             <canvas id="liveCanvas" hidden></canvas>
             <div class="countdown" id="countdown"></div>
           </div>
+          <div class="dcap" id="dCap" data-modes="mirror follow"></div>
         </div>
         <div class="reviewCol" data-modes="review">
           <div class="stage">
@@ -403,6 +406,17 @@ ol,ul{padding-left:20px;margin:6px 0} li{margin:3px 0;font-size:14px}
 
     <!-- ================= 右側：數據 ================= -->
     <aside class="drawer" id="right"><div class="inner">
+      <details class="panel" open data-modes="mirror follow">
+        <summary>🗣️ 現在在做什麼</summary>
+        <div class="body">
+          <div id="dHead" style="font-size:22px;font-weight:900;color:var(--ink,#3b3355);line-height:1.3">開鏡頭後會描述動作</div>
+          <div id="dWarn" style="margin-top:6px;font-weight:800;color:#C0567A;font-size:15px;line-height:1.5"></div>
+          <div id="dItems" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div class="small" id="dRel" style="margin-top:6px"></div>
+          <button class="pbtn mint" id="tgSpeak" style="margin-top:6px">🔊 朗讀動作：關</button>
+          <div class="small">依各關節角度的門檻自動判讀（例如兩膝平均彎曲 20°／50°／90° 分成微蹲／半蹲／深蹲；膝內夾 10° 以上提醒）。門檻是教學用的經驗值，不是診斷標準。</div>
+        </div>
+      </details>
       <details class="panel" open data-modes="follow">
         <summary>🎬 示範影片來源</summary>
         <div class="body">
@@ -664,7 +678,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1338,14 +1352,16 @@ function computePlanes(W3){
   const sag=v=>[dot(v,ap),v.y], fro=v=>[dot(v,ml),v.y];
   const sa=(r,t)=>{ const c=r[0]*t[1]-r[1]*t[0], d=r[0]*t[0]+r[1]*t[1]; return (Math.hypot(r[0],r[1])<1e-6||Math.hypot(t[0],t[1])<1e-6)?null:Math.atan2(c,d)*180/Math.PI; };
   const ok=(...ix)=>ix.every(i=>V(i).v>=.5);
+  // 肢段在該平面上的投影太短（例如深蹲時大腿幾乎正對前方，在冠狀面上只剩一小段）→ 角度不穩定，不報告
+  const pa=(pl,a,b)=>{ const A=pl(a),B=pl(b); if(Math.hypot(A[0],A[1])<.4*nrm(a)||Math.hypot(B[0],B[1])<.4*nrm(b)) return null; return sa(A,B); };
   const trunkDown=sb(H,S), trunkUp=sb(S,H);
   const out={L:{},R:{},one:{}};
   for(const [s,sg,o] of [["L",1,0],["R",-1,1]]){
     const hip=23+o,kne=25+o,ank=27+o,hee=29+o,toe=31+o,sh=11+o,elb=13+o,wr=15+o, r=out[s];
-    if(ok(hip,kne)){ const th=sb(V(kne),V(hip)); r.hipFlex=sa(sag(trunkDown),sag(th)); const a=sa(fro(trunkDown),fro(th)); r.hipAbd=a==null?null:sg*a; }
-    if(ok(hip,kne,ank)){ const th=sb(V(kne),V(hip)), shk=sb(V(ank),V(kne)); const f=sa(sag(th),sag(shk)); r.kneeFlex=f==null?null:-f; const v=sa(fro(th),fro(shk)); r.kneeVal=v==null?null:sg*v; }
-    if(ok(kne,ank,hee,toe)){ const shk=sb(V(ank),V(kne)), ft=sb(V(toe),V(hee)); const a=sa(sag(shk),sag(ft)); r.ankDF=a==null?null:a-90; }
-    if(ok(sh,elb)){ const hu=sb(V(elb),V(sh)); r.shFlex=sa(sag(trunkDown),sag(hu)); const a=sa(fro(trunkDown),fro(hu)); r.shAbd=a==null?null:sg*a; }
+    if(ok(hip,kne)){ const th=sb(V(kne),V(hip)); r.hipFlex=pa(sag,trunkDown,th); const a=pa(fro,trunkDown,th); r.hipAbd=a==null?null:sg*a; }
+    if(ok(hip,kne,ank)){ const th=sb(V(kne),V(hip)), shk=sb(V(ank),V(kne)); const f=pa(sag,th,shk); r.kneeFlex=f==null?null:-f; const v=pa(fro,th,shk); r.kneeVal=v==null?null:sg*v; }
+    if(ok(kne,ank,hee,toe)){ const shk=sb(V(ank),V(kne)), ft=sb(V(toe),V(hee)); const a=pa(sag,shk,ft); r.ankDF=a==null?null:a-90; }
+    if(ok(sh,elb)){ const hu=sb(V(elb),V(sh)); r.shFlex=pa(sag,trunkDown,hu); const a=pa(fro,trunkDown,hu); r.shAbd=a==null?null:sg*a; }
     if(ok(sh,elb,wr)){ const u=sb(V(sh),V(elb)), f=sb(V(wr),V(elb)), c=dot(u,f)/(nrm(u)*nrm(f)); r.elbFlex=180-Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI; }
   }
   if(S.v>=.5){ const f=sa(sag(up),sag(trunkUp)); out.one.trunkFlex=f==null?null:-f; const l=sa(fro(up),fro(trunkUp)); out.one.trunkLat=l==null?null:-l; }
@@ -1392,6 +1408,78 @@ function renderPlaneTable(){
   $("plSrc").textContent=Pl?livePlSrc:"—";
   const a=hd==null?null:Math.abs(hd);
   $("plHint").innerHTML=a==null?"":a<30||a>150?"📷 正面／背面拍攝：<b>冠狀面</b>角度最可靠；矢狀面要靠深度推算，誤差較大。":a>60&&a<120?"📷 側面拍攝：<b>矢狀面</b>角度最可靠；冠狀面要靠深度推算，誤差較大。":"📷 斜向拍攝：兩個平面都部分依賴深度推算，建議改成正面或側面。";
+}
+/* ===================== 動作描述：把角度翻成「現在在做什麼」 ===================== */
+// 規則式判讀（不是 AI 分類器）：先平滑角度，再依門檻判斷姿勢、動作方向、各部位狀態與提醒。
+const DESC_TH={stand:20,mild:50,half:90,valg:10,varus:-10,trunkF:15,trunkBig:45,trunkBack:-10,lat:10,armFwd:60,armUp:150,armSide:60,elb:100,pelv:5,hipAbd:20,vel:35};
+class Describer{
+  constructor(){ this.s={}; this.t=null; this.prevK=null; this.vK=0; this.lastHead=""; this.headSince=0; this.spoken=""; this.spokenAt=0; }
+  sm(k,v,a=.35){ if(v==null) return this.s[k]=null; const o=this.s[k]; return this.s[k]=(o==null?v:o+a*(v-o)); }
+  update(Pl,t){
+    if(!Pl) return null;
+    const S=(k,v)=>this.sm(k,v), L=Pl.L, R=Pl.R, O=Pl.one;
+    const kL=S("kL",L.kneeFlex),kR=S("kR",R.kneeFlex),hL=S("hL",L.hipFlex),hR=S("hR",R.hipFlex),vL=S("vL",L.kneeVal),vR=S("vR",R.kneeVal),
+      aL=S("aL",L.hipAbd),aR=S("aR",R.hipAbd),sfL=S("sfL",L.shFlex),sfR=S("sfR",R.shFlex),saL=S("saL",L.shAbd),saR=S("saR",R.shAbd),
+      eL=S("eL",L.elbFlex),eR=S("eR",R.elbFlex),tf=S("tf",O.trunkFlex),tl=S("tl",O.trunkLat),po=S("po",O.pelvObl);
+    // 膝屈曲速度（°/秒）判斷「往下」或「往上」
+    const kAvg=[kL,kR].filter(v=>v!=null); const k=kAvg.length?kAvg.reduce((a,b)=>a+b)/kAvg.length:null;
+    if(k!=null&&this.prevK!=null&&this.t!=null&&t>this.t){ const v=(k-this.prevK)/(t-this.t); this.vK+=.25*(v-this.vK); }
+    this.prevK=k; this.t=t;
+    // 哪個平面比較可信（單鏡頭）
+    const hd=Math.abs(Pl.heading??0), froOK=hd<35||hd>145, sagOK=hd>55&&hd<125, est=p=>(p==="sag"&&!sagOK)||(p==="fro"&&!froOK)?"（推算）":"";
+    const P=Pl.pts, up=i=>P[i]?.u, ap=i=>P[i]?.a;
+    // ---- 整體姿勢 ----
+    let pose="站立", poseIc="🧍";
+    const ankDiff=(up(27)!=null&&up(28)!=null)?up(27)-up(28):0, footAP=(ap(27)!=null&&ap(28)!=null)?ap(27)-ap(28):0;
+    if(Math.abs(ankDiff)>.10){ pose=`單腳站（抬${ankDiff>0?"左":"右"}腳）`; poseIc="🦩"; }
+    else if(k!=null&&Math.abs(footAP)>.35&&Math.max(kL??0,kR??0)>50){ pose=`弓箭步（${footAP>0?"左":"右"}腳在前）`; poseIc="🤺"; }
+    else if(k!=null&&k>=DESC_TH.half){ pose="深蹲"; poseIc="🏋️"; }
+    else if(k!=null&&k>=DESC_TH.mild){ pose="半蹲"; poseIc="🏋️"; }
+    else if(k!=null&&k>=DESC_TH.stand){ pose="微蹲"; poseIc="🧎"; }
+    else if(tf!=null&&tf>=DESC_TH.trunkBig){ pose="彎腰前彎"; poseIc="🙇"; }
+    let phase="";
+    if(k!=null&&k>12){ if(this.vK>DESC_TH.vel) phase="正在往下蹲 ⬇️"; else if(this.vK<-DESC_TH.vel) phase="正在站起來 ⬆️"; else if(k>=DESC_TH.stand&&/蹲|弓箭步/.test(pose)) phase="停在低點"; }
+    // ---- 各部位 ----
+    const items=[], warn=[], r=v=>Math.round(v), side=(l,rr,f)=>{ const a=f(l),b=f(rr); if(a&&b&&a===b) return [["雙",a]]; return [["左",a],["右",b]].filter(x=>x[1]); };
+    // 膝
+    const kneeWord=v=>v==null?null:v<DESC_TH.stand?"伸直":v<DESC_TH.mild?"微彎":v<DESC_TH.half?"彎曲（半蹲深度）":"深彎（低於大腿水平）";
+    for(const [s,w] of side(kL,kR,kneeWord)) items.push(`${s}膝${w}${s==="雙"?"":"："+r(s==="左"?kL:kR)+"°"}${s==="雙"?"："+r(kL)+"°／"+r(kR)+"°":""}${est("sag")}`);
+    // 髖
+    const hipWord=v=>v==null?null:v>=60?"大腿往前抬高":v>=25?"髖往前折（屁股往後坐）":v<=-10?"大腿往後伸":null;
+    for(const [s,w] of side(hL,hR,hipWord)) items.push(`${s}髖：${w}${est("sag")}`);
+    const abdWord=v=>v==null?null:v>=DESC_TH.hipAbd?"腿往外打開":v<=-10?"腿往內收（交叉）":null;
+    for(const [s,w] of side(aL,aR,abdWord)) items.push(`${s}腿：${w}${est("fro")}`);
+    // 膝內夾／外開
+    const valWord=v=>v==null?null:v>=DESC_TH.valg?"往內夾（外翻）":v<=DESC_TH.varus?"往外開（內翻）":null;
+    for(const [s,w] of side(vL,vR,valWord)){ const txt=`${s}膝蓋${w}`; items.push(txt+est("fro")); if(w.includes("內夾")&&k!=null&&k>=DESC_TH.stand) warn.push(`⚠️ ${s}膝蓋往內夾：蹲下時膝蓋要對準腳尖方向${est("fro")}`); }
+    // 軀幹
+    if(tf!=null){ if(tf>=DESC_TH.trunkBig) items.push(`上身大幅前彎 ${r(tf)}°${est("sag")}`); else if(tf>=DESC_TH.trunkF) items.push(`上身前傾 ${r(tf)}°${est("sag")}`); else if(tf<=DESC_TH.trunkBack) items.push(`上身後仰 ${r(-tf)}°${est("sag")}`); else items.push("上身直立"); }
+    if(tl!=null&&Math.abs(tl)>=DESC_TH.lat){ items.push(`上身往${tl>0?"左":"右"}側彎 ${r(Math.abs(tl))}°${est("fro")}`); if(pose.includes("蹲")||pose.includes("單腳")) warn.push(`⚠️ 上身往${tl>0?"左":"右"}歪：保持身體正中${est("fro")}`); }
+    if(po!=null&&Math.abs(po)>=DESC_TH.pelv) items.push(`骨盆${po>0?"左":"右"}邊較高${est("fro")}`);
+    if(tf!=null&&k!=null&&k>=DESC_TH.mild&&tf>=DESC_TH.trunkBig) warn.push(`⚠️ 蹲的時候上身太往前倒：胸口抬起來${est("sag")}`);
+    // 手臂
+    const armWord=(f,a)=>{ if(f==null&&a==null) return null; if((f??0)>=DESC_TH.armUp||(a??0)>=DESC_TH.armUp) return "手舉過頭"; if((f??0)>=DESC_TH.armFwd&&(f??0)>=(a??0)) return "手往前舉"; if((a??0)>=DESC_TH.armSide) return "手往側邊平舉"; if((f??0)<=-25) return "手往後擺"; return null; };
+    for(const [s,w] of side([sfL,saL],[sfR,saR],x=>armWord(x[0],x[1]))) items.push(`${s}${w.replace("手","手")}${est(w.includes("前")||w.includes("後")?"sag":"fro")}`);
+    const elbWord=v=>v==null?null:v>=DESC_TH.elb?"手肘彎曲":null;
+    for(const [s,w] of side(eL,eR,elbWord)) items.push(`${s}${w}`);
+    // 左右不對稱
+    if(kL!=null&&kR!=null&&!pose.includes("單腳")&&!pose.includes("弓箭步")&&Math.abs(kL-kR)>15&&k>=DESC_TH.stand) warn.push(`⚠️ 左右膝彎曲差 ${r(Math.abs(kL-kR))}°：重心偏${kL>kR?"左":"右"}邊`);
+    const head=`${poseIc} ${pose}${phase?"・"+phase:""}`;
+    if(head!==this.lastHead){ this.lastHead=head; this.headSince=t; }
+    return {head,pose,phase,items,warn,stable:t-this.headSince,reliable:froOK?"正面拍：冠狀面為量測、矢狀面為推算":sagOK?"側面拍：矢狀面為量測、冠狀面為推算":"斜向拍：兩個平面都含推算"};
+  }
+}
+const describer=new Describer(); let liveDesc=null;
+function renderDesc(){
+  const d=liveDesc;
+  $("dHead").textContent=d?d.head:(liveOn?"看不到全身，請退後一點":"開鏡頭後會描述動作");
+  $("dCap").textContent=d?d.head+(d.warn.length?"　"+d.warn[0].replace(/（推算）/g,""):""):"";
+  $("dItems").innerHTML=d?d.items.map(x=>`<span class="chip">${esc(x)}</span>`).join(""):"";
+  $("dWarn").innerHTML=d?d.warn.map(x=>`<div>${esc(x)}</div>`).join(""):"";
+  $("dRel").textContent=d?d.reliable+"；標「推算」的項目僅供參考。":"";
+  // 朗讀：姿勢穩定 0.8 秒才念，同一句 4 秒內不重複
+  if(settings.speak&&d&&d.stable>.8&&window.speechSynthesis){ const now=performance.now()/1000, say=d.pose+(d.phase?"，"+d.phase.replace(/[⬇️⬆️]/g,""):"")+(d.warn[0]?"。"+d.warn[0].replace(/⚠️|（推算）/g,"").split("：")[0]:"");
+    if(say!==describer.spoken||now-describer.spokenAt>8){ if(say!==describer.spoken||!speechSynthesis.speaking){ if(now-describer.spokenAt>2.5){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(say); u.lang="zh-TW"; u.rate=1.05; speechSynthesis.speak(u); describer.spoken=say; describer.spokenAt=now; } } } }
 }
 const engine=new MarkerEngine();
 let liveQ=null, liveVM=null;
@@ -1462,6 +1550,7 @@ function processLive(now){
     else{ liveQ=null; liveRes=raw; }
     liveLift=liveRes?lifter.lift(liveRes,W,H,liveWorld):null;
     { const src=liveLift||liveWorld; livePl=liveRes&&src?computePlanes(src):null; livePlSrc=liveLift?(settings.scan?"3D 重建（轉身掃描長度）":"3D 重建（身高比例長度）"):"AI 3D 估計"; }
+    liveDesc=describer.update(livePl,now/1000);
     if(scanRun) scanFrame(liveRes,W,H);
     liveM=liveRes?computeMetrics(liveRes,(settings.angleMode==="lift"&&liveLift)?liveLift:liveWorld,W,H):null;
     liveVM=liveRes?computeVM(liveRes,W,H,liveHands):null;
@@ -1780,7 +1869,7 @@ function bindSettings(){
   const tg=(id,key,label,after)=>{ const b=$(id),up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{ settings[key]=!settings[key]; saveSettings(); up(); after&&after(); }; };
   tg("tgHands","hands","✋ 手指追蹤",async()=>{ if(settings.hands&&!handLM&&vision){ setStatus("⏳ 載入手指模型…"); await loadHands(); } refreshStatus(); });
   tg("tgAngles","showAngles","🔢 角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
-  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgEuro","euro","〰️ 即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
+  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpeak","speak","🔊 朗讀動作",()=>{ if(!settings.speak&&window.speechSynthesis) speechSynthesis.cancel(); }); tg("tgEuro","euro","〰️ 即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
   $("btnCalib").onclick=startCalib;
 }
 function updateUI(now){
@@ -1806,6 +1895,7 @@ function updateUI(now){
     $("qList").textContent=liveQ.filled.length?"補點中："+liveQ.filled.map(i=>LM[i][1]+"（"+SRC_NAME[liveRes[i].src]+"）").join("、"):(liveQ.missing?`遺失 ${liveQ.missing} 點`:"所有身體點都由 AI 直接量測 ✅"); }
   else{ $("qMeas").textContent=liveM?"補點已關閉":"—"; $("qFill").textContent="—"; $("qList").textContent=""; }
   if(!document.querySelector('#planePanel')?.hidden) renderPlaneTable();
+  renderDesc();
   updateScore();
   if(document.body.classList.contains("left-open")) renderSegTable();
 }
