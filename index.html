@@ -330,8 +330,8 @@ body[data-page=app].right-open .main{grid-template-columns:1fr var(--rw)}
 body[data-page=settings] .main{grid-template-columns:1fr!important}
 body[data-page=settings] #center,body[data-page=settings] #right{display:none!important}
 body[data-page=settings] #left{display:block;border:none;background:var(--bg)}
-body[data-page=settings] #left .inner{width:auto;max-width:1120px;margin:0 auto;padding:28px 24px 64px;columns:2 440px;column-gap:18px}
-body[data-page=settings] #left details.panel{display:block;break-inside:avoid;background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 0 16px}
+body[data-page=settings] #left .inner{width:auto;max-width:820px;margin:0 auto;padding:28px 24px 64px}
+body[data-page=settings] #left details.panel{display:block;break-inside:avoid;background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 0 12px;overflow:hidden}
 .setHead{column-span:all;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;border-bottom:2px solid var(--ink);padding-bottom:12px}
 .setHead h2{margin:0;font-size:26px;font-weight:700}
 .setHead p{margin:4px 0 0}
@@ -506,6 +506,8 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
   .stage .abtn{min-width:46px}
   .stage #recLen{max-width:88px;min-width:84px}
 }
+.setHead+.setSec{margin-top:6px}
+.setSec{font-size:12.5px;font-weight:600;color:var(--muted);margin:18px 2px 8px;letter-spacing:.02em}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -560,6 +562,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
     <!-- ================= 左側：設定與資料 ================= -->
     <aside class="drawer" id="left"><div class="inner">
       <div class="setHead"><div><h2>設定</h2><p class="small">學員資料、AI 模型、個人化校正與參考資料。設定會保存在這台裝置。</p></div><button class="pbtn" id="setDone">完成，回到分析</button></div>
+      <h3 class="setSec">操作與校正</h3>
       <details class="panel" open>
         <summary>🧒 學員資料</summary>
         <div class="body">
@@ -572,6 +575,24 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
           <label class="f" for="inSex">性別（膝內夾參考值會依性別調整）</label>
           <select id="inSex"><option value="">未填</option><option value="F">女</option><option value="M">男</option></select>
           <div class="note">身高用來把像素換算成公尺，體重用來算肢段質量與力。資料只存在這台裝置。</div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>🧍 靜態校正</summary>
+        <div class="body">
+          <div class="small">參考 Vicon／Visual3D 先錄「靜態站姿」再套用到動態的做法：學員面向鏡頭、雙手微張站好 3 秒，系統記下這個人的肢段比例和各叢集形狀，之後點被遮住時就能用個人化的模板推算。</div>
+          <button class="pbtn peach" id="btnCalib" style="margin-top:6px">🧍 開始靜態校正（倒數 3 秒＋錄 3 秒）</button>
+          <div class="tw" style="margin-top:6px"><table id="calibTable"></table></div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>🔄 轉身掃描（3D）</summary>
+        <div class="body">
+          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後跟著畫面右側的示範人形和提示音，<b>向左原地慢慢轉一圈</b>（約 12 秒；每 30° 一聲嗶、每 90° 有語音，背對鏡頭時也能跟上）。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
+          <button class="pbtn peach" id="btnScan" style="margin-top:6px">🔄 開始轉身掃描（倒數 3 秒＋轉 14 秒）</button>
+          <button class="pbtn" id="btnScanDel">🗑️ 刪除掃描</button>
+          <div class="tw" style="margin-top:6px"><table id="scanTable"></table></div>
+          <div class="small">注意：掃描得到的是「身體尺寸」；動作中每一格仍只有一個視角，深度是用肢段長度推算（Taylor 2000），前後方向偶爾會判斷錯。</div>
         </div>
       </details>
       <details class="panel" open>
@@ -605,7 +626,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
           <label class="f">標記點精度</label>
           <div>
             <button class="pbtn mint" id="tgFill">🛠️ 缺點補點：開</button>
-            <button class="pbtn mint" id="tgEuro">〰️ 即時平滑（1€）：開</button>
+            <button class="pbtn mint" id="tgEuro">即時平滑（1€）：開</button>
             <button class="pbtn mint" id="tgVM">📍 PiG 虛擬標記：關</button>
             <button class="pbtn mint" id="tgVMLabel">🏷️ 標記名稱：關</button>
           </div>
@@ -629,38 +650,6 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
         </div>
       </details>
       <details class="panel">
-        <summary>🧍 靜態校正</summary>
-        <div class="body">
-          <div class="small">參考 Vicon／Visual3D 先錄「靜態站姿」再套用到動態的做法：學員面向鏡頭、雙手微張站好 3 秒，系統記下這個人的肢段比例和各叢集形狀，之後點被遮住時就能用個人化的模板推算。</div>
-          <button class="pbtn peach" id="btnCalib" style="margin-top:6px">🧍 開始靜態校正（倒數 3 秒＋錄 3 秒）</button>
-          <div class="tw" style="margin-top:6px"><table id="calibTable"></table></div>
-        </div>
-      </details>
-      <details class="panel">
-        <summary>📏 關節角度參考區間</summary>
-        <div class="body">
-          <div class="small">「正常活動度」是 AAOS 的關節活動範圍；動作中明顯超出（例如膝屈曲 &gt;155°）多半是 AI 點跑錯，系統會提醒。「蹲的參考區間」用在報告的判讀。</div>
-          <div class="tw" style="margin-top:6px"><table id="refTable" class="rpt2"></table></div>
-        </div>
-      </details>
-      <details class="panel">
-        <summary>🔄 轉身掃描（3D）</summary>
-        <div class="body">
-          <div class="small">學員雙手微張（A 字站姿）站在畫面中央，倒數後跟著畫面右側的示範人形和提示音，<b>向左原地慢慢轉一圈</b>（約 12 秒；每 30° 一聲嗶、每 90° 有語音，背對鏡頭時也能跟上）。系統從各角度的影像算出這個人每個點的 3D 位置和每一段的真實長度，之後單鏡頭就能用這些長度把動作重建成 3D。</div>
-          <button class="pbtn peach" id="btnScan" style="margin-top:6px">🔄 開始轉身掃描（倒數 3 秒＋轉 14 秒）</button>
-          <button class="pbtn" id="btnScanDel">🗑️ 刪除掃描</button>
-          <div class="tw" style="margin-top:6px"><table id="scanTable"></table></div>
-          <div class="small">注意：掃描得到的是「身體尺寸」；動作中每一格仍只有一個視角，深度是用肢段長度推算（Taylor 2000），前後方向偶爾會判斷錯。</div>
-        </div>
-      </details>
-      <details class="panel">
-        <summary>🦴 肢段參數表</summary>
-        <div class="body">
-          <div class="tw"><table id="segTable"></table></div>
-          <div class="small" id="segNote"></div>
-        </div>
-      </details>
-      <details class="panel">
         <summary>🍎 老師快速上手</summary>
         <div class="body">
           <ol>
@@ -671,6 +660,21 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
             <li>右上角 📊 可以打開／收起數據面板，左上角 ⚙️ 是這個設定面板。</li>
           </ol>
           <div class="note warn">請用 Chrome、Edge 或 Safari 開啟。在 Claude 等 App 的「預覽視窗」裡，AI 模型和相機都會被擋住。手機、平板要用 https 網址開啟（例如 GitHub Pages）。</div>
+        </div>
+      </details>
+      <h3 class="setSec">參考資料</h3>
+      <details class="panel">
+        <summary>📏 關節角度參考區間</summary>
+        <div class="body">
+          <div class="small">「正常活動度」是 AAOS 的關節活動範圍；動作中明顯超出（例如膝屈曲 &gt;155°）多半是 AI 點跑錯，系統會提醒。「蹲的參考區間」用在報告的判讀。</div>
+          <div class="tw" style="margin-top:6px"><table id="refTable" class="rpt2"></table></div>
+        </div>
+      </details>
+      <details class="panel">
+        <summary>🦴 肢段參數表</summary>
+        <div class="body">
+          <div class="tw"><table id="segTable"></table></div>
+          <div class="small" id="segNote"></div>
         </div>
       </details>
       <details class="panel">
@@ -1439,8 +1443,8 @@ function drawHands(ctx,hands,W,H,mirror){
     ctx.fillStyle=side==="L"?"rgba(255,107,79,.22)":"rgba(61,139,255,.22)"; ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw*.6;
     ctx.beginPath(); [0,1,2,5,9,13,17].forEach((i,j)=>j?ctx.lineTo(X(L[i]),Y(L[i])):ctx.moveTo(X(L[i]),Y(L[i]))); ctx.closePath(); ctx.fill(); ctx.stroke();
     for(const [a,b] of HAND_CONN){ ctx.strokeStyle="rgba(16,21,30,.6)"; ctx.lineWidth=lw*2.1; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
-    for(const [a,b] of HAND_CONN){ ctx.strokeStyle=FINGER_COLOR[Math.max(a,b)-1]||COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
-    L.forEach((p,i)=>{ const tip=i%4===0&&i>0; ctx.fillStyle=i===0?COLORS[side]:FINGER_COLOR[i-1]; ctx.strokeStyle="#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(X(p),Y(p),tip?lw*1.25:lw*.95,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+    for(const [a,b] of HAND_CONN){ ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
+    L.forEach((p,i)=>{ const tip=i%4===0&&i>0; ctx.fillStyle=tip?"#fff":COLORS[side]; ctx.strokeStyle=tip?COLORS[side]:"#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(X(p),Y(p),tip?lw*1.25:lw*.95,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
     if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`握 ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"",COLORS[side]); }
   }
   ctx.restore();
@@ -3025,7 +3029,7 @@ function bindSettings(){
   const tg=(id,key,label,after)=>{ const b=$(id),up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{ settings[key]=!settings[key]; saveSettings(); up(); after&&after(); }; };
   tg("tgHands","hands","✋ 手指追蹤",async()=>{ if(settings.hands&&!handLM&&vision){ setStatus("⏳ 載入手指模型…"); await loadHands(); } refreshStatus(); });
   tg("tgAngles","showAngles","🔢 角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
-  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpine","anatSpine","脊柱"); tg("tgBone2d","bone2d","影像疊加骨骼"); tg("tgMus2d","muscle2d","影像疊加肌肉"); $("tgSpeak").onclick=cycleAudio; $("btnAudio").onclick=cycleAudio; if(settings.speak&&!settings.audio) settings.audio="full"; updateAudioBtn(); tg("tgEuro","euro","〰️ 即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
+  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpine","anatSpine","脊柱"); tg("tgBone2d","bone2d","影像疊加骨骼"); tg("tgMus2d","muscle2d","影像疊加肌肉"); $("tgSpeak").onclick=cycleAudio; $("btnAudio").onclick=cycleAudio; if(settings.speak&&!settings.audio) settings.audio="full"; updateAudioBtn(); tg("tgEuro","euro","即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
   $("btnCalib").onclick=startCalib;
 }
 function updateUI(now){
