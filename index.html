@@ -413,6 +413,78 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 .lg i{display:inline-block;width:14px;height:3px;margin-right:4px;vertical-align:middle}
 #reportSheet .cmp{font-size:10px;border:1px solid #bbb} #reportSheet .cmp th,#reportSheet .cmp td{padding:2px 3px;border-bottom:1px solid #eee}
 #reportSheet .tc{border:none;padding:0;margin-top:4px} #reportSheet .tct{font-size:11px}
+/* ===================== 手機：直向／橫向 ===================== */
+@media (max-width:860px), (max-height:520px){
+  .topbar{flex-wrap:nowrap!important;height:var(--top)!important;padding:0 8px!important;gap:6px!important;position:sticky;top:0}
+  .brand,#fpsChip{display:none!important}
+  .modes{order:0!important;width:auto!important;flex:1;min-width:0;justify-content:stretch}
+  .modes button{flex:1;padding:6px 4px!important;font-size:13px!important;white-space:nowrap}
+  #status{font-size:0;padding:0;width:30px;height:30px;justify-content:center;flex:none;gap:0}
+  #status::before{width:10px;height:10px}
+  #recChip{font-size:13px}
+  .iconbtn{width:36px;height:36px;flex:none}
+  .s3dbar .seg button,.s3dbtn{font-size:12px;padding:4px 7px;min-height:30px}
+  .s3dlab{font-size:13px;padding:5px 9px} .s3dlab span{display:none}
+  .s3dhint{display:none}
+  .stage .dcap{font-size:13px;padding:5px 9px;top:8px;left:8px}
+  .hstat{grid-template-columns:repeat(2,1fr)!important}
+}
+/* 直向：由上到下排列，控制列固定在螢幕底部 */
+@media (max-width:860px) and (orientation:portrait){
+  :root{--top:52px}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  body[data-page=app] .main{display:flex!important;flex-direction:column}
+  #center{padding:8px!important;gap:8px}
+  .stageArea{height:auto!important;flex-direction:column!important;gap:8px}
+  .stageArea .stagebox{flex:none!important}
+  #liveStage{height:58vh;min-height:300px}
+  #stage3d{height:46vh;min-height:260px}
+  #refStage{height:36vh}
+  body[data-mode=follow] #liveStage{height:44vh}
+  .reviewCol .stage{height:42vh;flex:none}
+  #chart{height:170px}
+  #right{display:block!important;border:none!important}
+  #right .inner{width:100%!important}
+  body:not(.right-open) #right{display:none!important}
+  .stage .actionbar{position:fixed!important;left:0!important;right:0!important;bottom:0!important;transform:none!important;opacity:1!important;pointer-events:auto!important;width:auto!important;max-width:none!important;border-radius:0!important;border:none!important;border-top:1px solid rgba(255,255,255,.1)!important;flex-wrap:nowrap!important;justify-content:flex-start!important;overflow-x:auto!important;padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;gap:2px!important;z-index:50!important;box-shadow:0 -6px 20px rgba(0,0,0,.25)!important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .stage .actionbar::-webkit-scrollbar{display:none}
+  .stage .tbToggle{display:none!important}
+  .stage .abtn{min-width:58px!important;height:58px!important;font-size:11px!important;flex:none;padding:2px 6px;white-space:nowrap}
+  .stage .sel{height:40px;font-size:13px;flex:none;max-width:118px}
+  .stage .scorehud{min-width:0;width:auto!important;flex:none;padding:4px 10px}
+  .stage .scorehud .num{font-size:26px}
+}
+/* 橫向手機：畫面填滿高度、影像與 3D 並排、控制列精簡且自動收起 */
+@media (max-height:520px) and (orientation:landscape){
+  :root{--top:46px}
+  #app{height:100dvh!important;display:grid!important}
+  body{overflow:auto}
+  body[data-page=app] .main{display:block!important;overflow:auto}
+  #center{padding:6px!important;gap:6px;height:calc(100dvh - var(--top))}
+  .stageArea{height:100%!important;flex-direction:row!important;gap:6px}
+  .stageArea .stagebox{height:100%!important;flex:1 1 0!important;min-width:0}
+  body[data-mode=review] .stageArea{height:100%!important}
+  .reviewCol{flex-direction:row!important}
+  .reviewCol .stage{flex:1.4}
+  #chart{height:100%!important;flex:1;min-width:0}
+  #right{display:block;border:none!important}
+  #right .inner{width:100%!important;max-width:720px;margin:0 auto}
+  body:not(.right-open) #right{display:none!important}
+  .stage .actionbar{bottom:6px;padding:4px 6px;gap:2px;flex-wrap:nowrap;overflow-x:auto;max-width:calc(100% - 12px);justify-content:flex-start;scrollbar-width:none}
+  .stage .abtn{min-width:50px;height:46px;font-size:10.5px;padding:2px 4px}
+  .stage .abtn .ic svg{width:19px;height:19px}
+  .stage .sel{height:36px;font-size:12px;max-width:110px}
+  .tbToggle{bottom:8px;height:34px}
+  .stage .scorehud{min-width:0;padding:2px 8px} .stage .scorehud .num{font-size:22px}
+  .stagetitle{display:none}
+}
+@media (max-width:860px), (max-height:520px){
+  .s3dbar{top:auto!important;bottom:8px;left:8px;right:8px;justify-content:center}
+  #btnCam,#btnCam2,#rvPlay{order:1} #btnRec{order:2} #recLen{order:3;max-width:96px} #btnFlip{order:4} #btnMirror{order:5} #btn3d{order:6} #camSel{order:7} #btnSnap{order:8}
+  #clipSel{order:0;max-width:96px} #rvBack{order:2} #rvFwd{order:3} #rvSpeed{order:4;max-width:72px} #dlCsv{order:5} #fcSel{order:6;max-width:72px} #dlCsvF{order:7} #dlVid{order:8} #delClip{order:9}
+  .stage .actionbar .sep{display:none}
+  .stage .actionbar{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -653,7 +725,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
             <div class="s3dbar">
               <div class="seg" id="v3dSeg"><button data-v="front">正面</button><button data-v="side">側面</button><button data-v="obl" class="on">斜向</button><button data-v="top">俯視</button></div>
               <button class="s3dbtn" id="b3dAuto">自動旋轉</button>
-              <button class="s3dbtn" id="b3dSrc">即時</button>
+              <button class="s3dbtn" id="b3dSrc" title="切換顯示即時動作或轉身掃描得到的靜態身體">顯示：即時動作</button>
             </div>
             <div class="s3dhint">拖曳可旋轉視角</div>
           </div>
@@ -1041,7 +1113,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,sex:"",view3d:window.innerWidth>1000,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,sex:"",view3d:true,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1754,7 +1826,7 @@ function bind3D(){
   const setV=v=>{ [view3d.yaw,view3d.pitch]=V3[v]; view3d.auto=false; $("b3dAuto").classList.remove("on"); document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); };
   document.querySelectorAll("#v3dSeg button").forEach(b=>b.onclick=()=>setV(b.dataset.v));
   $("b3dAuto").onclick=()=>{ view3d.auto=!view3d.auto; $("b3dAuto").classList.toggle("on",view3d.auto); if(view3d.auto) document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); };
-  $("b3dSrc").onclick=()=>{ view3d.src=view3d.src==="live"?"scan":"live"; $("b3dSrc").textContent=view3d.src==="live"?"即時":"掃描模型"; $("b3dSrc").classList.toggle("on",view3d.src==="scan"); };
+  $("b3dSrc").onclick=()=>{ view3d.src=view3d.src==="live"?"scan":"live"; $("b3dSrc").textContent=view3d.src==="live"?"顯示：即時動作":"顯示：掃描模型"; $("b3dSrc").classList.toggle("on",view3d.src==="scan"); };
   const upd3d=()=>{ document.body.classList.toggle("no3d",!settings.view3d); setAbtn("btn3d","3d","3D 視圖："+(settings.view3d?"開":"關")); $("btn3d").classList.toggle("off",!settings.view3d); };
   $("btn3d").onclick=()=>{ settings.view3d=!settings.view3d; saveSettings(); upd3d(); }; upd3d();
   cv.addEventListener("pointerdown",()=>{ document.querySelectorAll("#v3dSeg button").forEach(b=>b.classList.remove("on")); });
@@ -2773,7 +2845,7 @@ for(const st of [$("liveStage"),rvStage]){
 }
 setInterval(()=>{ for(const o of TB){ if(!canHide(o.st)){ o.st.classList.add("tb-open"); } else if(o.st.classList.contains("tb-open")&&!o.tmr) o.arm(3000); } },500);
 
-if(window.innerWidth>860){ document.body.classList.add("right-open"); } else { $("tgRight").classList.add("off"); }
+document.body.classList.add("right-open");
 
 /* ===================== 主迴圈 ===================== */
 let lastUI=0;
