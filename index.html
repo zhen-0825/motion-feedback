@@ -561,6 +561,12 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 @media (max-width:860px){ .rvbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:4px 6px} .rvbar::-webkit-scrollbar{display:none} .rvbar .glab{display:none} .rvbar .sep{margin:0 4px} .rvbar .abtn{flex:0 0 56px;min-width:56px;height:50px;font-size:11px} #chart{height:180px} }
 @media (max-width:860px){ .rvbar #rvBack{order:0} .rvbar #rvPlay{order:1} .rvbar #rvFwd{order:2} }
 #refFrame{isolation:isolate;transform-style:flat}
+.pbar{position:absolute;left:12px;bottom:12px;z-index:5;display:flex;align-items:center;gap:4px;background:rgba(16,21,30,.88);color:#fff;border-radius:8px;padding:5px 6px 5px 10px;font-size:12.5px;max-width:calc(100% - 24px);flex-wrap:wrap}
+.pbar .pl{margin-right:4px;color:#C9D2DE}
+.pbar button{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:6px;padding:4px 9px;font-size:12.5px;font-weight:700;cursor:pointer}
+.pbar button.on{background:#fff;color:#1B2230;border-color:#fff}
+#liveStage .pbar{bottom:auto;top:56px}
+#refStage .pbar{bottom:auto;top:12px;left:auto;right:12px}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -658,6 +664,9 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
             <option value="full">🐻 標準（筆電）</option>
             <option value="heavy">🐘 精準（高效能電腦）</option>
           </select>
+          <label class="f" for="setPeople">同時偵測人數</label>
+          <select id="setPeople"><option value="1">1 人（最快）</option><option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人</option></select>
+          <div class="small">畫面中超過一人時，可在畫面上點選要分析的人；示範影片若是同一人正面＋側面的分割畫面，可選「雙視角」合併。人數越多越耗效能。</div>
           <label class="f" for="setSeg">肢段參數模型</label>
           <select id="setSeg">
             <option value="dempster">Dempster（Winter 2009）・軀幹 1 段</option>
@@ -795,6 +804,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
             <iframe id="refFrame" hidden allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
             <div class="capHint" id="refCapHint" hidden><div><b>平台播放器的畫面 AI 讀不到</b><span>按右邊按鈕擷取這個分頁，系統只分析播放器範圍。</span></div><button class="pbtn" id="btnTabCap">分析這個播放器</button></div>
             <div class="anaProg" id="refProg" hidden></div>
+            <div class="pbar" id="refPeopleBar" hidden></div>
           </div>
         </div>
         <div class="stagebox" data-modes="mirror follow">
@@ -803,6 +813,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
             <div class="ph" id="livePh">點下方「開鏡頭」開始即時分析<br><span class="small">學員全身入鏡，距離鏡頭約 2–3 公尺</span></div>
             <canvas id="liveCanvas" hidden></canvas>
             <div class="countdown" id="countdown"></div>
+            <div class="pbar" id="livePeople" hidden></div>
             <div class="trialChip" id="trialChip" hidden></div>
           </div>
           <div class="dcap" id="dCap" data-modes="mirror follow"></div>
@@ -1218,7 +1229,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1272,7 +1283,7 @@ async function createTask(kind){
   const common={runningMode:"VIDEO"};
   const opts=delegate=>isHand
     ? {...common,baseOptions:{modelAssetBuffer:buf,delegate},numHands:2,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5}
-    : {...common,baseOptions:{modelAssetBuffer:buf,delegate},numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5,outputSegmentationMasks:false};
+    : {...common,baseOptions:{modelAssetBuffer:buf,delegate},numPoses:Math.max(1,Math.min(4,settings.people||2)),minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5,outputSegmentationMasks:false};
   const Cls=isHand?mp.HandLandmarker:mp.PoseLandmarker;
   try{ return await Cls.createFromOptions(vision,opts("GPU")); }
   catch(e){ console.warn("GPU 無法使用，改用 CPU",e);
@@ -2317,13 +2328,64 @@ function drawAnat2D(ctx,lms,lift,W,H,mirror){
   const proj=p=>{ const x=Ox+p.x*s; return [mirror?W-x:x, Oy+p.y*s, p.z]; };
   drawAnat(ctx,A,proj,s,{bone:bo,muscle:mu,spine:sp,lw:Math.max(2.5,Math.min(W,H)/150),label:sp&&!bo});
 }
+/* ===================== 多人追蹤：同一人給固定代號、可點選分析對象 ===================== */
+const PLAB="ABCDEFGH";
+class PeopleTracker{
+  constructor(){ this.reset(); this.sel=null; this.dual=false; }
+  reset(){ this.tracks=[]; this.next=0; this.pri=null; }
+  static geo(l,W,H){ const v=i=>(l[i].visibility??1)>=.4, P=i=>({x:l[i].x*W,y:l[i].y*H});
+    let c=null,s=null,sw=null;
+    if(v(23)&&v(24)&&v(11)&&v(12)){ const h={x:(P(23).x+P(24).x)/2,y:(P(23).y+P(24).y)/2}, sh={x:(P(11).x+P(12).x)/2,y:(P(11).y+P(12).y)/2}; c={x:(h.x+sh.x)/2,y:(h.y+sh.y)/2}; s=Math.hypot(sh.x-h.x,sh.y-h.y); sw=Math.hypot(P(11).x-P(12).x,P(11).y-P(12).y); }
+    else { const pts=l.filter(p=>(p.visibility??1)>=.4); if(!pts.length) return null; c={x:pts.reduce((a,p)=>a+p.x,0)/pts.length*W,y:pts.reduce((a,p)=>a+p.y,0)/pts.length*H}; s=Math.min(W,H)*.15; }
+    const xs=l.map(p=>p.x*W), ys=l.map(p=>p.y*H);
+    return {c,s,sw,box:[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]}; }
+  update(list,W,H,t){
+    const dets=list.map(d=>({...d,g:PeopleTracker.geo(d.lms,W,H)})).filter(d=>d.g);
+    const used=new Set();
+    for(const tr of this.tracks){ let best=null,bd=1e9; dets.forEach((d,i)=>{ if(used.has(i)) return; const dd=Math.hypot(d.g.c.x-tr.c.x,d.g.c.y-tr.c.y)/Math.max(tr.s,1); if(dd<bd){ bd=dd; best=i; } });
+      if(best!=null&&bd<1.6){ used.add(best); Object.assign(tr,{c:dets[best].g.c,s:dets[best].g.s,sw:dets[best].g.sw,box:dets[best].g.box,lms:dets[best].lms,world:dets[best].world,seen:t}); } else tr.lms=null; }
+    dets.forEach((d,i)=>{ if(used.has(i)) return; this.tracks.push({id:PLAB[this.next++%PLAB.length],c:d.g.c,s:d.g.s,sw:d.g.sw,box:d.g.box,lms:d.lms,world:d.world,seen:t}); });
+    this.tracks=this.tracks.filter(tr=>t-tr.seen<1.2);
+    const vis=this.tracks.filter(tr=>tr.lms);
+    let pri=vis.find(tr=>tr.id===this.sel)||vis.find(tr=>tr.id===this.pri)||null;
+    if(!pri&&vis.length) pri=vis.reduce((a,b)=>{ const sc=x=>x.s*(1-Math.abs(x.c.x/W-.5)*.8); return sc(b)>sc(a)?b:a; });
+    const changed=(pri?.id||null)!==this.pri; this.pri=pri?.id||null;
+    let side=null;
+    if(this.dual&&pri&&vis.length>=2){ const o=vis.filter(x=>x!==pri).reduce((a,b)=>b.s>a.s?b:a); const r=x=>(x.sw||0)/Math.max(x.s,1); if(r(o)>r(pri)){ side=pri; pri=o; } else side=o; }
+    return {pri,side,others:vis.filter(x=>x!==pri&&x!==side),n:vis.length,changed,ids:vis.map(x=>x.id).sort()}; }
+  pickAt(x,y){ let best=null,bd=1e9; for(const tr of this.tracks){ if(!tr.lms) continue; const [x0,y0,x1,y1]=tr.box, inside=x>=x0&&x<=x1&&y>=y0&&y<=y1, d=inside?0:Math.hypot(x-tr.c.x,y-tr.c.y); if(d<bd){ bd=d; best=tr; } } if(best){ this.sel=best.id; this.dual=false; } return best; }
+}
+const liveTrk=new PeopleTracker(), refTrk=new PeopleTracker();
+const listOf=r=>(r?.landmarks||[]).map((l,i)=>({lms:l,world:r.worldLandmarks?.[i]||null}));
+function drawOthers(ctx,P,W,H,mirror){ if(!P||P.n<2) return; const lw=Math.max(2,Math.min(W,H)/200), fs=Math.max(13,Math.min(W,H)/32);
+  ctx.save(); ctx.lineCap="round";
+  for(const tr of P.others){ const l=tr.lms, X=p=>(mirror?1-p.x:p.x)*W, Y=p=>p.y*H; ctx.strokeStyle="rgba(201,210,222,.55)"; ctx.lineWidth=lw;
+    for(const [a,b] of CONN){ if((l[a].visibility??1)<.4||(l[b].visibility??1)<.4) continue; ctx.beginPath(); ctx.moveTo(X(l[a]),Y(l[a])); ctx.lineTo(X(l[b]),Y(l[b])); ctx.stroke(); } }
+  const tag=(tr,on,txt)=>{ if(!tr) return; const x=mirror?W-(tr.box[0]+tr.box[2])/2:(tr.box[0]+tr.box[2])/2, y=Math.max(fs,tr.box[1]-fs*.9); const t=txt||tr.id; ctx.font=`700 ${fs}px "Noto Sans TC",sans-serif`; const w=ctx.measureText(t).width+fs*.8;
+    ctx.fillStyle=on?"#fff":"rgba(16,21,30,.75)"; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x-w/2,y-fs*.75,w,fs*1.5,fs*.4):ctx.rect(x-w/2,y-fs*.75,w,fs*1.5); ctx.fill(); ctx.fillStyle=on?"#1B2230":"#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(t,x,y); };
+  tag(P.pri,true,P.side?`${P.pri.id}・正面`:`${P.pri.id}・分析中`); if(P.side) tag(P.side,true,`${P.side.id}・側面`); for(const tr of P.others) tag(tr,false);
+  ctx.restore(); }
+function canvasPt(cv,e,mirror){ const r=cv.getBoundingClientRect(), W=cv.width, H=cv.height, s=Math.min(r.width/W,r.height/H), ox=(r.width-W*s)/2, oy=(r.height-H*s)/2;
+  let x=(e.clientX-r.left-ox)/s, y=(e.clientY-r.top-oy)/s; if(mirror) x=W-x; return {x,y}; }
+function renderPeopleBar(el,trk,P,dualOk,onChange){
+  if(!P||P.n<2){ if(!el.hidden){ el.hidden=true; el.dataset.k=""; } return; }
+  const k=P.ids.join("")+"|"+(trk.sel||"")+"|"+trk.dual+"|"+(P.pri?.id||""); if(el.dataset.k===k&&!el.hidden) return; el.dataset.k=k; el.hidden=false;
+  el.innerHTML=`<span class="pl">畫面中 ${P.n} 人，分析：</span>`+P.ids.map(id=>`<button data-id="${id}" class="${!trk.dual&&P.pri?.id===id?"on":""}">${id}</button>`).join("")+`<button data-id="" class="${!trk.dual&&!trk.sel?"on":""}" title="自動選最大、最靠中間的人">自動</button>`+(dualOk?`<button data-id="dual" class="${trk.dual?"on":""}" title="同一人的正面＋側面分割畫面">雙視角</button>`:"");
+  el.querySelectorAll("button").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.id; if(id==="dual"){ trk.dual=!trk.dual; trk.sel=null; } else { trk.dual=false; trk.sel=id||null; } el.dataset.k=""; onChange?.(); }); }
+// 雙視角合併：每個角度取「兩段肢段在畫面上最不縮短」的那個視角
+function mergeViews(mF,mS,lF,lS,W,H){ if(!mF) return mS; if(!mS) return mF; const ang={}, src={};
+  const len=(l,a,b)=>Math.hypot((l[a].x-l[b].x)*W,(l[a].y-l[b].y)*H), tr=l=>Math.hypot(((l[11].x+l[12].x)-(l[23].x+l[24].x))/2*W,((l[11].y+l[12].y)-(l[23].y+l[24].y))/2*H)||1;
+  for(const d of ANGLES){ const a=mF.angles[d.k], b=mS.angles[d.k]; if(a==null&&b==null) continue; if(a==null||b==null){ ang[d.k]=a??b; src[d.k]=a==null?"S":"F"; continue; }
+    const rF=(len(lF,d.a,d.b)+len(lF,d.b,d.c))/tr(lF), rS=(len(lS,d.a,d.b)+len(lS,d.b,d.c))/tr(lS); if(rS>=rF*.95){ ang[d.k]=b; src[d.k]="S"; } else { ang[d.k]=a; src[d.k]="F"; } }
+  return {...mF,angles:ang,angSrc:src,dual:true}; }
 const engine=new MarkerEngine();
 let liveQ=null, liveVM=null;
 
 /* ===================== 即時鏡頭 ===================== */
 const liveVideo=$("liveVideo"), liveCanvas=$("liveCanvas"), lctx=liveCanvas.getContext("2d");
+liveCanvas.addEventListener("click",e=>{ if(!livePeople||livePeople.n<2) return; const p=canvasPt(liveCanvas,e,liveMirror); if(liveTrk.pickAt(p.x,p.y)){ engine.reset(); e.stopPropagation(); } });
 let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
-let liveRes=null, liveWorld=null, liveM=null, liveHands=null;
+let liveRes=null, liveWorld=null, liveM=null, liveHands=null, livePeople=null;
 const kin=new Kin();
 let fpsCount=0,fps=0,fpsT=performance.now();
 function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||ICON[ic]||""}</span>${label}`; }
@@ -2392,7 +2454,7 @@ function processLive(now){
   if(liveLM&&liveVideo.currentTime!==lastLiveT){
     lastLiveT=liveVideo.currentTime;
     let raw=null;
-    try{ const r=liveLM.detectForVideo(liveVideo,nextTs(liveLM)); raw=r.landmarks?.[0]||null; liveWorld=r.worldLandmarks?.[0]||null; }catch(e){ console.warn(e); raw=null; }
+    try{ const r=liveLM.detectForVideo(liveVideo,nextTs(liveLM)); livePeople=liveTrk.update(listOf(r),W,H,now/1000); if(livePeople.changed){ engine.reset(); lifter.reset?.(); kin.reset?.(); } raw=livePeople.pri?.lms||null; liveWorld=livePeople.pri?.world||null; }catch(e){ console.warn(e); raw=null; }
     if(settings.hands&&handLM){ try{ liveHands=assignHands(handLM.detectForVideo(liveVideo,nextTs(handLM)),raw); }catch(e){ console.warn(e); liveHands=null; } } else liveHands=null;
     if(raw&&settings.fill){ liveQ=engine.process(raw,W,H,now/1000,liveHands,{euro:settings.euro}); liveRes=liveQ.lms; }
     else{ liveQ=null; liveRes=raw; }
@@ -2411,6 +2473,7 @@ function processLive(now){
   }
   drawFrame(lctx,liveVideo,W,H,liveMirror);
   drawAnat2D(lctx,liveRes,liveLift,W,H,liveMirror);
+  drawOthers(lctx,livePeople,W,H,liveMirror);
   drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
   drawPalmLite(lctx,liveRes,W,H,liveMirror);
   drawHands(lctx,liveHands,W,H,liveMirror);
@@ -2995,6 +3058,7 @@ $("btnUrl").onclick=()=>{
   showRefVideo(); refVideo.play().catch(()=>{}); refMsg("正在載入影片網址…");
 };
 const refEngine=new MarkerEngine(); let refRestricted=false;
+refCanvas.addEventListener("click",e=>{ if(refMode!=="video"||!refPeople||refPeople.n<2) return; const p=canvasPt(refCanvas,e,refMirror); if(refTrk.pickAt(p.x,p.y)) refEngine.reset(); });
 refVideo.addEventListener("seeked",()=>{ if(!refAnalyzing) refEngine.reset(); });
 refVideo.addEventListener("error",()=>{ if(refMode==="video"&&!refStream) refMsg("這個網址無法播放或被網站保護。請改用影片檔或「擷取分頁畫面」。",true); });
 refVideo.addEventListener("loadeddata",()=>{ if(refMode==="video"&&!refStream&&/^http/.test(refVideo.src)) refMsg("影片網址載入成功 ✅"); });
@@ -3037,9 +3101,14 @@ $("btnTabCap").onclick=async()=>{
 };
 // 示範者點位：同一套補點＋跳點剔除＋1€ 平滑（與學員端相同），避免亂飄
 function smoothRef(raw,W,H,t){ if(!raw) return null; try{ return refEngine.process(raw,W,H,t,null,{euro:true}).lms; }catch(e){ return raw; } }
+let refPeople=null, refSide=null, refSideM=null;
+function refFromResult(r,W,H,t){ refPeople=refTrk.update(listOf(r),W,H,t); if(refPeople.changed) refEngine.reset();
+  refRes=smoothRef(refPeople.pri?.lms||null,W,H,t); const mP=refRes?computeMetrics(refRes,refPeople.pri.world,W,H):null;
+  refSide=refPeople.side?.lms||null; refSideM=refSide?computeMetrics(refSide,refPeople.side.world,W,H):null;
+  refM=refSide?mergeViews(mP,refSideM,refRes,refSide,W,H):mP; return refRes; }
 function detectRef(src,W,H){
   if(!(refLM&&refAI)||refAnalyzing) return;
-  try{ const r=refLM.detectForVideo(src,nextTs(refLM)); refRes=smoothRef(r.landmarks?.[0]||null,W,H,performance.now()/1000); refM=refRes?computeMetrics(refRes,r.worldLandmarks?.[0]||null,W,H):null;
+  try{ const r=refLM.detectForVideo(src,nextTs(refLM)); refFromResult(r,W,H,performance.now()/1000);
     if(tplRec) tplRec.raw.push(mkFrame((performance.now()-tplRec.t0)/1000,refM?.angles,refRes,W,H)); }
   catch(e){ console.warn(e); refAI=false; refRes=null; refM=null; refMsg("影片可以播放，但這個網站不允許 AI 讀取畫面。請改用影片檔，或在嵌入播放器上按「分析這個播放器」。",true); }
 }
@@ -3053,7 +3122,7 @@ function processRef(){
     if(refRestricted){ const W=refVideo.videoWidth, H=refVideo.videoHeight;
       if(refCanvas.width!==W||refCanvas.height!==H){ refCanvas.width=W; refCanvas.height=H; }
       if(now-lastTabDet>30){ lastTabDet=now; detectRef(refVideo,W,H); }
-      rctx.clearRect(0,0,W,H); if(refRestricted===true) drawPose(rctx,refRes,W,H,false,refM,null); else { rctx.globalAlpha=.35; drawPose(rctx,refRes,W,H,false,null,null); rctx.globalAlpha=1; } return; }
+      rctx.clearRect(0,0,W,H); if(refRestricted===true){ drawOthers(rctx,refPeople,W,H,false); if(refSide) drawPose(rctx,refSide,W,H,false,null,null); drawPose(rctx,refRes,W,H,false,refSide?null:refM,null); } else { rctx.globalAlpha=.35; drawPose(rctx,refRes,W,H,false,null,null); rctx.globalAlpha=1; } return; }
     const vw=refVideo.videoWidth, vh=refVideo.videoHeight, R=$("refFrame").getBoundingClientRect(), k=vw/innerWidth;
     const sx=Math.max(0,R.left*k), sy=Math.max(0,R.top*k), sw=Math.min(vw-sx,R.width*k), sh=Math.min(vh-sy,R.height*k); if(sw<40||sh<40) return;
     const W=Math.round(sw), H=Math.round(sh);
@@ -3066,7 +3135,7 @@ function processRef(){
   const W=refVideo.videoWidth,H=refVideo.videoHeight; if(!W) return;
   if(refCanvas.width!==W||refCanvas.height!==H){ refCanvas.width=W; refCanvas.height=H; }
   if(refVideo.currentTime!==lastRefT||refStream){ if(refVideo.currentTime!==lastRefT||now-lastTabDet>30){ lastRefT=refVideo.currentTime; lastTabDet=now; detectRef(refVideo,W,H); } }
-  drawFrame(rctx,refVideo,W,H,refMirror); drawPose(rctx,refRes,W,H,refMirror,refM,null);
+  drawFrame(rctx,refVideo,W,H,refMirror); drawOthers(rctx,refPeople,W,H,refMirror); if(refSide) drawPose(rctx,refSide,W,H,refMirror,null,null); drawPose(rctx,refRes,W,H,refMirror,refSide?null:refM,null);
   if(!refStream&&isFinite(refVideo.duration)&&refVideo.duration>0) $("refSeek").value=Math.round(refVideo.currentTime/refVideo.duration*1000);
 }
 
@@ -3127,7 +3196,7 @@ $("btnAnaRef").onclick=async()=>{
   const v=refVideo; if(!isFinite(v.duration)||!v.videoWidth) return tplMsg("影片還沒載入完成，請稍候。",true);
   const W=v.videoWidth,H=v.videoHeight, dur=Math.min(v.duration,30), raw=[], prog=$("refProg"); v.pause(); refAnalyzing=true; refEngine.reset(); prog.hidden=false;
   try{ for(let t=0;t<=dur+1e-6;t+=1/TPL_FPS){ await seekTo(v,t);
-      const r=refLM.detectForVideo(v,nextTs(refLM)), l=smoothRef(r.landmarks?.[0]||null,W,H,t), m=l?computeMetrics(l,r.worldLandmarks?.[0]||null,W,H):null;
+      const r=refLM.detectForVideo(v,nextTs(refLM)), l=refFromResult(r,W,H,t), m=refM;
       raw.push(mkFrame(t,m?.angles,l,W,H)); refRes=l; refM=m; lastRefT=v.currentTime;
       prog.innerHTML=`分析示範中 ${Math.round(t/dur*100)}%（逐格 ${TPL_FPS} fps）<i style="width:${(t/dur*100).toFixed(1)}%"></i>`; } }
   catch(e){ console.warn(e); refAnalyzing=false; prog.hidden=true; return tplMsg("這段影片不允許 AI 讀取（網站保護）。請改用影片檔，或用「錄下示範（即時）」。",true); }
@@ -3358,6 +3427,7 @@ function bindSettings(){
   $("inH").oninput=e=>{settings.height=Number(e.target.value)||150;saveSettings();kin.reset();renderSegTable();};
   $("inW").oninput=e=>{settings.weight=Number(e.target.value)||45;saveSettings();renderSegTable();};
   $("setModel").onchange=e=>{settings.model=e.target.value;saveSettings();loadModels();};
+  $("setPeople").value=String(settings.people||2); $("setPeople").onchange=e=>{ settings.people=Number(e.target.value); saveSettings(); liveTrk.reset(); refTrk.reset(); loadModels(); };
   $("setSeg").value=settings.segModel;
   $("setSeg").onchange=e=>{ settings.segModel=e.target.value; saveSettings(); applySegModel(); for(const k in lenAcc) delete lenAcc[k]; renderSegTable(); };
   $("setAngle").onchange=e=>{settings.angleMode=e.target.value;saveSettings();};
@@ -3391,6 +3461,8 @@ function updateUI(now){
   else{ $("qMeas").textContent=liveM?"補點已關閉":"—"; $("qFill").textContent="—"; $("qList").textContent=""; }
   if(!document.querySelector('#planePanel')?.hidden) renderPlaneTable();
   renderDesc();
+  renderPeopleBar($("livePeople"),liveTrk,liveOn?livePeople:null,false,()=>engine.reset());
+  renderPeopleBar($("refPeopleBar"),refTrk,(refMode==="video"||refMode==="tab")?refPeople:null,true,()=>refEngine.reset());
   updateScore();
   if(document.body.dataset.page==="settings") renderSegTable();
 }
