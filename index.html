@@ -560,6 +560,7 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 .sttab td{font-weight:600}
 @media (max-width:860px){ .rvbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:4px 6px} .rvbar::-webkit-scrollbar{display:none} .rvbar .glab{display:none} .rvbar .sep{margin:0 4px} .rvbar .abtn{flex:0 0 56px;min-width:56px;height:50px;font-size:11px} #chart{height:180px} }
 @media (max-width:860px){ .rvbar #rvBack{order:0} .rvbar #rvPlay{order:1} .rvbar #rvFwd{order:2} }
+#refFrame{isolation:isolate;transform-style:flat}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -2993,6 +2994,8 @@ $("btnUrl").onclick=()=>{
   refVideo.crossOrigin="anonymous"; refVideo.src=u; refVidKey=u; refVideo.playbackRate=Number($("refSpeed").value);
   showRefVideo(); refVideo.play().catch(()=>{}); refMsg("正在載入影片網址…");
 };
+const refEngine=new MarkerEngine(); let refRestricted=false;
+refVideo.addEventListener("seeked",()=>{ if(!refAnalyzing) refEngine.reset(); });
 refVideo.addEventListener("error",()=>{ if(refMode==="video"&&!refStream) refMsg("這個網址無法播放或被網站保護。請改用影片檔或「擷取分頁畫面」。",true); });
 refVideo.addEventListener("loadeddata",()=>{ if(refMode==="video"&&!refStream&&/^http/.test(refVideo.src)) refMsg("影片網址載入成功 ✅"); });
 $("btnScreen").onclick=async()=>{
@@ -3018,18 +3021,25 @@ $("btnTabCap").onclick=async()=>{
   catch(e){ if(e.name!=="NotAllowedError") alert("擷取畫面失敗："+e.message); return; }
   const tr=s.getVideoTracks()[0], st=tr.getSettings?.()||{};
   if(refStream) refStream.getTracks().forEach(t=>t.stop());
+  // Element Capture（Chrome 132+）：只擷取播放器本身，疊在上面的骨架不會被擷取回去，避免 AI 看到自己畫的線
+  refRestricted=false;
+  try{ if(window.RestrictionTarget&&tr.restrictTo){ await tr.restrictTo(await RestrictionTarget.fromElement($("refFrame"))); refRestricted=true; }
+       else if(window.CropTarget&&tr.cropTo){ await tr.cropTo(await CropTarget.fromElement($("refFrame"))); refRestricted="crop"; } }catch(e){ console.warn("element capture",e); refRestricted=false; }
+  refEngine.reset();
   refStream=s; refVideo.srcObject=s; try{ await refVideo.play(); }catch(e){}
   const vw=refVideo.videoWidth||st.width||0, vh=refVideo.videoHeight||st.height||1, same=st.displaySurface?st.displaySurface==="browser":true;
-  if(!same||(vw&&Math.abs(vw/vh-innerWidth/innerHeight)>.08)){ // 選到別的視窗：當成一般擷取
+  if(!refRestricted&&(!same||(vw&&Math.abs(vw/vh-innerWidth/innerHeight)>.08))){ // 選到別的視窗：當成一般擷取
     $("refFrame").hidden=true; $("refCapHint").hidden=true; refCanvas.classList.remove("ovl"); showRefVideo(); refMsg("選到的不是這個分頁，已改為分析整個擷取畫面。");
   } else { refMode="tab"; refAI=true; refCanvas.hidden=false; refCanvas.classList.add("ovl"); $("refCapHint").hidden=true; if(!refLM&&!loading) loadModels();
-    refMsg("正在分析播放器：請按播放器的播放鍵。分析期間不要捲動頁面或切換分頁。"); }
+    refMsg(refRestricted===true?"正在分析播放器：請按播放器的播放鍵。":"正在分析播放器：請按播放器的播放鍵，分析期間不要捲動頁面。<br>這個瀏覽器不支援「只擷取播放器」，骨架會淡化顯示以免干擾 AI；建議更新到最新版 Chrome。"); }
   tr.addEventListener("ended",()=>{ if(refStream!==s) return; refStream=null; refVideo.srcObject=null; refRes=null; refM=null;
     if(refMode==="tab"){ refMode="iframe"; refCanvas.hidden=true; refCanvas.classList.remove("ovl"); $("refCapHint").hidden=false; refMsg("已停止分析播放器。"); } else { clearRef(); refMsg("畫面擷取已結束。"); } });
 };
+// 示範者點位：同一套補點＋跳點剔除＋1€ 平滑（與學員端相同），避免亂飄
+function smoothRef(raw,W,H,t){ if(!raw) return null; try{ return refEngine.process(raw,W,H,t,null,{euro:true}).lms; }catch(e){ return raw; } }
 function detectRef(src,W,H){
   if(!(refLM&&refAI)||refAnalyzing) return;
-  try{ const r=refLM.detectForVideo(src,nextTs(refLM)); refRes=r.landmarks?.[0]||null; refM=refRes?computeMetrics(refRes,r.worldLandmarks?.[0]||null,W,H):null;
+  try{ const r=refLM.detectForVideo(src,nextTs(refLM)); refRes=smoothRef(r.landmarks?.[0]||null,W,H,performance.now()/1000); refM=refRes?computeMetrics(refRes,r.worldLandmarks?.[0]||null,W,H):null;
     if(tplRec) tplRec.raw.push(mkFrame((performance.now()-tplRec.t0)/1000,refM?.angles,refRes,W,H)); }
   catch(e){ console.warn(e); refAI=false; refRes=null; refM=null; refMsg("影片可以播放，但這個網站不允許 AI 讀取畫面。請改用影片檔，或在嵌入播放器上按「分析這個播放器」。",true); }
 }
@@ -3040,13 +3050,17 @@ function processRef(){
   if(tplStageOn){ tplStageOn=false; if(!refMode){ refCanvas.hidden=true; $("refPh").hidden=false; } }
   if(refMode==="tab"){
     if(refVideo.readyState<2||!refVideo.videoWidth) return;
+    if(refRestricted){ const W=refVideo.videoWidth, H=refVideo.videoHeight;
+      if(refCanvas.width!==W||refCanvas.height!==H){ refCanvas.width=W; refCanvas.height=H; }
+      if(now-lastTabDet>30){ lastTabDet=now; detectRef(refVideo,W,H); }
+      rctx.clearRect(0,0,W,H); if(refRestricted===true) drawPose(rctx,refRes,W,H,false,refM,null); else { rctx.globalAlpha=.35; drawPose(rctx,refRes,W,H,false,null,null); rctx.globalAlpha=1; } return; }
     const vw=refVideo.videoWidth, vh=refVideo.videoHeight, R=$("refFrame").getBoundingClientRect(), k=vw/innerWidth;
     const sx=Math.max(0,R.left*k), sy=Math.max(0,R.top*k), sw=Math.min(vw-sx,R.width*k), sh=Math.min(vh-sy,R.height*k); if(sw<40||sh<40) return;
     const W=Math.round(sw), H=Math.round(sh);
     if(cropC.width!==W||cropC.height!==H){ cropC.width=W; cropC.height=H; }
     if(refCanvas.width!==W||refCanvas.height!==H){ refCanvas.width=W; refCanvas.height=H; }
     if(now-lastTabDet>30){ lastTabDet=now; cropX.drawImage(refVideo,sx,sy,sw,sh,0,0,W,H); detectRef(cropC,W,H); }
-    rctx.clearRect(0,0,W,H); rctx.globalAlpha=.75; drawPose(rctx,refRes,W,H,false,null,null); rctx.globalAlpha=1; return;
+    rctx.clearRect(0,0,W,H); rctx.globalAlpha=.35; drawPose(rctx,refRes,W,H,false,null,null); rctx.globalAlpha=1; return;
   }
   if(refMode!=="video"||refVideo.readyState<2) return;
   const W=refVideo.videoWidth,H=refVideo.videoHeight; if(!W) return;
@@ -3111,9 +3125,9 @@ $("btnAnaRef").onclick=async()=>{
   if(refMode!=="video"||refStream) return tplMsg("「分析整段示範」需要影片檔或 .mp4 網址。平台影片或擷取畫面請用「錄下示範（即時）」。",true);
   if(!refLM){ if(!loading) loadModels(); return tplMsg("AI 模型載入中，請稍候再按一次。"); }
   const v=refVideo; if(!isFinite(v.duration)||!v.videoWidth) return tplMsg("影片還沒載入完成，請稍候。",true);
-  const W=v.videoWidth,H=v.videoHeight, dur=Math.min(v.duration,30), raw=[], prog=$("refProg"); v.pause(); refAnalyzing=true; prog.hidden=false;
+  const W=v.videoWidth,H=v.videoHeight, dur=Math.min(v.duration,30), raw=[], prog=$("refProg"); v.pause(); refAnalyzing=true; refEngine.reset(); prog.hidden=false;
   try{ for(let t=0;t<=dur+1e-6;t+=1/TPL_FPS){ await seekTo(v,t);
-      const r=refLM.detectForVideo(v,nextTs(refLM)), l=r.landmarks?.[0]||null, m=l?computeMetrics(l,r.worldLandmarks?.[0]||null,W,H):null;
+      const r=refLM.detectForVideo(v,nextTs(refLM)), l=smoothRef(r.landmarks?.[0]||null,W,H,t), m=l?computeMetrics(l,r.worldLandmarks?.[0]||null,W,H):null;
       raw.push(mkFrame(t,m?.angles,l,W,H)); refRes=l; refM=m; lastRefT=v.currentTime;
       prog.innerHTML=`分析示範中 ${Math.round(t/dur*100)}%（逐格 ${TPL_FPS} fps）<i style="width:${(t/dur*100).toFixed(1)}%"></i>`; } }
   catch(e){ console.warn(e); refAnalyzing=false; prog.hidden=true; return tplMsg("這段影片不允許 AI 讀取（網站保護）。請改用影片檔，或用「錄下示範（即時）」。",true); }
