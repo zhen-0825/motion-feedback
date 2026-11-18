@@ -630,6 +630,26 @@ body.phone-link{overflow:hidden}
 .ph-lens button{border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:700}
 .ph-lens button.on{background:#FFC23D;color:#1B2230;border-color:#FFC23D}
 .ph-zoom{display:flex;align-items:center;gap:10px;padding:10px 16px 0;background:#10151E;color:#fff;font-size:14px}.ph-zoom input{flex:1}.ph-zoom em{font-style:normal;min-width:76px;text-align:right}
+.allstats{font-size:12.5px}
+.allstats .ash{font-weight:700;color:var(--muted);font-size:12px;margin:12px 0 4px}
+.allstats table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.allstats th{font-weight:500;color:var(--muted);font-size:11px;text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}
+.allstats td{padding:4px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+.allstats td.nm{text-align:left;white-space:normal;font-weight:600}.allstats th:first-child{text-align:left}
+.allstats td i{display:block;font-style:normal;font-size:10.5px;color:var(--muted)}
+.allstats td.sde.L{color:#E4573D;font-weight:700}.allstats td.sde.R{color:#2F7FCC;font-weight:700}
+.allstats tr[data-k]{cursor:pointer}.allstats tr[data-k]:hover td{background:#F3F6FA}
+.allstats .bio td{text-align:left}.allstats .bio td.v{text-align:right;font-weight:700}
+#reportSheet .ash{font-weight:800;font-size:11.5px;margin:8px 0 3px;border-left:3px solid #1B2230;padding-left:5px}
+#reportSheet .ast,#reportSheet .bio{width:100%;border-collapse:collapse;font-size:10.5px;font-variant-numeric:tabular-nums;break-inside:auto}
+#reportSheet .ast th{background:#E9E9E9;border:1px solid #bbb;padding:2px 3px;font-size:10px}
+#reportSheet .ast td{border:1px solid #ddd;padding:2px 3px;text-align:right}
+#reportSheet .ast td.nm{text-align:left;font-weight:700}#reportSheet .ast td i{font-style:normal;color:#777;margin-left:3px;font-size:9.5px}
+#reportSheet .ast td i:before{content:"@"}
+#reportSheet .ast td.sde{text-align:center;font-weight:800}#reportSheet .ast td.sde.L{color:#E4573D}#reportSheet .ast td.sde.R{color:#2F7FCC}
+#reportSheet .ast tr{break-inside:avoid}
+#reportSheet .bio td{border:1px solid #ddd;padding:3px 5px;font-size:11px}#reportSheet .bio td.v{text-align:right;font-weight:800}#reportSheet .bio td.nt{color:#666}
+#reportSheet .rp-all .ash{break-after:avoid}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -1101,6 +1121,10 @@ body.phone-link{overflow:hidden}
           <div class="statline" id="stats"></div>
           <div class="small" style="margin-top:6px">點一下下方曲線，影片就會跳到那個時間點。上方色帶為各時間點的姿勢分類（灰：站姿、淺黃：淺蹲、橙：半蹲、深橙：深蹲），紅線：判讀警示；灰底區塊：偵測到的反覆次。</div>
         </div>
+      </details>
+      <details class="panel" open data-modes="review">
+        <summary>全部數據（整段錄影）</summary>
+        <div class="body"><div id="allStats" class="allstats"></div></div>
       </details>
       <details class="panel" open data-modes="review">
         <summary>🦴 肢段參考圖</summary>
@@ -2804,8 +2828,8 @@ function renderClips(){
 $("clipSel").onchange=e=>selectClip(Number(e.target.value));
 function selectClip(id){
   curClip=clips.find(c=>c.id===id)||null;
-  if(!curClip){ rv.removeAttribute("src"); rv.load(); rv.hidden=true; $("rvPh").hidden=false; drawChart(); return; }
-  rv.hidden=false; $("rvPh").hidden=true; rv.src=curClip.url; renderClips(); drawChart(); setTimeout(()=>{ renderSkel(); renderCheck(); },60);
+  if(!curClip){ rv.removeAttribute("src"); rv.load(); rv.hidden=true; $("rvPh").hidden=false; drawChart(); renderAllStats(); return; }
+  rv.hidden=false; $("rvPh").hidden=true; rv.src=curClip.url; renderClips(); drawChart(); setTimeout(()=>{ renderSkel(); renderCheck(); renderAllStats(); },60);
 }
 $("delClip").onclick=()=>{ if(!curClip) return; if(!confirm(`刪除「${curClip.name}」？`)) return; URL.revokeObjectURL(curClip.url); clips=clips.filter(c=>c.id!==curClip.id); curClip=null; renderClips(); selectClip(clips.length?clips[clips.length-1].id:-1); };
 rv.addEventListener("loadedmetadata",()=>{
@@ -3101,9 +3125,63 @@ function clipSummary(clip){
   return {R,score,grade,notes,A,K};
 }
 function reportHistory(sum){ if(!curClip.uid){ curClip.uid=Date.now(); curClip.date=new Date().toISOString(); } const r=upsertHistory(curClip,sum); return histOf(r.name).slice(-12); }
+/* ===================== 全部數據：整段錄影的角度、角速度、重心與力學統計 ===================== */
+const G0=9.81;
+function smooth5(a){ return a.map((v,i)=>{ if(v==null) return null; let s=0,n=0; for(let j=i-2;j<=i+2;j++) if(a[j]!=null){ s+=a[j]; n++; } return s/n; }); }
+function seriesStat(T,V,isAng){
+  const idx=V.map((v,i)=>v!=null&&isFinite(v)?i:-1).filter(i=>i>=0); if(idx.length<5) return null;
+  const vs=idx.map(i=>V[i]), n=vs.length, mean=vs.reduce((a,b)=>a+b,0)/n, sd=Math.sqrt(vs.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,n-1));
+  let iMin=idx[0], iMax=idx[0]; for(const i of idx){ if(V[i]<V[iMin]) iMin=i; if(V[i]>V[iMax]) iMax=i; }
+  let w=null;
+  if(isAng){ const S=smooth5(V); let best=0, bi=-1; for(let i=1;i<S.length-1;i++){ if(S[i-1]==null||S[i+1]==null) continue; const dt=T[i+1]-T[i-1]; if(dt<=0||dt>.25) continue; const om=(S[i+1]-S[i-1])/dt; if(Math.abs(om)>Math.abs(best)){ best=om; bi=i; } } if(bi>=0) w={v:best,t:T[bi]}; }
+  return {n,mean,sd,min:V[iMin],tMin:T[iMin],max:V[iMax],tMax:T[iMax],range:V[iMax]-V[iMin],w}; }
+function clipAllStats(clip){
+  const D=clip.data, T=D.map(r=>r.t), groups=[];
+  for(const o of SERIES){ const isAng=o.u==="°"; if(ANGLES.some(x=>x.k===o.k)) continue; // 單側重複項（左右合併列已涵蓋）
+    const rows=o.pair?[["左",o.pair[0]],["右",o.pair[1]]]:[["",o.get]];
+    const out=rows.map(([sd,f])=>{ const st=seriesStat(T,D.map(r=>{ try{ const v=f(r); return v==null?null:+v; }catch(e){ return null; } }),isAng); return st?{side:sd,...st}:null; }).filter(Boolean);
+    if(!out.length||out.every(r=>r.range===0&&r.mean===0)) continue;
+    let g=groups.find(x=>x.n===o.grp); if(!g) groups.push(g={n:o.grp,items:[]});
+    g.items.push({k:o.k,n:o.n.replace(/（左右一起・([^）]*)）/,"（$1）").replace(/（左右一起）/,""),u:o.u,d:o.d??(o.u==="°"?1:2),isAng,rows:out}); }
+  return {groups,bio:clipBiomech(clip)}; }
+function clipBiomech(clip){
+  const D=clip.data, m=bodyM(), T=D.map(r=>r.t), H=D.map(r=>r.h), VX=D.map(r=>r.vx), VY=D.map(r=>r.vy), F=D.map(r=>r.F);
+  const ok=a=>a.filter(v=>v!=null&&isFinite(v)); if(ok(H).length<5) return null;
+  const st=a=>seriesStat(T,a,false), hs=st(H), vxs=st(VX), vys=st(VY), fs=st(F);
+  const P=D.map(r=>r.F!=null&&r.vy!=null?r.F*m*G0*r.vy:null), ps=st(P);
+  // 騰空：估計地面反作用力 < 0.15 BW 持續 ≥ 0.08 s
+  let flights=[], s0=null; D.forEach((r,i)=>{ const air=r.F!=null&&r.F<.15; if(air&&s0==null) s0=i; if((!air||i===D.length-1)&&s0!=null){ const t0=T[s0], t1=T[air?i:i-1]; if(t1-t0>=.08) flights.push(t1-t0); s0=null; } });
+  const ft=flights.length?Math.max(...flights):null;
+  const vMax=ok(VX).concat(ok(VY)); const spd=D.map(r=>r.vx!=null&&r.vy!=null?Math.hypot(r.vx,r.vy):null), ss=st(spd);
+  return {m,hs,vxs,vys,fs,ps,ss,disp:hs?hs.range:null,ft,jump:ft?G0*ft*ft/8:null,nFlight:flights.length}; }
+const fmtN=(v,d)=>{ if(v==null||!isFinite(v)) return "—"; const t=(+v).toFixed(d); return /^-0(\.0+)?$/.test(t)?t.slice(1):t; };
+function bioHTML(b,compact){ if(!b) return '<div class="small">這段錄影沒有足夠的重心資料。</div>';
+  const kv=(n,v,note)=>`<tr><td>${n}</td><td class="v">${v}</td>${compact?"":`<td class="nt">${note||""}</td>`}</tr>`;
+  return `<table class="bio">
+  ${kv("重心最高／最低",`${fmtN(b.hs?.max,2)}／${fmtN(b.hs?.min,2)} m`,"離地高度")}
+  ${kv("重心垂直位移",`${fmtN(b.disp,2)} m`,"最高－最低")}
+  ${kv("重心最大上升速度",`${fmtN(b.vys?.max,2)} m/s`,`${fmtN(b.vys?.tMax,1)} s`)}
+  ${kv("重心最大下降速度",`${fmtN(b.vys?-b.vys.min:null,2)} m/s`,`${fmtN(b.vys?.tMin,1)} s`)}
+  ${kv("重心最大水平速度",`${fmtN(b.vxs?Math.max(Math.abs(b.vxs.max),Math.abs(b.vxs.min)):null,2)} m/s`,"")}
+  ${kv("重心最大合速度",`${fmtN(b.ss?.max,2)} m/s`,"")}
+  ${kv("垂直地面反作用力 峰值",`${fmtN(b.fs?.max,2)} BW（${fmtN(b.fs?b.fs.max*b.m*G0:null,0)} N）`,`${fmtN(b.fs?.tMax,1)} s`)}
+  ${kv("垂直地面反作用力 最低",`${fmtN(b.fs?.min,2)} BW`,"")}
+  ${kv("向上功率 峰值",`${fmtN(b.ps?.max,0)} W（${fmtN(b.ps?b.ps.max/b.m:null,1)} W/kg）`,"F × 垂直速度")}
+  ${kv("騰空時間",b.ft?`${fmtN(b.ft,2)} s（${b.nFlight} 次）`:"未偵測到騰空","")}
+  ${kv("跳躍高度（騰空時間法）",b.jump?`${fmtN(b.jump*100,1)} cm`:"—","h = g·t²／8")}
+  </table>`; }
+function allStatsHTML(S,opt={}){ const {compact,link}=opt;
+  return S.groups.map(g=>`<div class="ash">${esc(g.n)}</div><table class="ast"><tr><th>項目</th><th></th><th>平均±SD</th><th>最小（秒）</th><th>最大（秒）</th><th>範圍</th>${g.items.some(i=>i.isAng)?"<th>峰值角速度</th>":""}</tr>`+
+    g.items.map(it=>it.rows.map((r,j)=>`<tr${link?` data-k="${it.k}"`:""}>${j?"":`<td class="nm" rowspan="${it.rows.length}">${esc(it.n)}</td>`}<td class="sde ${r.side==="左"?"L":r.side==="右"?"R":""}">${r.side}</td><td>${fmtN(r.mean,it.d)}±${fmtN(r.sd,it.d)}${it.u.trim()}</td><td>${fmtN(r.min,it.d)}<i>${fmtN(r.tMin,1)}</i></td><td>${fmtN(r.max,it.d)}<i>${fmtN(r.tMax,1)}</i></td><td>${fmtN(r.range,it.d)}</td>${g.items.some(i=>i.isAng)?`<td>${r.w?fmtN(Math.abs(r.w.v),0)+"°/s<i>"+fmtN(r.w.t,1)+"</i>":"—"}</td>`:""}</tr>`).join("")).join("")+`</table>`).join(""); }
+function renderAllStats(){ const box=$("allStats"); if(!box) return;
+  if(!curClip?.data?.length){ box.innerHTML='<div class="small">錄影後這裡會列出整段的所有數據。</div>'; return; }
+  const S=clipAllStats(curClip);
+  box.innerHTML=`<div class="ash">重心與生物力學（估計）</div>${bioHTML(S.bio,true)}${allStatsHTML(S,{compact:true,link:true})}<div class="small" style="margin-top:6px">點任一列可在下方看它的曲線。時間（秒）為該值出現的時刻；角速度由 5 點平滑後中央差分計算。</div>`;
+  box.querySelectorAll("tr[data-k]").forEach(tr=>tr.onclick=()=>{ $("series").value=tr.dataset.k; $("series").dispatchEvent(new Event("change")); }); }
+
 function openReport(){
   if(!curClip?.data?.length) return alert("請先選一段錄影");
-  const sum=clipSummary(curClip), {R,A,K}=sum, hist=reportHistory(sum);
+  const sum=clipSummary(curClip), {R,A,K}=sum, hist=reportHistory(sum), AS=clipAllStats(curClip);
   // 肢段參考圖（正面、側面、疊圖）
   const mk=(view,mode,w,h)=>{ const cv=document.createElement("canvas"); cv.width=w; cv.height=h; const sv=$("skelView").value, sm=$("skelMode").value; $("skelView").value=view; $("skelMode").value=mode; renderSkel(cv); $("skelView").value=sv; $("skelMode").value=sm; return cv.toDataURL("image/png"); };
   const imgF=mk("front","key",1400,380), imgS=mk("side","key",1400,380), imgO=mk("front","overlay",340,260), imgOS=mk("side","overlay",340,260);
@@ -3151,9 +3229,13 @@ function openReport(){
     <div class="rp-box"><div class="h">與前次比較</div>${cmpTable(hist[hist.length-2],hist[hist.length-1],true)}</div><div class="rp-box"><div class="h">歷次變化（${hist.length} 次）</div>${trendSet(hist,true)}</div>
    </div>
   </div>
-  ${sec("6","建議")}
+  ${sec("6","生物力學摘要（重心與地面反作用力，估計）")}
+  <div class="rp-bio">${bioHTML(AS.bio,false)}</div>
+  ${sec("7","全部數據（整段錄影：平均±標準差、最小／最大值與出現時間、範圍、峰值角速度）")}
+  <div class="rp-all">${allStatsHTML(AS,{})}</div>
+  ${sec("8","建議")}
   <div class="rp-notes">${sum.notes.length?sum.notes.map(t=>`<div>• ${esc(t)}</div>`).join(""):"<div>• 各項都在參考區間內，動作控制良好 👍</div>"}</div>
-  ${sec("7","參考區間與來源")}
+  ${sec("9","參考區間與來源")}
   <table class="rp-t sm"><tr><th>項目</th><th>平面</th><th>正常活動度（AAOS）</th><th>蹲的參考區間</th><th>來源</th></tr>${refRows}</table>
   <div class="sm rp-foot">* 踝背屈以腳跟→腳尖連線估計，誤差較大。單鏡頭時與鏡頭平行的平面為量測，另一平面為推算（Taylor 2000）。膝內夾參考值依性別：女 ≤13°、男 ≤9°（Herrington & Munro 2010，跳落地 2D 常模），用於蹲姿時為近似。本報告為教學回饋，不是醫療診斷。</div>`;
   document.body.classList.add("rp"); $("reportWrap").hidden=false; $("reportWrap").scrollTop=0;
@@ -3815,7 +3897,7 @@ let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
-document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|比對目標|示範影片來源|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateViewBtn(); $("btnView").onclick=e=>{ e.stopPropagation(); viewOpen=!viewOpen; if(viewOpen&&!liveOn) toast("開鏡頭後可調整畫面"); renderViewCtl(); updateViewBtn(); }; setAbtn("btnTrial","trial","跟做一次"); updateGhostBtn(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|比對目標|示範影片來源|重心與力學|雙平面角度|數據曲線|全部數據|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateViewBtn(); $("btnView").onclick=e=>{ e.stopPropagation(); viewOpen=!viewOpen; if(viewOpen&&!liveOn) toast("開鏡頭後可調整畫面"); renderViewCtl(); updateViewBtn(); }; setAbtn("btnTrial","trial","跟做一次"); updateGhostBtn(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
 requestAnimationFrame(loop);
 loadModels();
 </script>
