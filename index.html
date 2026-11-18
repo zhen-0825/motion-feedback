@@ -619,6 +619,17 @@ body.phone-link{overflow:hidden}
 .ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ph-grid button{height:76px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:17px;font-weight:700;cursor:pointer}
 .ph-grid button.on{background:#C0364E;color:#fff;border-color:#C0364E}
+.viewctl{position:absolute;right:12px;top:56px;z-index:6;width:min(300px,calc(100% - 24px));background:rgba(16,21,30,.94);color:#fff;border-radius:10px;padding:10px 12px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.viewctl .vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.viewctl .vx{background:none;border:none;color:#C9D2DE;font-size:22px;cursor:pointer;line-height:1}
+.viewctl .vrow{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:8px;margin:7px 0}.viewctl .vrow>span{color:#C9D2DE}
+.viewctl .vchips{display:flex;flex-wrap:wrap;gap:4px;grid-column:2/4;align-items:center}
+.viewctl button:not(.vx){border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:6px;padding:5px 9px;font-size:12.5px;font-weight:700;cursor:pointer}
+.viewctl button.on{background:#fff;color:#1B2230;border-color:#fff}.viewctl input[type=range]{width:100%}.viewctl em{font-style:normal;font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.viewctl .vnote{font-size:11.5px;color:#9AA6B6;margin:-2px 0 4px 44px}.viewctl .vdeg{margin-left:4px;font-variant-numeric:tabular-nums}
+.ph-lens{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:10px 10px 0;background:#10151E}
+.ph-lens button{border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:700}
+.ph-lens button.on{background:#FFC23D;color:#1B2230;border-color:#FFC23D}
+.ph-zoom{display:flex;align-items:center;gap:10px;padding:10px 16px 0;background:#10151E;color:#fff;font-size:14px}.ph-zoom input{flex:1}.ph-zoom em{font-style:normal;min-width:76px;text-align:right}
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -881,6 +892,7 @@ body.phone-link{overflow:hidden}
             <div class="ph" id="livePh">點下方「開鏡頭」開始即時分析<br><span class="small">學員全身入鏡，距離鏡頭約 2–3 公尺</span></div>
             <canvas id="liveCanvas" hidden></canvas>
             <div class="countdown" id="countdown"></div>
+            <div class="viewctl" id="viewCtl" hidden></div>
             <div class="pbar" id="livePeople" hidden></div>
             <div class="trialChip" id="trialChip" hidden></div>
           </div>
@@ -925,6 +937,7 @@ body.phone-link{overflow:hidden}
           <option value="10" selected>錄 10 秒</option>
           <option value="20">錄 20 秒</option>
         </select>
+        <button class="abtn" id="btnView"><span class="ic"></span>畫面調整</button>
         <button class="abtn white" id="btnSnap"><span class="ic">📸</span>拍照</button>
       </div>
 
@@ -1262,6 +1275,7 @@ const ICON={
   sound:svgI('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>'),
   trial:svgI('<circle cx="12" cy="12" r="8.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/>'),
   ghost:svgI('<circle cx="9" cy="5" r="2"/><path d="M9 7.5v6l-3 6M9 13.5l3 6M5 10l4-1.5 4 1.5"/><circle cx="16" cy="5" r="2" stroke-dasharray="1.6 1.6"/><path d="M16 7.5v6l-3 6M16 13.5l3 6M12 10l4-1.5 4 1.5" stroke-dasharray="1.6 1.6"/>'),
+  zoom:svgI('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8M10.5 7.5v6M7.5 10.5h6"/>'),
   panel:svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14.5 4v16"/><path d="M17 8.5h1.5M17 11.5h1.5M17 14.5h1.5"/>')
 };
 const EMOJI2ICON={"▶️":"cam","⏹️":"stop","🔄":"flip","🪞":"mirror","🔴":"rec","📸":"snap","⏯️":"play","⏪":"back","⏩":"fwd","📌":"pin","📄":"doc","🧹":"filter","🎞️":"film","🗑️":"trash"};
@@ -2451,6 +2465,49 @@ let liveQ=null, liveVM=null;
 
 /* ===================== 即時鏡頭 ===================== */
 const liveVideo=$("liveVideo"), liveCanvas=$("liveCanvas"), lctx=liveCanvas.getContext("2d");
+/* ===================== 畫面調整：縮放／平移／旋轉（主機端），手機鏡頭切換與光學縮放 ===================== */
+const view={z:1,cx:.5,cy:.5,rot:0}; let phoneCaps=null, viewOpen=false;
+const vC=document.createElement("canvas"), vX=vC.getContext("2d");
+function viewActive(){ return view.z>1.001||view.rot%360!==0; }
+function prepView(VW,VH){ const z=Math.max(1,view.z), cw=VW/z, ch=VH/z;
+  view.cx=Math.min(1-cw/VW/2,Math.max(cw/VW/2,view.cx)); view.cy=Math.min(1-ch/VH/2,Math.max(ch/VH/2,view.cy));
+  const sx=view.cx*VW-cw/2, sy=view.cy*VH-ch/2, r=((view.rot%360)+360)%360, sw=r%180?ch:cw, sh=r%180?cw:ch, k=Math.max(1,Math.min(2,720/Math.max(sw,sh)));
+  const W=Math.round(sw*k), H=Math.round(sh*k); if(vC.width!==W||vC.height!==H){ vC.width=W; vC.height=H; }
+  vX.save(); vX.translate(W/2,H/2); vX.rotate(r*Math.PI/180); const dw=(r%180?H:W), dh=(r%180?W:H); vX.drawImage(liveVideo,sx,sy,cw,ch,-dw/2,-dh/2,dw,dh); vX.restore();
+  return {src:vC,W,H}; }
+const LENS_N={ultra:"超廣角 0.5×",wide:"廣角 1×",tele:"望遠",auto:"自動切換",front:"前鏡頭",back:"後鏡頭"};
+function lensType(l){ l=l||""; return /front|前置|前鏡頭|user facing|facing front/i.test(l)?"front":/ultra ?wide|超廣角|超广角/i.test(l)?"ultra":/tele|望遠|望远|長焦|长焦/i.test(l)?"tele":/dual|triple|雙|双|三鏡頭|三镜头/i.test(l)?"auto":"wide"; }
+const camConn=()=>linkConns.find(c=>c.open&&c.metadata?.role==="cam");
+function sendPhone(m){ const c=camConn(); if(c) c.send(m); }
+function renderViewCtl(){ const el=$("viewCtl"); if(!el) return; el.hidden=!(viewOpen&&liveOn);
+  if(el.hidden) return;
+  const ph=camSource==="phone"&&phoneCaps, hw=ph&&phoneCaps.zoom;
+  const lens=ph&&phoneCaps.lenses?.length>1?`<div class="vrow"><span>鏡頭</span><div class="vchips">${phoneCaps.lenses.map(l=>`<button data-lens="${esc(l.id)}" class="${l.id===phoneCaps.cur?"on":""}" title="${esc(l.label)}">${LENS_N[l.type]}${l.n>1?" "+l.n:""}</button>`).join("")}</div></div>`:"";
+  const zmin=hw?phoneCaps.zoom.min:1, zmax=hw?Math.min(phoneCaps.zoom.max,10):4, zstep=hw?(phoneCaps.zoom.step||.1):.1, zv=hw?phoneCaps.zoom.cur:view.z;
+  el.innerHTML=`<div class="vhead"><b>畫面調整</b><button class="vx" data-act="close" aria-label="關閉">×</button></div>${lens}
+   <div class="vrow"><span>縮放</span><input type="range" id="vZoom" min="${zmin}" max="${zmax}" step="${zstep}" value="${zv}"><em id="vZoomV">${(+zv).toFixed(1)}×</em></div>
+   <div class="vnote">${hw?"手機光學／感光元件縮放，畫質較好":"數位縮放（裁切畫面）"}${!hw&&view.z>1?"，拖曳畫面可移動位置":""}</div>
+   <div class="vrow"><span>旋轉</span><div class="vchips"><button data-act="rl">↺ 左轉</button><button data-act="rr">↻ 右轉</button><b class="vdeg">${((view.rot%360)+360)%360}°</b></div></div>
+   <div class="vrow"><span></span><div class="vchips">${ph?'<button data-act="flip">前／後鏡頭</button>':""}<button data-act="reset">重設</button></div></div>`;
+  el.querySelectorAll("[data-lens]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); sendPhone({pcmd:"lens",id:b.dataset.lens}); });
+  el.querySelectorAll("[data-act]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const a=b.dataset.act;
+    if(a==="close"){ viewOpen=false; renderViewCtl(); updateViewBtn(); return; }
+    if(a==="rl") view.rot-=90; else if(a==="rr") view.rot+=90; else if(a==="flip") sendPhone({pcmd:"facing"});
+    else if(a==="reset"){ Object.assign(view,{z:1,cx:.5,cy:.5,rot:0}); if(hw) sendPhone({pcmd:"zoom",v:phoneCaps.zoom.min<=1&&phoneCaps.zoom.max>=1?1:phoneCaps.zoom.min}); }
+    engine.reset(); liveTrk.reset(); renderViewCtl(); });
+  const zi=$("vZoom"); zi.oninput=e=>{ const v=+e.target.value; $("vZoomV").textContent=v.toFixed(1)+"×"; if(hw){ phoneCaps.zoom.cur=v; clearTimeout(zi._t); zi._t=setTimeout(()=>sendPhone({pcmd:"zoom",v}),80); } else { view.z=v; } };
+  zi.onchange=()=>{ engine.reset(); renderViewCtl(); };
+  el.onclick=e=>e.stopPropagation(); }
+function updateViewBtn(){ const b=$("btnView"); if(!b) return; setAbtn("btnView","zoom",isCompact()?"畫面":"畫面調整"); b.classList.toggle("on",viewOpen); }
+// 拖曳平移、滾輪縮放（數位縮放時）
+{ let drag=null;
+  liveCanvas.addEventListener("pointerdown",e=>{ if(!viewOpen||view.z<=1.001) return; drag={x:e.clientX,y:e.clientY,cx:view.cx,cy:view.cy}; liveCanvas.setPointerCapture(e.pointerId); e.stopPropagation(); });
+  liveCanvas.addEventListener("pointermove",e=>{ if(!drag) return; const r=liveCanvas.getBoundingClientRect(), k=1/view.z, rr=((view.rot%360)+360)%360;
+    let dx=(e.clientX-drag.x)/r.width*k, dy=(e.clientY-drag.y)/r.height*k; if(liveMirror) dx=-dx;
+    if(rr===90) [dx,dy]=[dy,-dx]; else if(rr===180){ dx=-dx; dy=-dy; } else if(rr===270) [dx,dy]=[-dy,dx];
+    view.cx=drag.cx-dx; view.cy=drag.cy-dy; });
+  liveCanvas.addEventListener("pointerup",e=>{ if(drag){ drag=null; engine.reset(); e.stopPropagation(); } });
+  liveCanvas.addEventListener("wheel",e=>{ if(!viewOpen||(camSource==="phone"&&phoneCaps?.zoom)) return; e.preventDefault(); view.z=Math.max(1,Math.min(4,view.z*(e.deltaY<0?1.1:1/1.1))); renderViewCtl(); },{passive:false}); }
 liveCanvas.addEventListener("click",e=>{ if(!livePeople||livePeople.n<2) return; const p=canvasPt(liveCanvas,e,liveMirror); if(liveTrk.pickAt(p.x,p.y)){ engine.reset(); e.stopPropagation(); } });
 let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
 let liveRes=null, liveWorld=null, liveM=null, liveHands=null, livePeople=null;
@@ -2500,7 +2557,7 @@ async function openHost(){
       linkMsg("視訊直接在兩台裝置之間傳送（WebRTC 點對點），不經過伺服器、也不會被儲存；連線服務只交換配對碼。"); });
     hostPeer.on("error",e=>{ if(e.type==="unavailable-id"){ hostPeer.destroy(); start(); } else linkMsg("連線服務錯誤："+(e.type||e.message)+"。請關掉視窗再開一次。",true); });
     hostPeer.on("connection",c=>{ linkConns.push(c); c.on("open",()=>{ renderLinkList(); toast((c.metadata?.role==="cam"?"手機鏡頭":"遙控器")+"已連線"); sendStatus(); });
-      c.on("data",d=>hostCmd(d,c)); c.on("close",()=>{ linkConns=linkConns.filter(x=>x!==c); renderLinkList(); }); });
+      c.on("data",d=>{ if(d?.caps){ phoneCaps=d.caps; renderViewCtl(); return; } hostCmd(d,c); }); c.on("close",()=>{ linkConns=linkConns.filter(x=>x!==c); renderLinkList(); }); });
     hostPeer.on("call",call=>{ call.answer(); call.on("stream",s=>usePhoneStream(s,call)); call.on("close",()=>{ if(phoneCall===call){ phoneCall=null; if(camSource==="phone"){ stopCam(); toast("手機鏡頭已中斷"); } renderLinkList(); } }); });
   };
   start();
@@ -2513,7 +2570,7 @@ async function usePhoneStream(s,call){
   liveOn=true; kin.reset(); engine.reset(); lifter.reset(); liveTrk.reset();
   $("livePh").hidden=true; liveCanvas.hidden=false; setAbtn("btnCam","⏹️","關鏡頭"); setAbtn("btnCam2","⏹️","關鏡頭");
   if(!liveLM&&!loading) loadModels();
-  listCams(); renderCamList(); renderLinkList(); toast("已改用手機鏡頭（無線）"); $("linkModal").hidden=true;
+  listCams(); renderCamList(); renderLinkList(); toast("已改用手機鏡頭（無線），可按「畫面調整」切換鏡頭、縮放與旋轉"); $("linkModal").hidden=true; viewOpen=true; renderViewCtl(); updateViewBtn();
 }
 function closePhoneCam(){ if(phoneCall){ try{ phoneCall.close(); }catch(e){} phoneCall=null; } camSource="local"; }
 function hostCmd(d,c){ if(!d||typeof d!=="object") return;
@@ -2525,6 +2582,8 @@ function hostCmd(d,c){ if(!d||typeof d!=="object") return;
   else if(d.cmd==="audio") click("btnAudio");
   else if(d.cmd==="mode"){ const m=document.body.dataset.mode==="mirror"?"follow":"mirror"; setMode?.(m); }
   else if(d.cmd==="facing"){ liveMirror=d.facing==="user"; updateMirrorBtn?.(); }
+  else if(d.cmd==="dzoom"){ view.z=Math.max(1,Math.min(4,+d.v||1)); renderViewCtl(); }
+  else if(d.cmd==="rot"){ view.rot+=90; engine.reset(); renderViewCtl(); }
   sendStatus(); }
 function sendStatus(){ const open=linkConns.filter(c=>c.open); if(!open.length) return;
   const st={st:1,live:liveOn,src:camSource,mode:document.body.dataset.mode,rec:!!rec,trial:!!trial,pose:$("dHead")?.textContent||"",warn:$("dWarn")?.textContent||"",num:$("scoreNum")?.textContent||"",tip:$("scoreTip")?.textContent||"",audio:settings.audio};
@@ -2547,19 +2606,44 @@ async function phoneJoin(code){
 }
 function phConnect(role){ const conn=phPeer.connect(peerId(phPeer.code),{reliable:true,metadata:{role,dev:devName()}}); phConn=conn;
   conn.on("open",()=>phSt("已連上電腦",true)); conn.on("close",()=>phSt("與電腦的連線已中斷"));
-  conn.on("data",d=>{ if(d?.st) phRender(d); }); return conn; }
+  conn.on("data",d=>{ if(d?.st) phRender(d); else if(d?.pcmd==="lens") phSetLens(d.id); else if(d?.pcmd==="zoom") phApplyZoom(+d.v); else if(d?.pcmd==="facing") $("phFlip").click(); });
+  conn.on("open",()=>{ if(role==="cam"&&phStream) phRenderCtl(); }); return conn; }
+let phDevId="", phLenses=[];
+async function phListLenses(){ try{ const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput"&&d.label);
+    const cnt={}; phLenses=ds.map(d=>{ const t=lensType(d.label); cnt[t]=(cnt[t]||0)+1; return {id:d.deviceId,label:d.label,type:t,n:cnt[t]}; });
+    const tot={}; phLenses.forEach(l=>tot[l.type]=(tot[l.type]||0)+1); phLenses.forEach(l=>{ if(tot[l.type]<2) l.n=0; });
+    const ord={ultra:0,wide:1,tele:2,auto:3,front:4}; phLenses.sort((a,b)=>ord[a.type]-ord[b.type]); }catch(e){ phLenses=[]; } }
+function phCaps(){ const t=phStream?.getVideoTracks()[0]; let z=null; try{ const c=t.getCapabilities?.(); if(c?.zoom&&c.zoom.max>c.zoom.min) z={min:c.zoom.min,max:c.zoom.max,step:c.zoom.step||.1,cur:t.getSettings().zoom??c.zoom.min}; }catch(e){}
+  return {lenses:phLenses,cur:phDevId||t?.getSettings?.().deviceId||"",zoom:z,facing:phFacing}; }
+function phRenderCtl(){ const c=phCaps(), L=$("phLens");
+  L.innerHTML=c.lenses.length>1?c.lenses.map(l=>`<button data-id="${esc(l.id)}" class="${l.id===c.cur?"on":""}">${LENS_N[l.type]}${l.n?" "+l.n:""}</button>`).join(""):"";
+  L.querySelectorAll("button").forEach(b=>b.onclick=()=>phSetLens(b.dataset.id));
+  const z=$("phZoom"); if(c.zoom){ z.min=c.zoom.min; z.max=Math.min(c.zoom.max,10); z.step=c.zoom.step; z.value=c.zoom.cur; z.dataset.hw="1"; } else { z.min=1; z.max=4; z.step=.1; z.dataset.hw=""; }
+  $("phZoomV").textContent=(+z.value).toFixed(1)+"×"+(c.zoom?"":"（數位）");
+  if(phConn?.open) phConn.send({caps:c}); }
+async function phSetLens(id){ const l=phLenses.find(x=>x.id===id); if(!l) return; phDevId=id; phFacing=l.type==="front"?"user":"environment"; const old=phStream; await phStartCam(); old?.getTracks().forEach(t=>{ if(!phStream.getTracks().includes(t)) t.stop(); }); }
+async function phApplyZoom(v){ const t=phStream?.getVideoTracks()[0], z=$("phZoom");
+  if(z.dataset.hw){ try{ await t.applyConstraints({advanced:[{zoom:v}]}); }catch(e){} } else phConn?.open&&phConn.send({cmd:"dzoom",v});
+  z.value=v; $("phZoomV").textContent=(+v).toFixed(1)+"×"+(z.dataset.hw?"":"（數位）"); if(phConn?.open) phConn.send({caps:phCaps()}); }
+$("phZoom").oninput=e=>{ clearTimeout(phZoomT); const v=+e.target.value; $("phZoomV").textContent=v.toFixed(1)+"×"; phZoomT=setTimeout(()=>phApplyZoom(v),60); };
+let phZoomT=0;
+$("phRot").onclick=()=>{ if(phConn?.open) phConn.send({cmd:"rot"}); };
 async function phStartCam(){
-  try{ phStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:phFacing,width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:false}); }
+  const v={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}; if(phDevId) v.deviceId={exact:phDevId}; else v.facingMode=phFacing;
+  try{ phStream=await navigator.mediaDevices.getUserMedia({video:v,audio:false});
+    if(!phDevId){ await phListLenses(); const want=phLenses.find(l=>l.type===(phFacing==="user"?"front":"wide")); const cur=phStream.getVideoTracks()[0].getSettings().deviceId;
+      if(want&&want.id!==cur){ phStream.getTracks().forEach(t=>t.stop()); phDevId=want.id; phStream=await navigator.mediaDevices.getUserMedia({video:{...v,facingMode:undefined,deviceId:{exact:want.id}},audio:false}); } else phDevId=cur||""; } }
   catch(e){ return alert("無法開啟手機相機："+(e.name==="NotAllowedError"?"請允許相機權限":e.message)); }
   $("phVideo").srcObject=phStream; $("phVideo").classList.toggle("mir",phFacing==="user");
   if(!phCall){ phCall=phPeer.call(peerId(phPeer.code),phStream,{metadata:{role:"cam",dev:devName(),facing:phFacing}}); phCall.on("close",()=>phSt("電腦已結束接收畫面")); }
   else { const snd=phCall.peerConnection?.getSenders().find(s=>s.track?.kind==="video"); if(snd) await snd.replaceTrack(phStream.getVideoTracks()[0]); phConn?.open&&phConn.send({cmd:"facing",facing:phFacing}); }
   try{ phWake=await navigator.wakeLock?.request("screen"); }catch(e){}
+  if(!phLenses.length) await phListLenses(); phRenderCtl();
 }
 document.querySelectorAll("#phRole .ph-big").forEach(b=>b.onclick=async()=>{ if(!phPeer?.open) return phSt("還在連線，請稍候再按");
   const role=b.dataset.role; $("phRole").hidden=true; phConnect(role);
   if(role==="cam"){ $("phCam").hidden=false; await phStartCam(); } else { $("phRemote").hidden=false; } });
-$("phFlip").onclick=async()=>{ const old=phStream; phFacing=phFacing==="environment"?"user":"environment"; await phStartCam(); old?.getTracks().forEach(t=>{ if(!phStream.getTracks().includes(t)) t.stop(); }); };
+$("phFlip").onclick=async()=>{ const old=phStream; phFacing=phFacing==="environment"?"user":"environment"; phDevId=(phLenses.find(l=>l.type===(phFacing==="user"?"front":"wide"))||{}).id||""; await phStartCam(); old?.getTracks().forEach(t=>{ if(!phStream.getTracks().includes(t)) t.stop(); }); };
 const phEnd=()=>{ try{ phCall?.close(); phConn?.close(); phPeer?.destroy(); }catch(e){} phStream?.getTracks().forEach(t=>t.stop()); try{ phWake?.release(); }catch(e){}
   phCall=phConn=phPeer=phStream=null; $("phonePage").hidden=true; document.body.classList.remove("phone-link"); history.replaceState(null,"",location.pathname); };
 $("phStop").onclick=phEnd; $("phStop2").onclick=phEnd;
@@ -2573,7 +2657,7 @@ $("btnLinkJoin").onclick=()=>phoneJoin($("linkJoinCode").value);
 async function startCam(){
   audioUnlock(); audioReset();
   if(!navigator.mediaDevices?.getUserMedia){ alert("這裡不能使用相機。\n\n如果你是在 App 的預覽視窗裡，請下載檔案後用 Chrome／Edge 開啟；手機、平板請用 https 網址開啟。"); return; }
-  stopCam(); closePhoneCam();
+  stopCam(); closePhoneCam(); phoneCaps=null;
   try{
     const vc={...camConstraints()};
     if(!settings.camId&&settings.preferExt!==false){ const ext=(await getCams()).find(c=>camKind(c.label)==="usb"); if(ext) vc.deviceId={exact:ext.deviceId}; }
@@ -2628,19 +2712,20 @@ function applyCompact(){
   if(typeof updateMirrorBtn==="function") updateMirrorBtn(); if(window.upd3d) window.upd3d(); if($("btnAudio")&&typeof updateAudioBtn==="function") updateAudioBtn();
 }
 compactMQ.addEventListener?.("change",applyCompact);
-function updateMirrorBtn(){ setAbtn("btnMirror","🪞",isCompact()?"鏡像":"鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
+function updateMirrorBtn(){  setAbtn("btnMirror","🪞",isCompact()?"鏡像":"鏡像："+(liveMirror?"開":"關")); $("btnMirror").classList.toggle("off",!liveMirror); updateSwapBtn(); }
 $("btnMirror").onclick=()=>{ liveMirror=!liveMirror; updateMirrorBtn(); };
 $("btnSnap").onclick=()=>{ if(!liveOn) return alert("請先開鏡頭"); const a=document.createElement("a"); a.href=liveCanvas.toDataURL("image/png"); a.download=`動作截圖_${settings.name||"學員"}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.click(); };
 
 function processLive(now){
   if(!liveOn||liveVideo.readyState<2) return;
-  const W=liveVideo.videoWidth,H=liveVideo.videoHeight; if(!W) return;
+  if(!liveVideo.videoWidth) return;
+  const VS=viewActive()?prepView(liveVideo.videoWidth,liveVideo.videoHeight):{src:liveVideo,W:liveVideo.videoWidth,H:liveVideo.videoHeight}, W=VS.W, H=VS.H;
   if(liveCanvas.width!==W||liveCanvas.height!==H){ liveCanvas.width=W; liveCanvas.height=H; }
   if(liveLM&&liveVideo.currentTime!==lastLiveT){
     lastLiveT=liveVideo.currentTime;
     let raw=null;
-    try{ const r=liveLM.detectForVideo(liveVideo,nextTs(liveLM)); livePeople=liveTrk.update(listOf(r),W,H,now/1000); if(livePeople.changed){ engine.reset(); lifter.reset?.(); kin.reset?.(); } raw=livePeople.pri?.lms||null; liveWorld=livePeople.pri?.world||null; }catch(e){ console.warn(e); raw=null; }
-    if(settings.hands&&handLM){ try{ liveHands=assignHands(handLM.detectForVideo(liveVideo,nextTs(handLM)),raw); }catch(e){ console.warn(e); liveHands=null; } } else liveHands=null;
+    try{ const r=liveLM.detectForVideo(VS.src,nextTs(liveLM)); livePeople=liveTrk.update(listOf(r),W,H,now/1000); if(livePeople.changed){ engine.reset(); lifter.reset?.(); kin.reset?.(); } raw=livePeople.pri?.lms||null; liveWorld=livePeople.pri?.world||null; }catch(e){ console.warn(e); raw=null; }
+    if(settings.hands&&handLM){ try{ liveHands=assignHands(handLM.detectForVideo(VS.src,nextTs(handLM)),raw); }catch(e){ console.warn(e); liveHands=null; } } else liveHands=null;
     if(raw&&settings.fill){ liveQ=engine.process(raw,W,H,now/1000,liveHands,{euro:settings.euro}); liveRes=liveQ.lms; }
     else{ liveQ=null; liveRes=raw; }
     liveLift=liveRes?lifter.lift(liveRes,W,H,liveWorld):null;
@@ -2656,7 +2741,7 @@ function processLive(now){
     if(rec&&rec.started) pushRecord(now);
     trialFrame(now,W,H);
   }
-  drawFrame(lctx,liveVideo,W,H,liveMirror);
+  drawFrame(lctx,VS.src,W,H,liveMirror);
   drawAnat2D(lctx,liveRes,liveLift,W,H,liveMirror);
   drawOthers(lctx,livePeople,W,H,liveMirror);
   drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
@@ -3730,7 +3815,7 @@ let lastUI=0;
 function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
-document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|比對目標|示範影片來源|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); setAbtn("btnTrial","trial","跟做一次"); updateGhostBtn(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
+document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|比對目標|示範影片來源|重心與力學|雙平面角度|數據曲線|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateViewBtn(); $("btnView").onclick=e=>{ e.stopPropagation(); viewOpen=!viewOpen; if(viewOpen&&!liveOn) toast("開鏡頭後可調整畫面"); renderViewCtl(); updateViewBtn(); }; setAbtn("btnTrial","trial","跟做一次"); updateGhostBtn(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
 requestAnimationFrame(loop);
 loadModels();
 </script>
@@ -3753,7 +3838,9 @@ loadModels();
   </div>
   <div class="ph-cam" id="phCam" hidden>
     <video id="phVideo" playsinline muted autoplay></video>
-    <div class="ph-bar"><button class="pbtn" id="phFlip">切換前／後鏡頭</button><button class="pbtn" id="phStop">結束</button></div>
+    <div class="ph-lens" id="phLens"></div>
+    <div class="ph-zoom"><span>縮放</span><input type="range" id="phZoom" min="1" max="4" step="0.1" value="1"><em id="phZoomV">1.0×</em></div>
+    <div class="ph-bar"><button class="pbtn" id="phFlip">前／後鏡頭</button><button class="pbtn" id="phRot">畫面轉 90°</button><button class="pbtn" id="phStop">結束</button></div>
     <div class="small ph-tip">畫面傳到電腦分析中。請保持這個頁面開著、螢幕不要關。</div>
   </div>
   <div class="ph-remote" id="phRemote" hidden>
