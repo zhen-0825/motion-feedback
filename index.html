@@ -787,6 +787,29 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
   #right details.panel,#left details.panel{margin:10px 10px 0}
   .hhead h1{font-size:30px}
 }
+
+/* ===== 版面整理：首頁一屏、設定與參考資料分開 ===== */
+body[data-page=settings]:not(.refview) #left .refp{display:none!important}
+body.refview #left details.panel:not(.refp),body.refview #left .setSec:not(.refp){display:none!important}
+body.refview #btnHome,body.refview #tgLeft,body.refview #status,body.refview #fpsChip{visibility:hidden}
+.reflink{color:var(--acc);font-weight:500;text-decoration:none;margin-left:8px;white-space:nowrap}
+.reflink:hover{text-decoration:underline}
+#home .hwrap{max-width:1120px;padding:clamp(16px,3.2vh,32px) 28px 20px;min-height:calc(100vh - var(--top));display:flex;flex-direction:column}
+.hhead h1{font-size:clamp(24px,3.6vh,32px);margin:0}
+.hhead p{font-size:15px;margin-top:4px}
+#home .hstat{margin:clamp(10px,2vh,20px) 0 clamp(10px,1.8vh,16px);padding:2px 16px}
+#home .hstat div{padding:8px 10px 8px 0}
+#home .htiles{grid-template-columns:1.35fr 1fr 1fr;grid-template-rows:1fr;flex:1 1 auto;min-height:170px;max-height:300px}
+#home .htiles .tile{min-height:0;padding:clamp(14px,2.4vh,22px)}
+#home .tile.primary{grid-row:auto;min-height:0}
+#home .tile h3{margin-top:8px}
+.hsub{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.tile.sub{flex-direction:row;align-items:center;gap:14px;min-height:0;padding:14px 18px}
+.tile.sub svg{margin:0;width:26px;height:26px;flex:none}
+.tile.sub h3{margin:0;font-size:16px}.tile.sub p{margin:2px 0 0;font-size:12.5px}
+.hfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+.hfoot .hflow{margin:0}
+@media (max-width:860px){ #home .htiles{grid-template-columns:1fr;max-height:none} #home .htiles .tile{min-height:120px} #home .tile.primary{min-height:170px} .hsub{grid-template-columns:1fr} #home .hwrap{min-height:0} }
 </style>
 </head>
 <body data-mode="mirror" data-page="home">
@@ -797,7 +820,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
   <header class="topbar">
     <button class="iconbtn off" id="btnHome" title="首頁" aria-label="首頁"></button>
     <button class="iconbtn off" id="tgLeft" title="設定" aria-label="設定"></button>
-    <div class="brand"><span class="zlogo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#1B2230"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 19Q33 11.5 44.5 18"/><path d="M44.5 18L20.5 44.5"/><path d="M20.5 44.5Q31 47 41 45.6"/></g><path d="M32.15 16.04A12.5 12.5 0 0 0 34.79 25.87" fill="none" stroke="#FF8A3D" stroke-width="2.6" stroke-linecap="round"/><circle cx="13.5" cy="19.5" r="5" fill="#fff"/><path d="M39.5 43.1Q42.3 41.6 44.2 43.2L51 45.6Q52.4 46.6 51.2 47.9Q50.5 48.3 49.6 48.2L39.5 48Z" fill="#fff"/><g fill="none" stroke="#FFC23D" stroke-width="1.3" opacity=".6"><circle cx="44.5" cy="18" r="6.6"/><circle cx="20.5" cy="44.5" r="6.6"/></g><g fill="#FFC23D" stroke="#1B2230" stroke-width="1.8"><circle cx="44.5" cy="18" r="3.9"/><circle cx="20.5" cy="44.5" r="3.9"/></g></svg></span>動作即時回饋系統<span class="small" style="font-weight:700">AI 動作分析與回饋</span></div>
+    <div class="brand">動作即時回饋系統<span class="small" style="font-weight:700">AI 動作分析與回饋</span></div>
     <div class="modes" id="modes">
       <button data-mode="mirror" class="on">即時分析</button>
       <button data-mode="follow">示範比對</button>
@@ -819,7 +842,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
     <div id="hxTable"></div>
   </div></section>
   <section id="home"><div class="hwrap">
-    <div class="hhead"><span class="zlogo big" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#1B2230"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 19Q33 11.5 44.5 18"/><path d="M44.5 18L20.5 44.5"/><path d="M20.5 44.5Q31 47 41 45.6"/></g><path d="M32.15 16.04A12.5 12.5 0 0 0 34.79 25.87" fill="none" stroke="#FF8A3D" stroke-width="2.6" stroke-linecap="round"/><circle cx="13.5" cy="19.5" r="5" fill="#fff"/><path d="M39.5 43.1Q42.3 41.6 44.2 43.2L51 45.6Q52.4 46.6 51.2 47.9Q50.5 48.3 49.6 48.2L39.5 48Z" fill="#fff"/><g fill="none" stroke="#FFC23D" stroke-width="1.3" opacity=".6"><circle cx="44.5" cy="18" r="6.6"/><circle cx="20.5" cy="44.5" r="6.6"/></g><g fill="#FFC23D" stroke="#1B2230" stroke-width="1.8"><circle cx="44.5" cy="18" r="3.9"/><circle cx="20.5" cy="44.5" r="3.9"/></g></svg></span><h1>動作即時回饋系統</h1><p>以單一鏡頭進行即時姿勢估計、雙平面關節角度分析與動作判讀，錄影後可回放並匯出報告。</p></div>
+    <div class="hhead"><h1>動作即時回饋系統</h1><p>以單一鏡頭進行即時姿勢估計、雙平面關節角度分析與動作判讀，錄影後可回放並匯出報告。</p></div>
     <div class="hstat">
       <div><span>學員</span><b id="hName">—</b></div>
       <div><span>身高／體重</span><b id="hBody">—</b></div>
@@ -829,18 +852,21 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
     </div>
     <div class="htiles">
       <button class="tile primary" data-go="mirror"><span class="tic" data-ic="cam"></span><h3>即時分析</h3><p>鏡頭即時辨識骨架，顯示矢狀面與冠狀面關節角度、姿勢分類與判讀。</p><span class="go">開始</span></button>
-      <button class="tile" data-go="review"><span class="tic" data-ic="film"></span><h3>回顧與報告</h3><p>逐格回放、角度曲線、肢段參考圖、資料檢查與報告匯出。</p></button>
-      <button class="tile" data-go="follow"><span class="tic" data-ic="mirror"></span><h3>示範比對</h3><p>把示範做成動作模板，跟做一次後對齊快慢，產生分階段比對報告。</p></button>
-      <button class="tile" data-go="settings"><span class="tic" data-ic="sliders"></span><h3>設定與校正</h3><p>學員資料、AI 模型、靜態校正、轉身掃描與參考區間。</p></button>
-      <button class="tile" data-go="history"><span class="tic" data-ic="doc"></span><h3>受試者紀錄</h3><p>歷次數據自動保存，與前次比較並以趨勢圖呈現變化。</p></button>
+      <button class="tile" data-go="settings"><span class="tic" data-ic="sliders"></span><h3>設定與校正</h3><p>學員資料、鏡頭與手機連動、靜態校正、轉身掃描、AI 設定。</p></button>
+      <button class="tile" data-go="review"><span class="tic" data-ic="film"></span><h3>回顧與報告</h3><p>慢動作回放、角度曲線、全部數據、資料檢查，產生報告。</p></button>
     </div>
-    <div class="hflow"><span><b>1</b>設定學員資料</span><span><b>2</b>靜態校正／轉身掃描</span><span><b>3</b>即時分析與錄影</span><span><b>4</b>回顧與報告</span></div>
+    <div class="hsub">
+      <button class="tile sub" data-go="follow"><span class="tic" data-ic="mirror"></span><span><h3>示範比對</h3><p>跟著示範做一次，看相似度與差最多的階段</p></span></button>
+      <button class="tile sub" data-go="history"><span class="tic" data-ic="doc"></span><span><h3>受試者紀錄</h3><p>歷次數據與趨勢，看學生有沒有進步</p></span></button>
+    </div>
+    <div class="hfoot"><div class="hflow"><span><b>1</b>學員資料</span><span><b>2</b>開鏡頭擺位</span><span><b>3</b>即時分析與錄影</span><span><b>4</b>回顧與報告</span></div>
+      <a class="reflink" href="?view=ref" target="_blank" rel="noopener">參考資料與說明（另開分頁）</a></div>
   </div></section>
 
   <div class="main">
     <!-- ================= 左側：設定與資料 ================= -->
     <aside class="drawer" id="left"><div class="inner">
-      <div class="setHead"><div><h2>設定</h2><p class="small">學員資料、AI 模型、個人化校正與參考資料。設定會保存在這台裝置。</p></div><button class="pbtn" id="setDone">完成，回到分析</button></div>
+      <div class="setHead"><div><h2 id="setTitle">設定</h2><p class="small" id="setSub">學員資料、鏡頭、個人化校正與 AI 設定。設定會保存在這台裝置。<a class="reflink" id="setRefLink" href="?view=ref" target="_blank" rel="noopener">參考資料與說明</a></p></div><button class="pbtn" id="setDone">完成，回到分析</button></div>
       <h3 class="setSec">操作與校正</h3>
       <details class="panel" open>
         <summary>🧒 學員資料</summary>
@@ -952,51 +978,51 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
           </div>
         </div>
       </details>
-      <details class="panel">
-        <summary>🍎 老師快速上手</summary>
+      <h3 class="setSec refp">使用說明與參考資料</h3>
+      <details class="panel refp">
+        <summary>老師快速上手</summary>
         <div class="body">
           <ol>
-            <li>在「學員資料」輸入身高和體重。</li>
-            <li>按「📷 鏡子」→ 下方的 <b>開鏡頭</b>，讓學員全身入鏡。看側面動作時，鏡頭要擺在側邊、和腰同高。</li>
-            <li>按 <b>🔴 錄影</b>，倒數 3 秒後開始錄，錄完會自動跳到「📼 回顧」，可以慢動作播放並對照曲線。</li>
-            <li>在「🎬 跟練」放入示範影片或存一個目標姿勢，學生跟著做，就會拿到分數和提示。</li>
-            <li>右上角 📊 可以打開／收起數據面板，左上角 ⚙️ 是這個設定面板。</li>
+            <li><b>學員資料</b>：首頁「設定與校正」→「學員資料」，填暱稱、身高、體重、性別（沒填會用預設 150 cm／45 kg，速度和力量會算錯）。</li>
+            <li><b>開鏡頭擺位</b>：首頁「即時分析」→「開鏡頭」。想看蹲深、髖膝彎曲就側拍，想看膝內夾就正拍；鏡頭約 3 公尺遠、腰的高度，頭到腳都入鏡。</li>
+            <li><b>錄影</b>：選「錄 10 秒」→「錄影」，倒數 3 秒後做動作；錄完自動跳到「回顧」。</li>
+            <li><b>回顧與報告</b>：播放慢動作、看「數據曲線」和「全部數據」，先看「資料檢查」，再到「動作報告」產生報告、存成 PDF。</li>
+            <li>需要時：「示範比對」讓學生跟著示範做；「受試者紀錄」看同一位學生有沒有進步。完整步驟見《使用說明書》。</li>
           </ol>
           <div class="note warn">請用 Chrome、Edge 或 Safari 開啟。在 Claude 等 App 的「預覽視窗」裡，AI 模型和相機都會被擋住。手機、平板要用 https 網址開啟（例如 GitHub Pages）。</div>
         </div>
       </details>
-      <h3 class="setSec">參考資料</h3>
-      <details class="panel">
+      <details class="panel refp">
         <summary>📏 關節角度參考區間</summary>
         <div class="body">
           <div class="small">「正常活動度」是 AAOS 的關節活動範圍；動作中明顯超出（例如膝屈曲 &gt;155°）多半是 AI 點跑錯，系統會提醒。「蹲的參考區間」用在報告的判讀。</div>
           <div class="tw" style="margin-top:6px"><table id="refTable" class="rpt2"></table></div>
         </div>
       </details>
-      <details class="panel">
+      <details class="panel refp">
         <summary>🦴 肢段參數表</summary>
         <div class="body">
           <div class="tw"><table id="segTable"></table></div>
           <div class="small" id="segNote"></div>
         </div>
       </details>
-      <details class="panel">
+      <details class="panel refp">
         <summary>📍 身體 33 點</summary>
         <div class="body"><div class="tw"><table id="lmTable"></table></div></div>
       </details>
-      <details class="panel">
+      <details class="panel refp">
         <summary>📍 Plug-in Gait 虛擬標記對照</summary>
         <div class="body">
           <div class="small">依 Vicon Plug-in Gait 標記名稱，從 AI 偵測點推算 40 個虛擬標記。等級 A＝AI 點本身或其連線上的位置；B＝依幾何或文獻比例推估；C＝粗估（2D 無法真正得知深度），只供示意。</div>
           <div class="tw"><table id="vmTable"></table></div>
         </div>
       </details>
-      <details class="panel">
+      <details class="panel refp">
         <summary>✋ 手指 21 點</summary>
         <div class="body"><div class="tw"><table id="handTable"></table></div>
         <div class="small">手指角度以「彎曲角度」表示：0° 是伸直，數字越大彎越多（由 3D 手部座標計算）。</div></div>
       </details>
-      <details class="panel">
+      <details class="panel refp">
         <summary>🧮 計算方法與文獻</summary>
         <div class="body">
           <ul>
@@ -4389,7 +4415,11 @@ $("btnHome").innerHTML=svgI('<path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"
 document.querySelectorAll(".tic").forEach(e=>e.outerHTML=ICON[e.dataset.ic]);
 bindHistory();
 function goPage(p){
+  const ref=p==="ref"; document.body.classList.toggle("refview",ref); if(ref) p="settings";
   document.body.dataset.page=p;
+  if(p==="settings"){ $("setTitle").textContent=ref?"參考資料與說明":"設定"; $("setSub").firstChild.textContent=ref?"參考區間、肢段參數、標記點對照與計算方法。":"學員資料、鏡頭、個人化校正與 AI 設定。設定會保存在這台裝置。"; $("setDone").textContent=ref?(window.opener?"關閉這個分頁":"回到系統"):"完成，回到分析"; $("setRefLink").hidden=ref;
+    const ds=[...document.querySelectorAll("#left details.panel")]; if(ref) ds.forEach(d=>{ if(d.classList.contains("refp")) d.open=/老師快速上手|參考區間/.test(d.querySelector("summary").textContent); }); else ds.forEach(d=>{ if(!d.classList.contains("refp")&&!d.dataset.touched) d.open=/學員資料/.test(d.querySelector("summary").textContent); });
+    document.querySelector("#left .inner").scrollTop=0; window.scrollTo(0,0); }
   $("btnHome").classList.toggle("off",p!=="home"); $("tgLeft").classList.toggle("off",p!=="settings");
   if(p==="home") renderHome();
   if(p==="history") renderHistory();
@@ -4410,7 +4440,9 @@ document.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{ const g=t.dataset.
   goPage("app"); setMode(g); });
 $("btnHome").onclick=()=>goPage("home");
 $("tgLeft").onclick=()=>goPage(document.body.dataset.page==="settings"?"app":"settings");
-$("setDone").onclick=()=>goPage("app");
+$("setDone").onclick=()=>{ if(document.body.classList.contains("refview")){ if(window.opener){ window.close(); return; } return goPage("home"); } goPage("app"); };
+document.querySelectorAll("#left details.panel>summary").forEach(sm=>sm.addEventListener("click",()=>{ sm.parentElement.dataset.touched="1"; }));
+if(new URLSearchParams(location.search).get("view")==="ref") setTimeout(()=>goPage("ref"),0);
 document.querySelector(".brand").style.cursor="pointer"; document.querySelector(".brand").onclick=()=>goPage("home");
 setInterval(()=>{ if(document.body.dataset.page==="home") renderHome(); },1500);
 
@@ -4464,7 +4496,7 @@ loadModels();
   <div class="note" id="linkMsg">視訊直接在兩台裝置之間傳送（WebRTC 點對點），不經過伺服器、也不會被儲存；連線服務只交換配對碼。</div>
 </div></div>
 <section id="phonePage" hidden>
-  <header class="ph-top"><span class="zlogo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#1B2230"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 19Q33 11.5 44.5 18"/><path d="M44.5 18L20.5 44.5"/><path d="M20.5 44.5Q31 47 41 45.6"/></g><path d="M32.15 16.04A12.5 12.5 0 0 0 34.79 25.87" fill="none" stroke="#FF8A3D" stroke-width="2.6" stroke-linecap="round"/><circle cx="13.5" cy="19.5" r="5" fill="#fff"/><path d="M39.5 43.1Q42.3 41.6 44.2 43.2L51 45.6Q52.4 46.6 51.2 47.9Q50.5 48.3 49.6 48.2L39.5 48Z" fill="#fff"/><g fill="none" stroke="#FFC23D" stroke-width="1.3" opacity=".6"><circle cx="44.5" cy="18" r="6.6"/><circle cx="20.5" cy="44.5" r="6.6"/></g><g fill="#FFC23D" stroke="#1B2230" stroke-width="1.8"><circle cx="44.5" cy="18" r="3.9"/><circle cx="20.5" cy="44.5" r="3.9"/></g></svg></span><b>動作即時回饋系統</b><span class="ph-st" id="phSt">連線中…</span></header>
+  <header class="ph-top"><b>動作即時回饋系統</b><span class="ph-st" id="phSt">連線中…</span></header>
   <div class="ph-role" id="phRole">
     <p>這支手機要做什麼？</p>
     <button class="ph-big" data-role="cam"><b>當無線鏡頭</b><span>把手機架在側面或遠處拍攝，電腦負責分析</span></button>
