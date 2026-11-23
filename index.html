@@ -853,6 +853,11 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
           </div>
           <label class="f" for="inSex">性別（膝內夾參考值會依性別調整）</label>
           <select id="inSex"><option value="">未填</option><option value="F">女</option><option value="M">男</option></select>
+          <div class="row">
+            <div><label class="f" for="inLoad">外加負重 kg</label><input type="number" id="inLoad" min="0" max="500" step="0.5" placeholder="0"></div>
+            <div><label class="f" for="inLoadAt">負重位置</label><select id="inLoadAt"><option value="back">背上（深蹲）</option><option value="hands">手上（硬舉）</option></select></div>
+          </div>
+          <div class="small">槓鈴、啞鈴的重量。填了之後，重心、地面反作用力、關節力矩都會把它算進去（當成跟著肩膀或雙手移動的一個點）。臥推時主要受力不在腳，地面反作用力不適用。</div>
           <div class="note">身高用來把像素換算成公尺，體重用來算肢段質量與力。資料只存在這台裝置。</div>
         </div>
       </details>
@@ -1134,7 +1139,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
         </select></div>
         <span class="sep"></span>
         <div class="grp"><span class="glab">匯出</span><button class="abtn peach" id="dlCsv"><span class="ic">📄</span>原始 CSV</button>
-        <select class="sel" id="fcSel" aria-label="濾波截止頻率"><option value="6">6 Hz</option><option value="8" selected>8 Hz</option><option value="10">10 Hz</option></select>
+        <select class="sel" id="fcSel" aria-label="濾波截止頻率"><option value="auto">自動</option><option value="6">6 Hz</option><option value="8" selected>8 Hz</option><option value="10">10 Hz</option></select>
         <button class="abtn lav" id="dlCsvF"><span class="ic">🧹</span>濾波 CSV</button>
         <button class="abtn blue" id="dlVid"><span class="ic">🎞️</span>影片</button></div>
         <button class="abtn pink" id="delClip"><span class="ic">🗑️</span>刪除</button>
@@ -1223,6 +1228,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
           <div class="metric"><span>AI 直接量測</span><b id="qMeas">—</b></div>
           <div class="metric"><span>補點（剛體／長度／時間／手部）</span><b id="qFill">—</b></div>
           <div class="metric"><span>排除的跳點（累計）</span><b id="qRej">—</b></div>
+          <div class="metric"><span>左右互換修正（累計）</span><b id="qSwap">0</b></div>
           <div class="metric"><span>靜態校正</span><b id="qCalib">未校正</b></div>
           <div class="small" id="qList"></div>
           <div class="legend" style="margin-top:6px"><span style="color:#B18CFF">剛體叢集</span><span style="color:#FFB86B">肢段長度</span><span style="color:#7CC4FF">時間預測</span><span style="color:#6FD3A8">手部模型</span></div>
@@ -1247,7 +1253,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
           <div class="metric"><span>重心水平速度</span><b id="mVx">—</b></div>
           <div class="metric"><span>重心垂直速度</span><b id="mVy">—</b></div>
           <div class="metric"><span>垂直地面反作用力</span><b id="mF">—</b></div>
-          <div class="note">由身高、體重和 Dempster 肢段參數推算，適合教學與看趨勢，不能取代測力板。</div>
+          <div class="metric"><span>水平地面反作用力</span><b id="mFx">—</b></div>
+          <div class="metric"><span>左右承重（估計）</span><b id="mSplit">—</b></div>
+          <div class="metric"><span>估計拍攝距離</span><b id="mCam">—</b></div>
+          <div class="note">由身高、體重、肢段參數（和外加負重）推算。速度、加速度用固定延遲 Savitzky–Golay 計算，數字比畫面晚約 0.17 秒；回顧頁會用前後都看的方式重算，比較準。左右承重只在雙腳站穩、正面拍時有意義。適合教學與看趨勢，不能取代測力板。</div>
         </div>
       </details>
 
@@ -1261,7 +1270,14 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
       </details>
       <details class="panel" open data-modes="review">
         <summary>全部數據（整段錄影）</summary>
-        <div class="body"><div id="allStats" class="allstats"></div></div>
+        <div class="body"><div id="allStats" class="allstats"></div>
+          <div style="margin-top:10px;border-top:3px solid var(--line);padding-top:8px">
+            <div style="font-weight:900">驗證比對：和參考系統比</div>
+            <div class="small">匯入 Vicon、MyoMotion、力板等系統匯出的 CSV（第一欄是時間，單位秒）。比對對象是上方「數據曲線」目前選的項目；系統會自動找出兩邊的時間差，再算 RMSE、偏差和 Bland–Altman 一致性界限。</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center"><button class="pbtn" id="valLoad">匯入參考 CSV</button><select id="valCol" hidden style="flex:1;min-width:120px"></select><select id="valSide" hidden><option value="0">左</option><option value="1">右</option></select><input type="file" id="valFile" accept=".csv,.txt,.tsv" hidden></div>
+            <div id="valOut"></div>
+          </div>
+        </div>
       </details>
       <details class="panel" open data-modes="review">
         <summary>🦴 肢段參考圖</summary>
@@ -1274,7 +1290,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
       <details class="panel" open data-modes="review">
         <summary>🔍 資料檢查（有沒有跑錯）</summary>
         <div class="body"><div id="chkBody"></div>
-          <div class="small">檢查項目：肢段突然變長、點瞬間跳走、左右對調、角度超出人體正常範圍、推算補點比例。</div></div>
+          <div class="small">檢查項目：肢段突然變長、點瞬間跳走、左右對調、角度超出人體正常範圍、推算補點比例、地面反作用力是否出現不可能的負值、拍攝距離。</div></div>
       </details>
       <details class="panel" open data-modes="review">
         <summary>🧾 動作報告</summary>
@@ -1472,10 +1488,11 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({camQ:"720",preferExt:true,people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45},store.get("settings",{}));
+const settings=Object.assign({camQ:"720",preferExt:true,people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45,load:0,loadAt:"back"},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
+const loadFrac=()=>Math.max(0,Number(settings.load)||0)/bodyM(); // 外加負重 ÷ 體重
 
 /* ===================== 模型載入 ===================== */
 const idb={
@@ -1545,12 +1562,19 @@ async function loadModels(){
     try{
       for(const t of [liveLM,refLM]) if(t) try{t.close();}catch(e){}
       liveLM=refLM=null; poseErr=null;
-      liveLM=await createTask("pose"); refLM=await createTask("pose");
+      liveLM=await createTask("pose");            // 示範影片用的第二個模型改成需要時才載入（啟動時間與記憶體省一半）
+      if(refMode) await ensureRefLM();
     }catch(e){ console.error(e); poseErr=e; }
     if(settings.hands && !poseErr) await loadHands();
     loading=null; refreshStatus();
   })();
   return loading;
+}
+let refLoading=null;
+async function ensureRefLM(){
+  if(refLM) return refLM; if(refLoading) return refLoading;
+  refLoading=(async()=>{ try{ if(loading&&!liveLM) await loading; refLM=await createTask("pose"); }catch(e){ console.warn("示範影片模型載入失敗",e); } refLoading=null; refreshStatus(); return refLM; })();
+  return refLoading;
 }
 async function loadHands(){
   if(handLM) return;
@@ -1602,6 +1626,7 @@ function computeMetrics(lms,world,W,H){
   { const s=PA("shMid"),h=PA("hipMid"); if(Math.min(s.v,h.v)>=.5){ const t=sub(s,h),n=norm(t); if(n>1e-9) trunk=Math.acos(Math.max(-1,Math.min(1,-t.y/n)))*180/Math.PI; } }
   let cx=0,cy=0,ms=0;
   for(const s of SEGS){ const p=P2(s.p),d=P2(s.d); cx+=s.m*(p.x+s.r*(d.x-p.x)); cy+=s.m*(p.y+s.r*(d.y-p.y)); ms+=s.m; }
+  { const lf=loadFrac(); if(lf>0){ const q=settings.loadAt==="hands"?mid(P2(15),P2(16)):P2("shMid"); cx+=lf*q.x; cy+=lf*q.y; ms+=lf; } } // 槓鈴＝跟著肩或手移動的點質量
   const com={x:cx/ms,y:cy/ms};
   const scales=[];
   for(const k of SCALE_SEGS){ const s=DEMPSTER.find(z=>z.k===k),p=P2(s.p),d=P2(s.d); if(Math.min(p.v,d.v)<.6) continue; const px=Math.hypot(d.x-p.x,d.y-p.y); if(px<10) continue; scales.push(s.len*bodyH()/px); }
@@ -1636,7 +1661,7 @@ function computeMetrics(lms,world,W,H){
   }
   // ② de Leva 三段軀幹的估計點（畫面顯示用）
   const est = settings.segModel!=="dempster" ? {xyph:P2("xyph"),omph:P2("omph")} : null;
-  return {angles,trunk,com,scale:median(scales),footY,len3d,xf,shRot,hipRot,neckT,neckV,sideView,est};
+  return {angles,trunk,com,hip:P2("hipMid"),scale:median(scales),footY,len3d,xf,shRot,hipRot,neckT,neckV,sideView,est};
 }
 // 手指：彎曲角度 = 180° − 三點夾角（用 3D 手部世界座標）
 function computeHand(world){
@@ -1669,23 +1694,20 @@ function assignHands(r,poseLms){
   });
   return out;
 }
-class Kin{
+class Kin{ // 重心速度、加速度與地面反作用力（第 1、17 則：固定延遲 SG，依真實時間戳）
   constructor(){ this.reset(); }
-  reset(){ this.t=null;this.p=null;this.v={x:0,y:0};this.a={x:0,y:0};this.sc=null;this.h=null;this.Fbw=null; }
+  reset(){ this.sg=new BM.FixedDelaySG(.33,1/30); this.t=null; this.sc=null; this.h=null; this.v={x:0,y:0}; this.a={x:0,y:0}; this.Fbw=null; this.Fx=null; this.tEst=null; }
   update(t,M){
-    if(!M){ this.t=null;this.p=null;return; }
+    if(!M){ this.sg.reset(); return; }
     if(M.scale) this.sc=this.sc==null?M.scale:lerp(this.sc,M.scale,.04);
     if(this.sc==null) return;
-    const pos={x:M.com.x*this.sc,y:M.com.y*this.sc};
-    this.h=M.footY!=null?(M.footY-M.com.y)*this.sc:null;
-    if(this.p==null||this.t==null){ this.p=pos;this.t=t;return; }
-    const dt=t-this.t; if(dt<.008) return;
-    const sp={x:lerp(this.p.x,pos.x,.55),y:lerp(this.p.y,pos.y,.55)};
-    const vNew={x:(sp.x-this.p.x)/dt,y:(sp.y-this.p.y)/dt}, vOld={...this.v};
-    this.v={x:lerp(this.v.x,vNew.x,.35),y:lerp(this.v.y,vNew.y,.35)};
-    const aNew={x:(this.v.x-vOld.x)/dt,y:(this.v.y-vOld.y)/dt};
-    this.a={x:lerp(this.a.x,aNew.x,.2),y:lerp(this.a.y,aNew.y,.2)};
-    this.p=sp; this.t=t; this.Fbw=(G-this.a.y)/G;
+    // 先在「像素」上微分，再乘尺度：尺度慢慢修正時不會被當成身體在動
+    const o=this.sg.push(t,[M.com.x,M.com.y,M.footY]); if(!o||o.p[1]==null) return;
+    const sc=this.sc, k=1+loadFrac();
+    this.tEst=o.t; this.h=o.p[2]!=null?(o.p[2]-o.p[1])*sc:null;
+    this.v={x:o.v[0]*sc,y:o.v[1]*sc}; this.a={x:o.a[0]*sc,y:o.a[1]*sc};
+    this.Fbw=k*(G-this.a.y)/G;      // 影像 y 向下：向上加速＝a.y 為負 → 地面推力變大（單位：學員體重）
+    this.Fx=k*this.a.x/G;
   }
 }
 
@@ -1952,7 +1974,14 @@ function finishCalib(){
   for(const [a,b] of SEG_PAIRS){ const r=run.frames.map((f,i)=>f.P[a].ok&&f.P[b].ok?dist2(f.P[a],f.P[b])/Ts[i]:null).filter(v=>v!=null); if(r.length>=5) ratios[a+"-"+b]=median(r); }
   for(const [name,idx] of Object.entries(CLUSTERS)){ const fr=run.frames.filter(f=>idx.every(i=>f.P[i].ok)); if(fr.length<5) continue; const f=fr[fr.length>>1]; tpl[name]=idx.map(i=>[f.P[i].x,f.P[i].y]); }
   for(const s of SEGS){ const v=run.frames.map(f=>f.len3d?.[s.k]).filter(x=>x!=null); if(v.length>=5) len3d[s.k]=median(v); }
-  settings.calib={name:settings.name||"",date:new Date().toISOString(),frames:run.frames.length,ratios,tpl,len3d}; saveSettings(); engine.reset(); renderCalib();
+  // 靜止站立測試：站著不動時，算出來的地面反作用力應該一直等於體重；它的波動就是系統的「雜訊底線」
+  let noise=null;
+  { const fr=run.frames.filter(f=>f.com&&f.t!=null), sc=median(fr.map(f=>f.sc).filter(v=>v!=null));
+    if(fr.length>=20&&sc){ const T=fr.map(f=>f.t), Y=fr.map(f=>f.com[1]*sc), A=BM.sgCentered(T,Y,.33).a, k=1+loadFrac(), F=A.slice(4,-4).filter(v=>v!=null).map(v=>k*(G-v)/G);
+      if(F.length>=10){ const m=F.reduce((a,b)=>a+b)/F.length; noise={Fmean:m,Fsd:Math.sqrt(F.reduce((s,v)=>s+(v-m)**2,0)/(F.length-1)),n:F.length}; } } }
+  // 骨長抖動：主要肢段長度（÷軀幹長）的變異係數
+  const cvs=[]; for(const [a,b] of [[11,13],[12,14],[23,25],[24,26],[25,27],[26,28]]){ const r=run.frames.map((f,i)=>f.P[a].ok&&f.P[b].ok?dist2(f.P[a],f.P[b])/Ts[i]:null).filter(v=>v!=null); if(r.length>=10){ const m=r.reduce((x,y)=>x+y)/r.length; cvs.push(Math.sqrt(r.reduce((s,v)=>s+(v-m)**2,0)/(r.length-1))/m*100); } }
+  settings.calib={name:settings.name||"",date:new Date().toISOString(),frames:run.frames.length,ratios,tpl,len3d,noise,lenCV:cvs.length?median(cvs):null}; saveSettings(); engine.reset(); renderCalib();
   alert(`靜態校正完成：${run.frames.length} 格、${Object.keys(ratios).length} 個肢段、${Object.keys(tpl).length} 個叢集模板。`);
 }
 function renderCalib(){
@@ -1963,6 +1992,7 @@ function renderCalib(){
   let h=`<tr><th colspan="4">${esc(c.name||"未命名")}・${c.date.slice(0,16).replace("T"," ")}・${c.frames} 格</th></tr><tr><th>肢段</th><th>2D 比例（÷軀幹）</th><th>AI 3D cm</th><th>身高推估 cm</th></tr>`;
   const map={"11-13":["uarmL",.186],"13-15":["farmL",.146],"12-14":["uarmR",.186],"14-16":["farmR",.146],"23-25":["thighL",.245],"25-27":["legL",.246],"24-26":["thighR",.245],"26-28":["legR",.246]};
   for(const [k,r] of Object.entries(c.ratios)){ const m=map[k]; h+=`<tr><td>${SEG_NAME[k]||k}</td><td>${r.toFixed(3)}</td><td>${m?d3(m[0]):"—"}</td><td>${m?(m[1]*H*100).toFixed(1):"—"}</td></tr>`; }
+  if(c.noise||c.lenCV!=null) h+=`<tr><td colspan="4"><b>靜止測試（雜訊底線）</b>：${c.noise?`地面反作用力 平均 ${c.noise.Fmean.toFixed(2)} 倍體重、波動 ±${c.noise.Fsd.toFixed(3)} 倍體重`:"重心資料不足"}${c.lenCV!=null?`；骨長抖動 ${c.lenCV.toFixed(1)}%`:""}<div class="small">站著不動時，地面推力應該剛好等於體重（1.00；有外加負重時是 1＋負重÷體重）。波動越小越好；之後的力學數字，比這個波動小的變化都分不出真假。</div></td></tr>`;
   h+=`<tr><td colspan="4" class="small">叢集模板：${Object.keys(c.tpl).map(n=>({head:"頭",handL:"左手",handR:"右手",footL:"左足",footR:"右足",trunk:"軀幹"}[n])).join("、")||"無"}</td></tr>`;
   $("calibTable").innerHTML=h;
 }
@@ -1982,6 +2012,269 @@ function filterSeries(arr,fc,fs){ // 只濾連續（無缺值）且長度足夠�
   while(i<arr.length){ if(arr[i]==null){ i++; continue; } let j=i; while(j<arr.length&&arr[j]!=null) j++; if(j-i>=12){ const y=filtfilt(arr.slice(i,j),fc,fs); for(let k=i;k<j;k++) out[k]=y[k-i]; } i=j; }
   return out;
 }
+/* ===================== 生物力學引擎（第 1–19 則整合） ===================== */
+// 這一段只放「計算」，不碰畫面；其他地方用 BM.xxx 呼叫。
+// 座標慣例：
+//   p3（錄影存的 3D）：X 右、Y 上、Z 朝鏡頭（右手座標，公尺，髖中點為原點）
+//   身體矢狀面：a＝學員前方、u＝上方（公尺）
+const BM=(()=>{
+  const G=9.81, D2R=Math.PI/180;
+  const med=a=>{ const s=a.filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y); if(!s.length) return null; const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  // 3D 向量（陣列 [x,y,z]）
+  const vs=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], va=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]], vk=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
+  const vd=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], vn=a=>Math.hypot(a[0],a[1],a[2]);
+  const vx=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const vu=a=>{ const n=vn(a); return n>1e-9?vk(a,1/n):null; };
+
+  /* ---------- 第 1 則：Savitzky–Golay（二次多項式） ---------- */
+  // 白話：在一小段時間內畫一條最順的拋物線，同時讀出位置、速度、加速度。
+  const SGW={};
+  function sgWeights(h){
+    if(SGW[h]) return SGW[h];
+    const n=2*h+1; let S2=0,S4=0; for(let i=-h;i<=h;i++){ S2+=i*i; S4+=i**4; }
+    const den=n*S4-S2*S2, c0=[],c1=[],c2=[];
+    for(let i=-h;i<=h;i++){ c0.push((S4-S2*i*i)/den); c1.push(i/S2); c2.push(2*(n*i*i-S2)/den); }
+    return SGW[h]={c0,c1,c2,S2,S4,n,den};
+  }
+  // 即時版：固定延遲。輸入真實時間戳，內部先重新取樣到固定格距，再取視窗正中央的值（延遲＝視窗一半）。
+  class FixedDelaySG{
+    constructor(win=.3,dt=1/30){ this.dt=dt; this.h=Math.max(2,Math.round(win/2/dt)); this.w=sgWeights(this.h); this.buf=[]; }
+    reset(){ this.buf=[]; }
+    get delay(){ return this.h*this.dt; }
+    push(t,x){
+      const b=this.buf, last=b[b.length-1];
+      if(last){ if(t<=last.t) return null; if(t-last.t>.25) this.buf=[]; }   // 時間倒退或斷太久（>0.25 秒）就重來
+      this.buf.push({t,x});
+      const span=2*this.h*this.dt;
+      while(this.buf.length>2&&this.buf[1].t<=t-span) this.buf.shift();
+      if(this.buf[0].t>t-span+1e-9) return null;                          // 資料還不夠一個視窗
+      const n=2*this.h+1, B=this.buf, out={t:t-this.h*this.dt,p:[],v:[],a:[]};
+      const grid=[]; let j=0;
+      for(let k=0;k<n;k++){ const tg=t-span+k*this.dt; while(j<B.length-2&&B[j+1].t<tg) j++;
+        const A=B[j], C=B[j+1]||A, r=C.t>A.t?clamp((tg-A.t)/(C.t-A.t),0,1):0;
+        grid.push(A.x.map((v,i)=>v==null||C.x[i]==null?null:v+(C.x[i]-v)*r)); }
+      for(let i=0;i<x.length;i++){ let s0=0,s1=0,s2=0,bad=false;
+        for(let k=0;k<n;k++){ const y=grid[k][i]; if(y==null){ bad=true; break; } s0+=this.w.c0[k]*y; s1+=this.w.c1[k]*y; s2+=this.w.c2[k]*y; }
+        out.p.push(bad?null:s0); out.v.push(bad?null:s1/this.dt); out.a.push(bad?null:s2/this.dt/this.dt); }
+      return out;
+    }
+  }
+  // 離線版（回顧、匯出用）：置中視窗、沒有延遲；邊緣用最近的完整視窗外推。回傳和 T 對齊的 p、v、a。
+  function sgCentered(T,V,win=.25){
+    const n=T.length, P=Array(n).fill(null), Vv=Array(n).fill(null), A=Array(n).fill(null);
+    let i=0;
+    while(i<n){
+      if(V[i]==null||!isFinite(V[i])){ i++; continue; }
+      let j=i; while(j+1<n&&V[j+1]!=null&&isFinite(V[j+1])&&T[j+1]-T[j]<=.25&&T[j+1]>T[j]) j++;
+      const dts=[]; for(let k=i+1;k<=j;k++) dts.push(T[k]-T[k-1]);
+      const dt=dts.length?Math.min(1/20,med(dts)):null;
+      if(dt&&j-i>=4){
+        const m=Math.floor((T[j]-T[i])/dt+1e-9)+1, g=[]; let q=i;
+        for(let k=0;k<m;k++){ const tg=T[i]+k*dt; while(q<j-1&&T[q+1]<tg) q++; const r=clamp((tg-T[q])/(T[q+1]-T[q]),0,1); g.push(V[q]+(V[q+1]-V[q])*r); }
+        let h=Math.max(2,Math.round(win/2/dt)); while(2*h+1>m&&h>2) h--;
+        if(2*h+1<=m){
+          const w=sgWeights(h), gp=[],gv=[],ga=[];
+          for(let k=0;k<m;k++){ const c=clamp(k,h,m-1-h), o=k-c; let sy=0,siy=0,si2y=0;
+            for(let r=-h;r<=h;r++){ const y=g[c+r]; sy+=y; siy+=r*y; si2y+=r*r*y; }
+            const b1=siy/w.S2, b0=(w.S4*sy-w.S2*si2y)/w.den, b2=(w.n*si2y-w.S2*sy)/w.den;
+            gp.push(b0+b1*o+b2*o*o); gv.push((b1+2*b2*o)/dt); ga.push(2*b2/dt/dt); }
+          for(let k=i;k<=j;k++){ const x=(T[k]-T[i])/dt, k0=Math.min(m-1,Math.floor(x)), k1=Math.min(m-1,k0+1), r=x-k0;
+            P[k]=gp[k0]+(gp[k1]-gp[k0])*r; Vv[k]=gv[k0]+(gv[k1]-gv[k0])*r; A[k]=ga[k0]+(ga[k1]-ga[k0])*r; }
+        } else for(let k=i;k<=j;k++) P[k]=V[k];
+      } else for(let k=i;k<=j;k++) P[k]=V[k];
+      i=j+1;
+    }
+    return {p:P,v:Vv,a:A};
+  }
+  // 角度展開：179° → −179° 其實只轉了 2°，把 ±360° 的假跳躍接回來
+  function unwrapDeg(a){ const o=a.slice(); let off=0, prev=null;
+    for(let i=0;i<a.length;i++){ const v=a[i]; if(v==null||!isFinite(v)){ o[i]=v; continue; }
+      if(prev!=null){ const d=v+off-prev; if(d>180) off-=360; else if(d<-180) off+=360; } o[i]=v+off; prev=o[i]; }
+    return o; }
+  // 第 11 則：Hampel 離群值（中位數 ± k×1.4826×MAD 以外的點換成中位數）
+  function hampel(a,h=3,k=3){ const o=a.slice(); let nFix=0;
+    for(let i=0;i<a.length;i++){ if(a[i]==null||!isFinite(a[i])) continue; const w=[];
+      for(let j=Math.max(0,i-h);j<=Math.min(a.length-1,i+h);j++) if(a[j]!=null&&isFinite(a[j])) w.push(a[j]);
+      if(w.length<5) continue; const m=med(w), mad=med(w.map(x=>Math.abs(x-m)));
+      if(mad>0&&Math.abs(a[i]-m)>k*1.4826*mad){ o[i]=m; nFix++; } }
+    o.nFix=nFix; return o; }
+  // 第 1 則：Winter 殘差分析選截止頻率。filt＝零延遲濾波函式 (x,fc,fs)→y；x 不可有缺值
+  function residualCutoff(x,fs,filt){
+    const fmax=Math.min(15,fs*.45*.802-.5); if(x.length<30||fmax<3) return null;
+    const fcs=[]; for(let f=1;f<=fmax+1e-9;f+=.5) fcs.push(f);
+    const R=fcs.map(fc=>{ const y=filt(x,fc,fs); let s=0; for(let i=0;i<x.length;i++) s+=(x[i]-y[i])**2; return Math.sqrt(s/x.length); });
+    const k0=Math.floor(fcs.length*2/3), X=fcs.slice(k0), Y=R.slice(k0); if(X.length<3) return null;
+    const mx=mean(X), my=mean(Y); let sxy=0,sxx=0; X.forEach((v,i)=>{ sxy+=(v-mx)*(Y[i]-my); sxx+=(v-mx)**2; });
+    const a0=my-(sxy/sxx)*mx;                 // 高頻段（只剩雜訊）直線延伸到 0 Hz 的截距
+    for(let i=0;i<fcs.length;i++) if(R[i]<=a0) return fcs[i];
+    return fcs[fcs.length-1];
+  }
+
+  /* ---------- 第 11 則：左右互換偵測（整條腿／整隻手臂一起換） ---------- */
+  const SWAP_GROUPS=[[[25,26],[27,28],[29,30],[31,32]],[[13,14],[15,16],[17,18],[19,20],[21,22]]];
+  class SwapGuard{
+    constructor(){ this.prev=null; this.t=null; this.count=0; }
+    reset(){ this.prev=null; this.t=null; }
+    apply(lms,world,W,H,t){
+      if(!lms) return {lms,world,sw:0};
+      const P=lms.map(l=>({x:l.x*W,y:l.y*H,v:l.visibility??1}));
+      const tr=Math.hypot((P[11].x+P[12].x-P[23].x-P[24].x)/2,(P[11].y+P[12].y-P[23].y-P[24].y)/2);
+      let sw=0;
+      if(this.prev&&t-this.t<.25&&tr>20){
+        for(const grp of SWAP_GROUPS){ let cN=0,cS=0,n=0;
+          for(const [l,r] of grp){ const a=P[l],b=P[r],pa=this.prev[l],pb=this.prev[r]; if(Math.min(a.v,b.v,pa.v,pb.v)<.3) continue;
+            cN+=Math.hypot(a.x-pa.x,a.y-pa.y)+Math.hypot(b.x-pb.x,b.y-pb.y); cS+=Math.hypot(a.x-pb.x,a.y-pb.y)+Math.hypot(b.x-pa.x,b.y-pa.y); n++; }
+          // 照原樣移動很大、對調後卻幾乎沒動 → AI 標反了
+          if(n>=2&&cN>.15*tr*n&&cS<.5*cN){ lms=lms.slice(); if(world) world=world.slice();
+            for(const [l,r] of grp){ [lms[l],lms[r]]=[lms[r],lms[l]]; if(world) [world[l],world[r]]=[world[r],world[l]]; [P[l],P[r]]=[P[r],P[l]]; } sw++; } }
+      }
+      this.prev=P; this.t=t; this.count+=sw; return {lms,world,sw};
+    }
+  }
+
+  /* ---------- 第 5 則：拍攝距離與透視比例（估計） ---------- */
+  // lift.s＝每公尺幾像素（3D 重建的尺度）；假設長邊視角約 69°（手機主鏡頭常見值，只是估計）
+  function camDistance(lift,W,H){
+    if(!lift?.s) return null; const f=Math.max(W,H)/(2*Math.tan(34.7*D2R)), Z=f/lift.s;
+    const zs=[11,12,23,24,25,26,27,28].map(i=>lift[i]?.z).filter(v=>v!=null&&isFinite(v));
+    const dr=zs.length>3?Math.max(...zs)-Math.min(...zs):null;
+    return {Z,ratio:dr!=null?dr/Z:null};
+  }
+
+  /* ---------- 虛擬點（肩中點、髖中點…）與身體矢狀面座標 ---------- */
+  function vpt(P,k,tf){ // P[i]={a,u,v}（或任何有相同欄位的點）；tf＝劍突／肚臍內插比例
+    if(typeof k==="number") return P[k];
+    const m=(i,j)=>({a:(P[i].a+P[j].a)/2,u:(P[i].u+P[j].u)/2,v:Math.min(P[i].v,P[j].v)});
+    const L=(p,q,r)=>({a:p.a+(q.a-p.a)*r,u:p.u+(q.u-p.u)*r,v:Math.min(p.v,q.v)});
+    switch(k){ case "earMid": return m(7,8); case "shMid": return m(11,12); case "hipMid": return m(23,24);
+      case "handL": return m(17,19); case "handR": return m(18,20);
+      case "xyph": return L(m(11,12),m(23,24),tf?.x??.35); case "omph": return L(m(11,12),m(23,24),tf?.o??.65); }
+    return null;
+  }
+  // 第 18 則：雙腳支撐時，依質心相對兩腳的左右位置分配承重（準靜態、估計）
+  // pts：computePlanes 的身體座標點 {m 左右（左為正）, a 前後, u 上下}
+  function loadSplit(pts,segs,loadFrac,loadAt,tf){
+    if(!pts) return null;
+    const P=pts.map(p=>({a:p.m,u:p.u,v:p.v}));          // 借用 a 欄位放「左右」座標
+    let cm=0,ms=0;
+    for(const s of segs){ const p=vpt(P,s.p,tf), d=vpt(P,s.d,tf); if(!p||!d||p.v<.3||d.v<.3) continue; cm+=s.m*(p.a+s.r*(d.a-p.a)); ms+=s.m; }
+    if(ms<.6) return null;
+    if(loadFrac>0){ const q=loadAt==="hands"?{a:(P[15].a+P[16].a)/2}:vpt(P,"shMid"); cm+=loadFrac*q.a; ms+=loadFrac; }
+    cm/=ms;
+    const L=pts[27],R=pts[28]; if(!L||!R||L.v<.4||R.v<.4) return null;
+    const dz=L.u-R.u;
+    if(Math.abs(dz)>.08) return {L:dz<0?1:0,R:dz<0?0:1,mode:"單腳"};   // 一腳離地 → 全部由支撐腳承擔
+    const span=L.m-R.m; if(Math.abs(span)<.05) return null;
+    const wL=clamp((cm-R.m)/span,0,1);
+    return {L:wL,R:1-wL,mode:"雙腳"};
+  }
+
+  /* ---------- 第 2、3 則：ISB 關節座標與 Cardan ZXY 分解 ---------- */
+  // 每個肢段座標系用 3 根軸表示 {x 前, y 上（長軸）, z 右}；關節角＝遠端相對近端
+  function frameGS(y,zTemp){ // y：長軸；zTemp：大概的右方 → Gram–Schmidt 扳正
+    const Y=vu(y); if(!Y||!zTemp) return null; const zt=vs(zTemp,vk(Y,vd(zTemp,Y))), Z=vu(zt); if(!Z||vn(zt)<.15*vn(zTemp)) return null;
+    return {x:vx(Y,Z),y:Y,z:Z}; }
+  function relZXY(Fp,Fd){ // R＝近端ᵀ·遠端；R=Rz(α)Rx(β)Ry(γ)
+    const r=(a,b)=>vd(Fp[a],Fd[b]);
+    const R01=r("x","y"),R11=r("y","y"),R21=r("z","y"),R20=r("z","x"),R22=r("z","z");
+    return {a:Math.atan2(-R01,R11)/D2R, b:Math.asin(clamp(R21,-1,1))/D2R, g:Math.atan2(-R20,R22)/D2R}; }
+  // p3：33 點 [X右,Y上,Z朝鏡頭]；回傳左右的 髖屈曲/外展、膝屈曲/外翻、踝背屈（度）
+  // 限制（第 3 則）：AI 沒有股骨髁、ASIS 點 → 大腿的側向軸借骨盆（假設髖不內外旋），所以不輸出髖、膝的旋轉角。
+  function isbAngles(p3,prev){
+    const P=i=>p3?.[i]?p3[i]:null; if(!P(23)||!P(24)||!P(11)||!P(12)) return null;
+    const hm=vk(va(P(23),P(24)),.5), sm=vk(va(P(11),P(12)),.5);
+    const pel=frameGS(vs(sm,hm),vs(P(24),P(23))); if(!pel) return null;   // z：左髖→右髖＝學員右方
+    const out={};
+    for(const [s,o] of [["L",0],["R",1]]){
+      const hip=P(23+o),kne=P(25+o),ank=P(27+o),hee=P(29+o),toe=P(31+o); if(!hip||!kne||!ank) continue;
+      const th=frameGS(vs(hip,kne),pel.z)||prev?.[s]?.th; if(!th) continue;
+      let sh=null, ft=null;
+      if(hee&&toe){ const fd=vs(toe,hee), ys=vu(vs(kne,ank)); if(ys){ const z=vu(vx(fd,ys)); if(z&&vn(vx(fd,ys))>.2*vn(fd)) sh={x:vx(ys,z),y:ys,z};
+        const xf=vu(fd); if(xf){ const yt=vs(ys,vk(xf,vd(ys,xf))), yf=vu(yt); if(yf) ft={x:xf,y:yf,z:vx(xf,yf)}; } } }
+      if(!sh) sh=frameGS(vs(kne,ank),th.z)||prev?.[s]?.sh; if(!sh) continue;
+      const sg=s==="R"?-1:1, hj=relZXY(pel,th), kj=relZXY(th,sh);
+      out[s]={hipF:hj.a, hipA:sg*hj.b, kneeF:-kj.a, kneeA:sg*kj.b, ankF:ft?relZXY(sh,ft).a:null, th, sh};
+    }
+    return out;
+  }
+
+  /* ---------- 第 16 則：迴轉半徑（佔肢段長的比例，矢狀面） ---------- */
+  const ROG={dempster:{foot:.475,leg:.302,thigh:.323}, M:{foot:.257,leg:.251,thigh:.329}, F:{foot:.299,leg:.267,thigh:.369}};
+  const rogOf=(k,model)=>{ const t=ROG[model==="delevaM"?"M":model==="delevaF"?"F":"dempster"]; const b=k.replace(/[LR]$/,""); return t[b]??.3; };
+
+  /* ---------- 第 17、19 則：矢狀面逆向動力學（離線，回顧用） ---------- */
+  // frames：[{t, P:[{a,u,v}×33]（絕對位置，公尺）, w:{L,R}|null}]；segs：肢段表（含 m 質量比、p、d、r 質心比例、k 名稱）
+  // 回傳每格 {F:[Fa,Fu] N, cop, M:{ankL,kneeL,hipL,ankR,kneeR,hipR} N·m（伸肌／蹠屈為正）}
+  function sagittalID(frames,segs,opt){
+    const BWm=opt.mass, model=opt.model, tf=opt.tf, n=frames.length, T=frames.map(f=>f.t);
+    const lf=opt.loadKg||0, loadAt=opt.loadAt||"back";
+    // ① 每個肢段每格的質心位置與方向角
+    const S=segs.map(s=>{ const ca=[],cu=[],ang=[]; let lens=[];
+      for(const f of frames){ const p=f.P&&vpt(f.P,s.p,tf), d=f.P&&vpt(f.P,s.d,tf);
+        if(!p||!d||p.v<.3||d.v<.3){ ca.push(null); cu.push(null); ang.push(null); continue; }
+        ca.push(p.a+s.r*(d.a-p.a)); cu.push(p.u+s.r*(d.u-p.u)); ang.push(Math.atan2(d.u-p.u,d.a-p.a)/D2R); lens.push(Math.hypot(d.a-p.a,d.u-p.u)); }
+      const L=med(lens)||0, m=s.m*BWm, I=m*((s.rog??rogOf(s.k,model))*L)**2;
+      const A=sgCentered(T,ca,opt.win), U=sgCentered(T,cu,opt.win), W=sgCentered(T,unwrapDeg(ang),opt.win);
+      return {s,m,I,ca:A.p,cu:U.p,aa:A.a,au:U.a,al:W.a.map(v=>v==null?null:v*D2R)}; });
+    // 外加負重（點質量，跟著肩中點或兩腕中點移動）
+    let LD=null;
+    if(lf>0){ const la=[],lu=[]; for(const f of frames){ const q=!f.P?null:loadAt==="hands"?(f.P[15]&&f.P[16]?{a:(f.P[15].a+f.P[16].a)/2,u:(f.P[15].u+f.P[16].u)/2,v:Math.min(f.P[15].v,f.P[16].v)}:null):vpt(f.P,"shMid"); la.push(q&&q.v>=.3?q.a:null); lu.push(q&&q.v>=.3?q.u:null); }
+      const A=sgCentered(T,la,opt.win), U=sgCentered(T,lu,opt.win); LD={m:lf,ca:A.p,cu:U.p,aa:A.a,au:U.a}; }
+    // 地面高度：整段錄影腳跟、腳尖的低點（第 5 百分位）
+    const lows=[]; frames.forEach(f=>{ if(!f.P) return; const z=[29,30,31,32].map(i=>f.P[i]).filter(p=>p&&p.v>=.4).map(p=>p.u); if(z.length) lows.push(Math.min(...z)); });
+    lows.sort((x,y)=>x-y); const ug=lows.length?lows[Math.floor(lows.length*.05)]:0;
+    const byK=k=>S.find(x=>x.s.k===k);
+    const out=[];
+    for(let i=0;i<n;i++){
+      // ② 全身：GRF＝Σm(a−g)，壓力中心由全身力矩平衡求（第 17、19 則；純攝影機模式）
+      let Fa=0,Fu=0,Mo=0,ok=true;
+      const all=LD?[...S,{m:LD.m,I:0,ca:LD.ca,cu:LD.cu,aa:LD.aa,au:LD.au,al:[]}]:S;
+      for(const q of all){ if(q.ca[i]==null||q.aa[i]==null||q.au[i]==null){ ok=false; break; }
+        const fa=q.m*q.aa[i], fu=q.m*(q.au[i]+G); Fa+=fa; Fu+=fu; Mo+=q.ca[i]*fu-(q.cu[i]-ug)*fa+(q.I&&q.al[i]!=null?q.I*q.al[i]:0); }
+      if(!ok||Fu<.2*BWm*G){ out.push(null); continue; }                 // 缺資料或騰空 → 不算
+      const cop=Mo/Fu, w=frames[i].w||{L:.5,R:.5};
+      const M={};
+      for(const [s,o] of [["L",0],["R",1]]){
+        const ft=byK("foot"+s), sh=byK("leg"+s), th=byK("thigh"+s); if(!ft||!sh||!th){ continue; }
+        const P=frames[i].P, prox=[P[27+o],P[25+o],P[23+o]]; if(prox.some(p=>!p||p.v<.3)) continue;
+        // ③ 由遠端往近端：腳 → 小腿 → 大腿（第 19 則，2D 牛頓–歐拉）
+        let fx=Fa*w[s], fy=Fu*w[s], px=cop, py=ug, mz=0; const res=[null,null,null];
+        const chain=[ft,sh,th];
+        for(let j=0;j<3;j++){ const q=chain[j]; if(q.ca[i]==null||q.aa[i]==null||q.au[i]==null) break;
+          const c=[q.ca[i],q.cu[i]], a=[q.aa[i],q.au[i]], p=[prox[j].a,prox[j].u], al=q.al[i]??0;
+          const Fpx=q.m*a[0]-fx, Fpy=q.m*(a[1]+G)-fy;
+          const Mp=q.I*al-mz-((px-c[0])*fy-(py-c[1])*fx)-((p[0]-c[0])*Fpy-(p[1]-c[1])*Fpx);
+          res[j]=Mp; fx=-Fpx; fy=-Fpy; mz=-Mp; px=p[0]; py=p[1]; }
+        if(res[0]!=null) M["ank"+s]=-res[0]; if(res[1]!=null) M["knee"+s]=res[1]; if(res[2]!=null) M["hip"+s]=-res[2];
+      }
+      out.push({F:[Fa,Fu],cop,M});
+    }
+    return {frames:out,ug};
+  }
+
+  /* ---------- 第 13 則：驗證統計（和參考系統比較） ---------- */
+  function agreement(sys,ref){
+    const d=[],x=[],y=[]; sys.forEach((v,i)=>{ const r=ref[i]; if(v!=null&&r!=null&&isFinite(v)&&isFinite(r)){ d.push(v-r); x.push(v); y.push(r); } });
+    const n=d.length; if(n<5) return null;
+    const bias=mean(d), sd=Math.sqrt(d.reduce((s,v)=>s+(v-bias)**2,0)/(n-1));
+    const mx=mean(x), my=mean(y); let sxy=0,sxx=0,syy=0; for(let i=0;i<n;i++){ sxy+=(x[i]-mx)*(y[i]-my); sxx+=(x[i]-mx)**2; syy+=(y[i]-my)**2; }
+    return {n,bias,sd,rmse:Math.sqrt(mean(d.map(v=>v*v))),rmseC:sd*Math.sqrt((n-1)/n),loaLo:bias-1.96*sd,loaHi:bias+1.96*sd,r:sxx>0&&syy>0?sxy/Math.sqrt(sxx*syy):null,pairs:x.map((v,i)=>[(v+y[i])/2,v-y[i]])};
+  }
+  // 把兩條不同時間軸的訊號放到同一格距，搜尋最佳時間差（±maxLag 秒，取相關最高）
+  function alignSeries(Ts,Vs,Tr,Vr,maxLag=2,dt=1/30){
+    const interp=(T,V,t)=>{ let lo=0,hi=T.length-1; if(t<T[0]||t>T[hi]) return null; while(hi-lo>1){ const m=(lo+hi)>>1; if(T[m]<=t) lo=m; else hi=m; } const a=V[lo],b=V[hi]; if(a==null||b==null) return null; if(T[hi]-T[lo]>.25) return null; const r=T[hi]>T[lo]?(t-T[lo])/(T[hi]-T[lo]):0; return a+(b-a)*r; };
+    const t0=Ts[0], t1=Ts[Ts.length-1], grid=[]; for(let t=t0;t<=t1;t+=dt) grid.push(t);
+    const s=grid.map(t=>interp(Ts,Vs,t));
+    let best=null;
+    for(let lag=-maxLag;lag<=maxLag+1e-9;lag+=dt){ const r=grid.map(t=>interp(Tr,Vr,t+lag)); const a=agreement(s,r); if(a&&a.n>=15&&a.r!=null&&(!best||a.r>best.a.r)) best={lag,a,ref:r}; }
+    return best?{lag:best.lag,grid,sys:s,ref:best.ref,...best.a}:null;
+  }
+
+  return {G,med,FixedDelaySG,sgCentered,unwrapDeg,hampel,residualCutoff,SwapGuard,camDistance,vpt,loadSplit,isbAngles,relZXY,frameGS,sagittalID,agreement,alignSeries,rogOf};
+})();
+
 /* ===================== 3D 化：轉身掃描＋單鏡頭肢段長度重建 ===================== */
 // 骨架樹（Taylor 2000）：H=髖中點、S=肩中點為虛擬點；每一段 [父, 子, 身高比例(無掃描時的預設長度)]
 const BONES=[["H",23,.055],["H",24,.055],["H","S",.288],["S",11,.115],["S",12,.115],["S",0,.12],[0,7,.05],[0,8,.05],
@@ -2288,7 +2581,8 @@ function renderPlaneTable(){
   $("plHead").textContent=hd==null?"—":`${Math.round(Math.abs(hd))}°（${Math.abs(hd)<30?"正面":Math.abs(hd)>60&&Math.abs(hd)<120?"側面":Math.abs(hd)>=150?"背面":"斜向"}）`;
   $("plSrc").textContent=Pl?livePlSrc:"—";
   const a=hd==null?null:Math.abs(hd);
-  $("plHint").innerHTML=a==null?"":a<30||a>150?"📷 正面／背面拍攝：<b>冠狀面</b>角度最可靠；矢狀面要靠深度推算，誤差較大。":a>60&&a<120?"📷 側面拍攝：<b>矢狀面</b>角度最可靠；冠狀面要靠深度推算，誤差較大。":"📷 斜向拍攝：兩個平面都部分依賴深度推算，建議改成正面或側面。";
+  const camTip=liveCam&&(liveCam.Z<2.5||(liveCam.ratio??0)>.1)?`<div style="color:#C0567A;font-weight:800">📏 估計拍攝距離約 ${liveCam.Z.toFixed(1)} m，身體前後深度差太大，透視誤差會變大：請退到 3–5 m，再用 2 倍鏡頭讓人填滿畫面。</div>`:"";
+  $("plHint").innerHTML=camTip+(a==null?"":a<30||a>150?"📷 正面／背面拍攝：<b>冠狀面</b>角度最可靠；矢狀面要靠深度推算，誤差較大。":a>60&&a<120?"📷 側面拍攝：<b>矢狀面</b>角度最可靠；冠狀面要靠深度推算，誤差較大。":"📷 斜向拍攝：兩個平面都部分依賴深度推算，建議改成正面或側面。");
 }
 /* ===================== 動作描述：把角度翻成「現在在做什麼」 ===================== */
 // 規則式判讀（不是 AI 分類器）：先平滑角度，再依門檻判斷姿勢、動作方向、各部位狀態與提醒。
@@ -2673,6 +2967,8 @@ liveCanvas.addEventListener("click",e=>{ if(!livePeople||livePeople.n<2) return;
 let stream=null, liveOn=false, facing="user", liveMirror=true, lastLiveT=-1;
 let liveRes=null, liveWorld=null, liveM=null, liveHands=null, livePeople=null;
 const kin=new Kin();
+const swapGuard=new BM.SwapGuard(), refSwap=new BM.SwapGuard();
+let liveSplit=null, liveCam=null, liveSwap=0, handTick=0;
 let fpsCount=0,fps=0,fpsT=performance.now();
 function setAbtn(id,ic,label){ const b=$(id); b.innerHTML=`<span class="ic">${ICON[EMOJI2ICON[ic]]||ICON[ic]||""}</span>${label}`; }
 /* ===================== 外接鏡頭：分類、畫質、熱插拔 ===================== */
@@ -2885,17 +3181,21 @@ function processLive(now){
   if(liveLM&&liveVideo.currentTime!==lastLiveT){
     lastLiveT=liveVideo.currentTime;
     let raw=null;
-    try{ const r=liveLM.detectForVideo(VS.src,nextTs(liveLM)); livePeople=liveTrk.update(listOf(r),W,H,now/1000); if(livePeople.changed){ engine.reset(); lifter.reset?.(); kin.reset?.(); } raw=livePeople.pri?.lms||null; liveWorld=livePeople.pri?.world||null; }catch(e){ console.warn(e); raw=null; }
-    if(settings.hands&&handLM){ try{ liveHands=assignHands(handLM.detectForVideo(VS.src,nextTs(handLM)),raw); }catch(e){ console.warn(e); liveHands=null; } } else liveHands=null;
+    try{ const r=liveLM.detectForVideo(VS.src,nextTs(liveLM)); livePeople=liveTrk.update(listOf(r),W,H,now/1000); if(livePeople.changed){ engine.reset(); lifter.reset?.(); kin.reset?.(); } raw=livePeople.pri?.lms||null; liveWorld=livePeople.pri?.world||null; if(livePeople.changed) swapGuard.reset(); }catch(e){ console.warn(e); raw=null; }
+    liveSwap=0; if(raw&&settings.fill){ const g=swapGuard.apply(raw,liveWorld,W,H,now/1000); raw=g.lms; liveWorld=g.world; liveSwap=g.sw; } // 第 11 則：左右標反就換回來
+    if(settings.hands&&handLM){ handTick++; // 畫面低於 22 fps 時手指隔一格才算一次，把時間留給身體
+      if(fps>=22||handTick%2===0||!liveHands){ try{ liveHands=assignHands(handLM.detectForVideo(VS.src,nextTs(handLM)),raw); }catch(e){ console.warn(e); liveHands=null; } } } else liveHands=null;
     if(raw&&settings.fill){ liveQ=engine.process(raw,W,H,now/1000,liveHands,{euro:settings.euro}); liveRes=liveQ.lms; }
     else{ liveQ=null; liveRes=raw; }
     liveLift=liveRes?lifter.lift(liveRes,W,H,liveWorld):null;
     { const src=liveLift||liveWorld; livePl=liveRes&&src?computePlanes(src):null; livePlSrc=liveLift?(settings.scan?"3D 重建（轉身掃描長度）":"3D 重建（身高比例長度）"):"AI 3D 估計"; }
+    liveSplit=livePl?BM.loadSplit(livePl.pts,SEGS,loadFrac(),settings.loadAt,TF):null;   // 第 18 則
+    { const c=liveLift?BM.camDistance(liveLift,W,H):null; if(c) liveCam=liveCam?{Z:lerp(liveCam.Z,c.Z,.05),ratio:c.ratio==null?liveCam.ratio:lerp(liveCam.ratio??c.ratio,c.ratio,.05)}:c; } // 第 5 則
     liveDesc=describer.update(livePl,now/1000); audioFeedback(liveDesc,now/1000);
     if(scanRun) scanFrame(liveRes,W,H);
     liveM=liveRes?computeMetrics(liveRes,(settings.angleMode==="lift"&&liveLift)?liveLift:liveWorld,W,H):null;
     liveVM=liveRes?computeVM(liveRes,W,H,liveHands):null;
-    if(calibRun&&liveRes&&liveM) calibRun.frames.push({P:liveRes.map(l=>({x:l.x*W,y:l.y*H,ok:(l.visibility??1)>=VTH&&!(l.src>0)})),len3d:liveM.len3d});
+    if(calibRun&&liveRes&&liveM) calibRun.frames.push({P:liveRes.map(l=>({x:l.x*W,y:l.y*H,ok:(l.visibility??1)>=VTH&&!(l.src>0)})),len3d:liveM.len3d,t:now/1000,com:[liveM.com.x,liveM.com.y],sc:liveM.scale});
     kin.update(now/1000,liveM);
     if(liveM) accumulateLen(liveM.len3d);
     fpsCount++;
@@ -2943,7 +3243,7 @@ function stopRecording(){
 function finishRecording(){
   const r=rec; rec=null; if(!r) return;
   const blob=new Blob(r.chunks,{type:r.mime});
-  const clip={id:++clipSeq,uid:Date.now(),date:new Date().toISOString(),subject:settings.name||"（未命名）",name:`${settings.name||"錄影"} ${clipSeq}`,blob,url:URL.createObjectURL(blob),ext:r.mime.includes("mp4")?"mp4":"webm",data:r.data,ar:liveCanvas.width/(liveCanvas.height||1),mass:bodyM(),height:bodyH(),segModel:segModelName()};
+  const clip={id:++clipSeq,uid:Date.now(),date:new Date().toISOString(),subject:settings.name||"（未命名）",name:`${settings.name||"錄影"} ${clipSeq}`,blob,url:URL.createObjectURL(blob),ext:r.mime.includes("mp4")?"mp4":"webm",data:r.data,ar:liveCanvas.width/(liveCanvas.height||1),mass:bodyM(),height:bodyH(),segModel:segModelName(),segKey:settings.segModel,load:Math.max(0,Number(settings.load)||0),loadAt:settings.loadAt||"back"};
   clips.push(clip); renderClips(); selectClip(clip.id); setMode("review");
   setTimeout(()=>autoSaveClip(clip),200);
 }
@@ -2951,7 +3251,8 @@ function handRow(h){ return h?{l:h.lms.map(p=>[p.x,p.y,p.z]),f:h.flex,g:h.grip}:
 function pushRecord(now){
   const t=(now-rec.t0)/1000; $("recTime").textContent=t.toFixed(1);
   rec.data.push({t,a:liveM?{...liveM.angles}:{},trunk:liveM?.trunk??null,xf:liveM?.xf??null,shRot:liveM?.shRot??null,hipRot:liveM?.hipRot??null,neckT:liveM?.neckT??null,neckV:liveM?.neckV??null,h:kin.h,vx:kin.v.x,vy:-kin.v.y,F:kin.Fbw,
-    l:liveRes?liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]):null, src:liveRes?liveRes.map(p=>p.src??0):null, p3:liveLift?liveLift.map(p=>[p.x,-p.y,-p.z]):null, pl:livePl?{L:{...livePl.L},R:{...livePl.R},one:{...livePl.one},hd:livePl.heading}:null, d:liveDesc?{p:liveDesc.pose,ph:liveDesc.phase,w:liveDesc.warn.map(x=>x.replace(/（推算）/g,""))}:null, vm:liveVM?VM_KEYS.map(k=>liveVM[k]?[liveVM[k].x,liveVM[k].y]:null):null, hL:handRow(liveHands?.L), hR:handRow(liveHands?.R)});
+    l:liveRes?liveRes.map(p=>[p.x,p.y,p.z,p.visibility??1]):null, src:liveRes?liveRes.map(p=>p.src??0):null, p3:liveLift?liveLift.map(p=>[p.x,-p.y,-p.z]):null, pl:livePl?{L:{...livePl.L},R:{...livePl.R},one:{...livePl.one},hd:livePl.heading}:null, d:liveDesc?{p:liveDesc.pose,ph:liveDesc.phase,w:liveDesc.warn.map(x=>x.replace(/（推算）/g,""))}:null, vm:liveVM?VM_KEYS.map(k=>liveVM[k]?[liveVM[k].x,liveVM[k].y]:null):null, hL:handRow(liveHands?.L), hR:handRow(liveHands?.R),
+    cm:liveM?[liveM.com.x,liveM.com.y,liveM.footY,liveM.scale??null,liveM.hip?.x??null,liveM.hip?.y??null]:null, wl:liveSplit?+liveSplit.L.toFixed(3):null, zc:liveCam?+liveCam.Z.toFixed(2):null, sw:liveSwap||0});
 }
 
 /* ===================== 回顧 ===================== */
@@ -2966,7 +3267,7 @@ $("clipSel").onchange=e=>selectClip(Number(e.target.value));
 function selectClip(id){
   curClip=clips.find(c=>c.id===id)||null;
   if(!curClip){ rv.removeAttribute("src"); rv.load(); rv.hidden=true; $("rvPh").hidden=false; drawChart(); renderAllStats(); return; }
-  rv.hidden=false; $("rvPh").hidden=true; rv.src=curClip.url; renderClips(); drawChart(); setTimeout(()=>{ renderSkel(); renderCheck(); renderAllStats(); },60);
+  rv.hidden=false; $("rvPh").hidden=true; rv.src=curClip.url; enrichClip(curClip); renderClips(); drawChart(); setTimeout(()=>{ renderSkel(); renderCheck(); renderAllStats(); if(valRef) runValidation(); },60);
 }
 $("delClip").onclick=()=>{ if(!curClip) return; if(!confirm(`刪除「${curClip.name}」？`)) return; URL.revokeObjectURL(curClip.url); clips=clips.filter(c=>c.id!==curClip.id); curClip=null; renderClips(); selectClip(clips.length?clips[clips.length-1].id:-1); };
 rv.addEventListener("loadedmetadata",()=>{
@@ -2978,6 +3279,33 @@ $("rvBack").onclick=()=>{ rv.pause(); rv.currentTime=Math.max(0,rv.currentTime-1
 $("rvFwd").onclick=()=>{ rv.pause(); rv.currentTime=rv.currentTime+1/30; };
 $("rvSpeed").onchange=()=>{ rv.playbackRate=Number($("rvSpeed").value); };
 
+/* ----- 回顧用的離線重算（第 1、2、17、18、19 則）：每段錄影算一次、存起來 ----- */
+function segsFor(key){ return key==="delevaM"?buildDeLeva("M"):key==="delevaF"?buildDeLeva("F"):DEMPSTER; }
+function enrichClip(clip){
+  if(!clip) return null; if(clip._bm) return clip._bm;
+  const D=clip.data, bm=clip._bm={kin:false,id:false,isb:false}; if(!D||D.length<10) return bm;
+  const T=D.map(r=>r.t), mass=clip.mass||bodyM(), k=1+(clip.load||0)/mass;
+  // ① 重心：置中 Savitzky–Golay（沒有延遲；前後都看）
+  const sc=median(D.map(r=>r.cm?.[3]).filter(v=>v!=null&&isFinite(v)));
+  if(sc){ const X=D.map(r=>r.cm?r.cm[0]*sc:null), Y=D.map(r=>r.cm?r.cm[1]*sc:null), Fy=D.map(r=>r.cm&&r.cm[2]!=null?r.cm[2]*sc:null);
+    const sx=BM.sgCentered(T,X,.25), sy=BM.sgCentered(T,Y,.25), sf=BM.sgCentered(T,Fy,.25);
+    D.forEach((r,i)=>{ r.k2={h:sf.p[i]!=null&&sy.p[i]!=null?sf.p[i]-sy.p[i]:null, vx:sx.v[i], vy:sy.v[i]==null?null:-sy.v[i], F:sy.a[i]==null?null:k*(G-sy.a[i])/G, Fx:sx.a[i]==null?null:k*sx.a[i]/G}; });
+    bm.kin=true; bm.sc=sc; }
+  // ② ISB 3D 關節角（Cardan ZXY，對應 Visual3D 的 Cardan XYZ）
+  D.forEach(r=>{ if(!r.p3) return; const a=BM.isbAngles(r.p3); if(!a) return; const pick=x=>x?{hipF:x.hipF,hipA:x.hipA,kneeF:x.kneeF,kneeA:x.kneeA,ankF:x.ankF}:null; r.j={L:pick(a.L),R:pick(a.R)}; bm.isb=true; });
+  // ③ 矢狀面逆向動力學（側拍的畫面才算；正面拍時前後方向的位移看不到）
+  if(bm.kin){
+    const frames=D.map(r=>{ const hd=Math.abs(r.pl?.hd??0); if(!r.p3||!r.cm||r.cm[4]==null||hd<40||hd>140) return {t:r.t,P:null};
+      const p=r.p3; let ml=[p[23][0]-p[24][0],0,p[23][2]-p[24][2]]; const nn=Math.hypot(ml[0],ml[2]); if(nn<1e-4) return {t:r.t,P:null};
+      ml=[ml[0]/nn,0,ml[2]/nn]; const ap=[-ml[2],0,ml[0]];                   // 學員前方＝左方 × 上方
+      const hx=r.cm[4]*sc, hy=-r.cm[5]*sc;                                       // 髖中點在畫面上的移動（公尺；深度方向看不到，當作 0）
+      return {t:r.t,P:p.map((q,i)=>({a:q[0]*ap[0]+q[2]*ap[2]+hx*ap[0],u:q[1]+hy,v:r.l?.[i]?.[3]??1})),w:r.wl!=null?{L:r.wl,R:1-r.wl}:{L:.5,R:.5}}; });
+    if(frames.filter(f=>f.P).length>=15){
+      const R=BM.sagittalID(frames,segsFor(clip.segKey),{mass,model:clip.segKey,tf:trunkFrac(clip.segKey==="delevaF"?"F":"M"),win:.25,loadKg:clip.load||0,loadAt:clip.loadAt});
+      R.frames.forEach((f,i)=>{ if(!f) return; D[i].M=f.M; const mk={}; for(const q in f.M) mk[q]=f.M[q]/mass; D[i].Mk=mk; }); bm.id=true; }
+  }
+  return bm;
+}
 const PL_GET=(s,k)=>r=>r.pl?.[s]?.[k];
 const SERIES=[
   // 左右一起看（雙平面 3D 角度）
@@ -2991,15 +3319,19 @@ const SERIES=[
   {k:"hipRot",n:"髖線旋轉角",u:"°",get:r=>r.hipRot,grp:"軀幹與頭頸"},
   {k:"neckT",n:"頭頸–軀幹夾角",u:"°",get:r=>r.neckT,grp:"軀幹與頭頸"},
   {k:"neckV",n:"耳–肩連線與鉛垂線",u:"°",get:r=>r.neckV,grp:"軀幹與頭頸"},
-  {k:"h",n:"重心離地高度",u:" m",d:2,get:r=>r.h,grp:"重心與力學（估計）"},
-  {k:"vx",n:"重心水平速度",u:" m/s",d:2,get:r=>r.vx,grp:"重心與力學（估計）"},
-  {k:"vy",n:"重心垂直速度（向上為正）",u:" m/s",d:2,get:r=>r.vy,grp:"重心與力學（估計）"},
-  {k:"F",n:"估計垂直地面反作用力",u:" BW",d:2,get:r=>r.F,grp:"重心與力學（估計）"},
+  {k:"h",n:"重心離地高度",u:" m",d:2,get:r=>r.k2?r.k2.h:r.h,grp:"重心與力學（估計）"},
+  {k:"vx",n:"重心水平速度",u:" m/s",d:2,get:r=>r.k2?r.k2.vx:r.vx,grp:"重心與力學（估計）"},
+  {k:"vy",n:"重心垂直速度（向上為正）",u:" m/s",d:2,get:r=>r.k2?r.k2.vy:r.vy,grp:"重心與力學（估計）"},
+  {k:"F",n:"估計垂直地面反作用力",u:" BW",d:2,get:r=>r.k2?r.k2.F:r.F,grp:"重心與力學（估計）"},
+  {k:"Fx",n:"估計水平地面反作用力（畫面左右方向）",u:" BW",d:2,get:r=>r.k2?.Fx,grp:"重心與力學（估計）"},
+  {k:"wl",n:"左腳承重比例（估計，雙腳站立）",u:"%",d:0,get:r=>r.wl==null?null:r.wl*100,grp:"重心與力學（估計）"},
+  ...[["ank","踝蹠屈力矩"],["knee","膝伸展力矩"],["hip","髖伸展力矩"]].map(([j,n])=>({k:"M_"+j,n:`${n}（左右一起）`,u:" N·m/kg",d:2,pair:[r=>r.Mk?.[j+"L"],r=>r.Mk?.[j+"R"]],grp:"關節力矩（逆向動力學・矢狀面估計）"})),
+  ...[["hipF","髖屈曲"],["hipA","髖外展"],["kneeF","膝屈曲"],["kneeA","膝外翻"],["ankF","踝背屈"]].map(([j,n])=>({k:"J_"+j,n:`${n}（左右一起・ISB）`,u:"°",pair:[r=>r.j?.L?.[j],r=>r.j?.R?.[j]],grp:"ISB 3D 關節角（對應 Visual3D Cardan XYZ）"})),
   {k:"gL",n:"左手握拳程度",u:"%",get:r=>r.hL?.g,grp:"手指"},
   {k:"gR",n:"右手握拳程度",u:"%",get:r=>r.hR?.g,grp:"手指"},
   ...["L","R"].flatMap(s=>FINGERS.map(f=>({k:`f${s}_${f.k}`,n:`${s==="L"?"左":"右"}${f.n}總彎曲`,u:"°",grp:"手指",get:r=>{ const h=r["h"+s]; const v=h?.f?.[f.k]; return v&&v.every(x=>x!=null)?v[0]+v[1]+v[2]:null; }})))
 ];
-{ const s=$("series"); let g=null, og=null; for(const o of SERIES){ if(o.grp!==g){ g=o.grp; og=document.createElement("optgroup"); og.label=g; s.appendChild(og); } const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; og.appendChild(e); } s.value="P_kneeFlex"; s.onchange=drawChart; }
+{ const s=$("series"); let g=null, og=null; for(const o of SERIES){ if(o.grp!==g){ g=o.grp; og=document.createElement("optgroup"); og.label=g; s.appendChild(og); } const e=document.createElement("option"); e.value=o.k; e.textContent=o.n; og.appendChild(e); } s.value="P_kneeFlex"; s.onchange=()=>{ drawChart(); if(valRef) runValidation(); }; }
 const POSE_COLOR={"站姿":"#DCE3EA","淺蹲":"#F2DDB3","半蹲":"#E7B567","深蹲":"#C5862C","軀幹前屈":"#BBC4E6"};
 const poseBase=p=>p?(p.startsWith("單腳")?"單腳支撐":p.startsWith("弓箭步")?"弓箭步":p):null;
 const POSE_COLOR2=p=>POSE_COLOR[p]||(p==="單腳支撐"?"#A9D2E4":p==="弓箭步"?"#E3B9C2":"#E6EAF0");
@@ -3007,7 +3339,7 @@ function drawChart(){
   const cv=$("chart"),dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w) return;
   cv.width=w*dpr; cv.height=h*dpr;
   const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
-  const S=SERIES.find(z=>z.k===$("series").value)||SERIES[0];
+  const S=SERIES.find(z=>z.k===$("series").value)||SERIES[0]; enrichClip(curClip);
   c.font='500 12px "Barlow Semi Condensed","Bahnschrift","Noto Sans TC",sans-serif';
   const msg=t=>{ c.fillStyle="#5B6678"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(t,w/2,h/2); $("stats").innerHTML=""; renderReport(); };
   if(!curClip||!curClip.data.length) return msg("錄影之後，這裡會出現「"+S.n+"」的曲線 📈");
@@ -3146,9 +3478,12 @@ function checkClip(clip){
   const D=clip.data, ar=clip.ar||16/9, n=D.length, F=D.map(r=>fig2D(r,ar));
   // 各肢段長度（軀幹長為單位）的中位數；2D 只會因透視「變短」，明顯「變長」＝點跑錯
   const med={}; for(const [a,b,nm] of SEGS2){ const L=F.map(f=>f&&Math.hypot(f[a].x-f[b].x,f[a].y-f[b].y)).filter(v=>v!=null).sort((x,y)=>x-y); med[nm]=L[Math.floor(L.length*.5)]||null; }
-  const flags=D.map(()=>new Set()); let recon=0, miss=0, tot=0;
+  enrichClip(clip);
+  const flags=D.map(()=>new Set()); let recon=0, miss=0, tot=0, negF=0, nF=0, swaps=0;
   for(let i=0;i<n;i++){ const r=D[i], f=F[i];
     if(r.src) for(const j of KEYJ){ tot++; if(r.src[j]>0) recon++; else if(r.src[j]<0) miss++; }
+    swaps+=r.sw||0;
+    { const F=r.k2?.F; if(F!=null){ nF++; if(F<-.15){ negF++; flags[i].add("地面反作用力為負（不可能，重心加速度可疑）"); } } }
     if(!f) continue;
     for(const [a,b,nm] of SEGS2){ const L=Math.hypot(f[a].x-f[b].x,f[a].y-f[b].y); if(med[nm]&&L>1.35*med[nm]) flags[i].add(`${nm}被拉長`); }
     const g=F[i-1], dt=i?D[i].t-D[i-1].t:1;
@@ -3160,7 +3495,8 @@ function checkClip(clip){
   const eps=[]; for(let i=0;i<n;i++){ if(!flags[i].size) continue; const last=eps[eps.length-1]; if(last&&D[i].t-last.t1<=.25){ last.t1=D[i].t; flags[i].forEach(x=>last.why.add(x)); last.n++; } else eps.push({t0:D[i].t,t1:D[i].t,why:new Set(flags[i]),n:1}); }
   const badPct=flags.filter(s=>s.size).length/(n||1)*100, reconPct=tot?recon/tot*100:0, missPct=tot?miss/tot*100:0;
   const grade=badPct<3&&reconPct<15?"良好":badPct<10&&reconPct<30?"尚可":"不佳";
-  return clip._chk={eps,flags,badPct,reconPct,missPct,grade,F};
+  const zc=median(D.map(r=>r.zc).filter(v=>v!=null));
+  return clip._chk={eps,flags,badPct,reconPct,missPct,grade,F,negPct:nF?negF/nF*100:null,zc,swaps};
 }
 /* ===================== 肢段參考圖 ===================== */
 const REP_COL=["#6A4FD8","#E0526F","#2F9E74","#E5A511","#2F7FCC","#C46BD6","#7A8AA6","#D9822B"];
@@ -3211,6 +3547,10 @@ function renderCheck(){
   box.innerHTML=`<div class="metric"><span>資料品質</span><b>${K.grade==="良好"?"✅":K.grade==="尚可"?"⚠️":"❌"} ${K.grade}</b></div>
    <div class="metric"><span>推算補點比例</span><b>${K.reconPct.toFixed(0)}%</b></div>
    <div class="metric"><span>可疑畫面比例</span><b>${K.badPct.toFixed(1)}%</b></div>
+   <div class="metric"><span>物理合理性（地面反作用力為負的畫面）</span><b>${K.negPct==null?"—":K.negPct.toFixed(1)+"%"}</b></div>
+   <div class="metric"><span>估計拍攝距離</span><b>${K.zc==null?"—":"約 "+K.zc.toFixed(1)+" m"+(K.zc<2.5?"（太近）":"")}</b></div>
+   <div class="metric"><span>左右互換已自動修正</span><b>${K.swaps} 次</b></div>
+   ${settings.calib?.noise?`<div class="small">靜止測試的雜訊底線：地面反作用力 ±${settings.calib.noise.Fsd.toFixed(3)} 倍體重。比這個小的變化分不出真假。</div>`:`<div class="small">建議先做「靜態校正」，系統會順便量出地面反作用力的雜訊底線。</div>`}
    <div style="margin-top:6px;font-weight:900">🧍 動作變形（和第 1 下最低點比，軀幹長的 %）</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${devTxt}</div>
    ${deform.length?`<div style="color:#C0567A;font-weight:800">⚠️ 第 ${deform.map(x=>x.n).join("、")} 下姿勢和第 1 下差很多（>20%）</div>`:""}${trend}
    <div style="margin-top:6px;font-weight:900">🔍 可能跑錯的片段（點一下跳過去看）</div>
@@ -3270,10 +3610,10 @@ function seriesStat(T,V,isAng){
   const vs=idx.map(i=>V[i]), n=vs.length, mean=vs.reduce((a,b)=>a+b,0)/n, sd=Math.sqrt(vs.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,n-1));
   let iMin=idx[0], iMax=idx[0]; for(const i of idx){ if(V[i]<V[iMin]) iMin=i; if(V[i]>V[iMax]) iMax=i; }
   let w=null;
-  if(isAng){ const S=smooth5(V); let best=0, bi=-1; for(let i=1;i<S.length-1;i++){ if(S[i-1]==null||S[i+1]==null) continue; const dt=T[i+1]-T[i-1]; if(dt<=0||dt>.25) continue; const om=(S[i+1]-S[i-1])/dt; if(Math.abs(om)>Math.abs(best)){ best=om; bi=i; } } if(bi>=0) w={v:best,t:T[bi]}; }
+  if(isAng){ const S=BM.sgCentered(T,BM.unwrapDeg(V),.2); let best=0, bi=-1; for(let i=0;i<S.v.length;i++){ const om=S.v[i]; if(om!=null&&isFinite(om)&&Math.abs(om)>Math.abs(best)){ best=om; bi=i; } } if(bi>=0) w={v:best,t:T[bi]}; }
   return {n,mean,sd,min:V[iMin],tMin:T[iMin],max:V[iMax],tMax:T[iMax],range:V[iMax]-V[iMin],w}; }
 function clipAllStats(clip){
-  const D=clip.data, T=D.map(r=>r.t), groups=[];
+  enrichClip(clip); const D=clip.data, T=D.map(r=>r.t), groups=[];
   for(const o of SERIES){ const isAng=o.u==="°"; if(ANGLES.some(x=>x.k===o.k)) continue; // 單側重複項（左右合併列已涵蓋）
     const rows=o.pair?[["左",o.pair[0]],["右",o.pair[1]]]:[["",o.get]];
     const out=rows.map(([sd,f])=>{ const st=seriesStat(T,D.map(r=>{ try{ const v=f(r); return v==null?null:+v; }catch(e){ return null; } }),isAng); return st?{side:sd,...st}:null; }).filter(Boolean);
@@ -3282,15 +3622,20 @@ function clipAllStats(clip){
     g.items.push({k:o.k,n:o.n.replace(/（左右一起・([^）]*)）/,"（$1）").replace(/（左右一起）/,""),u:o.u,d:o.d??(o.u==="°"?1:2),isAng,rows:out}); }
   return {groups,bio:clipBiomech(clip)}; }
 function clipBiomech(clip){
-  const D=clip.data, m=bodyM(), T=D.map(r=>r.t), H=D.map(r=>r.h), VX=D.map(r=>r.vx), VY=D.map(r=>r.vy), F=D.map(r=>r.F);
+  enrichClip(clip); const K=r=>r.k2||r;
+  const D=clip.data, m=clip.mass||bodyM(), T=D.map(r=>r.t), H=D.map(r=>K(r).h), VX=D.map(r=>K(r).vx), VY=D.map(r=>K(r).vy), F=D.map(r=>K(r).F);
   const ok=a=>a.filter(v=>v!=null&&isFinite(v)); if(ok(H).length<5) return null;
   const st=a=>seriesStat(T,a,false), hs=st(H), vxs=st(VX), vys=st(VY), fs=st(F);
-  const P=D.map(r=>r.F!=null&&r.vy!=null?r.F*m*G0*r.vy:null), ps=st(P);
+  const P=D.map(r=>K(r).F!=null&&K(r).vy!=null?K(r).F*m*G0*K(r).vy:null), ps=st(P), fxs=st(D.map(r=>r.k2?.Fx??null));
+  const wls=st(D.map(r=>r.wl==null?null:r.wl*100));
+  const pk=key=>{ const v=D.map(r=>r.M?.[key]).filter(x=>x!=null&&isFinite(x)); return v.length?Math.max(...v):null; };
+  const mom={}; for(const j of ["ank","knee","hip"]) for(const s of ["L","R"]) mom[j+s]=pk(j+s);
+  const idN=D.filter(r=>r.M).length;
   // 騰空：估計地面反作用力 < 0.15 BW 持續 ≥ 0.08 s
-  let flights=[], s0=null; D.forEach((r,i)=>{ const air=r.F!=null&&r.F<.15; if(air&&s0==null) s0=i; if((!air||i===D.length-1)&&s0!=null){ const t0=T[s0], t1=T[air?i:i-1]; if(t1-t0>=.08) flights.push(t1-t0); s0=null; } });
+  let flights=[], s0=null; D.forEach((r,i)=>{ const f=K(r).F, air=f!=null&&f<.15; if(air&&s0==null) s0=i; if((!air||i===D.length-1)&&s0!=null){ const t0=T[s0], t1=T[air?i:i-1]; if(t1-t0>=.08) flights.push(t1-t0); s0=null; } });
   const ft=flights.length?Math.max(...flights):null;
   const vMax=ok(VX).concat(ok(VY)); const spd=D.map(r=>r.vx!=null&&r.vy!=null?Math.hypot(r.vx,r.vy):null), ss=st(spd);
-  return {m,hs,vxs,vys,fs,ps,ss,disp:hs?hs.range:null,ft,jump:ft?G0*ft*ft/8:null,nFlight:flights.length}; }
+  return {m,hs,vxs,vys,fs,ps,ss,fxs,wls,mom,idN,idPct:D.length?idN/D.length*100:0,load:clip.load||0,disp:hs?hs.range:null,ft,jump:ft?G0*ft*ft/8:null,nFlight:flights.length}; }
 const fmtN=(v,d)=>{ if(v==null||!isFinite(v)) return "—"; const t=(+v).toFixed(d); return /^-0(\.0+)?$/.test(t)?t.slice(1):t; };
 function bioHTML(b,compact){ if(!b) return '<div class="small">這段錄影沒有足夠的重心資料。</div>';
   const kv=(n,v,note)=>`<tr><td>${n}</td><td class="v">${v}</td>${compact?"":`<td class="nt">${note||""}</td>`}</tr>`;
@@ -3304,16 +3649,19 @@ function bioHTML(b,compact){ if(!b) return '<div class="small">這段錄影沒�
   ${kv("垂直地面反作用力 峰值",`${fmtN(b.fs?.max,2)} BW（${fmtN(b.fs?b.fs.max*b.m*G0:null,0)} N）`,`${fmtN(b.fs?.tMax,1)} s`)}
   ${kv("垂直地面反作用力 最低",`${fmtN(b.fs?.min,2)} BW`,"")}
   ${kv("向上功率 峰值",`${fmtN(b.ps?.max,0)} W（${fmtN(b.ps?b.ps.max/b.m:null,1)} W/kg）`,"F × 垂直速度")}
+  ${kv("水平地面反作用力 最大",`${fmtN(b.fxs?Math.max(Math.abs(b.fxs.max),Math.abs(b.fxs.min)):null,2)} BW`,"畫面左右方向")}
+  ${kv("左腳承重 平均",b.wls?`${fmtN(b.wls.mean,0)}%`:"—",b.wls?`範圍 ${fmtN(b.wls.min,0)}～${fmtN(b.wls.max,0)}%；雙腳站立、正面拍時才準`:"")}
+  ${["knee","hip","ank"].map(j=>kv(({knee:"膝伸展",hip:"髖伸展",ank:"踝蹠屈"})[j]+"力矩峰值 左／右（N·m/kg）",b.idN?`${fmtN(b.mom[j+"L"]!=null?b.mom[j+"L"]/b.m:null,2)}／${fmtN(b.mom[j+"R"]!=null?b.mom[j+"R"]/b.m:null,2)}`:"—",b.idN?`${fmtN(b.idPct,0)}% 畫面可算（側拍）`:"需要側拍")).join("")}
   ${kv("騰空時間",b.ft?`${fmtN(b.ft,2)} s（${b.nFlight} 次）`:"未偵測到騰空","")}
   ${kv("跳躍高度（騰空時間法）",b.jump?`${fmtN(b.jump*100,1)} cm`:"—","h = g·t²／8")}
-  </table>`; }
+  </table><div class="small">${b.load?`已納入外加負重 ${b.load} kg。`:""}地面反作用力、關節力矩都是從影像推算（純攝影機模式），不是量到的；關節力矩是「淨力矩」，不等於某一條肌肉的出力。</div>`; }
 function allStatsHTML(S,opt={}){ const {compact,link}=opt;
   return S.groups.map(g=>`<div class="ash">${esc(g.n)}</div><table class="ast"><tr><th>項目</th><th></th><th>平均±SD</th><th>最小（秒）</th><th>最大（秒）</th><th>範圍</th>${g.items.some(i=>i.isAng)?"<th>峰值角速度</th>":""}</tr>`+
     g.items.map(it=>it.rows.map((r,j)=>`<tr${link?` data-k="${it.k}"`:""}>${j?"":`<td class="nm" rowspan="${it.rows.length}">${esc(it.n)}</td>`}<td class="sde ${r.side==="左"?"L":r.side==="右"?"R":""}">${r.side}</td><td>${fmtN(r.mean,it.d)}±${fmtN(r.sd,it.d)}${it.u.trim()}</td><td>${fmtN(r.min,it.d)}<i>${fmtN(r.tMin,1)}</i></td><td>${fmtN(r.max,it.d)}<i>${fmtN(r.tMax,1)}</i></td><td>${fmtN(r.range,it.d)}</td>${g.items.some(i=>i.isAng)?`<td>${r.w?fmtN(Math.abs(r.w.v),0)+"°/s<i>"+fmtN(r.w.t,1)+"</i>":"—"}</td>`:""}</tr>`).join("")).join("")+`</table>`).join(""); }
 function renderAllStats(){ const box=$("allStats"); if(!box) return;
   if(!curClip?.data?.length){ box.innerHTML='<div class="small">錄影後這裡會列出整段的所有數據。</div>'; return; }
   const S=clipAllStats(curClip);
-  box.innerHTML=`<div class="ash">重心與生物力學（估計）</div>${bioHTML(S.bio,true)}${allStatsHTML(S,{compact:true,link:true})}<div class="small" style="margin-top:6px">點任一列可在下方看它的曲線。時間（秒）為該值出現的時刻；角速度由 5 點平滑後中央差分計算。</div>`;
+  box.innerHTML=`<div class="ash">重心與生物力學（估計）</div>${bioHTML(S.bio,true)}${allStatsHTML(S,{compact:true,link:true})}<div class="small" style="margin-top:6px">點任一列可在下方看它的曲線。時間（秒）為該值出現的時刻；角速度用 Savitzky–Golay（0.2 秒視窗）計算。</div>`;
   box.querySelectorAll("tr[data-k]").forEach(tr=>tr.onclick=()=>{ $("series").value=tr.dataset.k; $("series").dispatchEvent(new Event("change")); }); }
 
 function openReport(){
@@ -3459,19 +3807,24 @@ function bindHistory(){
 }
 
 function csvMatrix(clip){
+  enrichClip(clip); const K=r=>r.k2||r;
   const head=["time_s",...ANGLES.map(a=>a.k+"_deg"),"trunk_lean_deg","x_factor_deg","shoulder_rot_deg","hip_rot_deg","neck_trunk_deg","ear_shoulder_vertical_deg","com_height_m","com_vx_mps","com_vy_up_mps","vGRF_BW",...PLANE_ROWS.flatMap(d=>["L","R"].map(x=>`${d.p}_${d.k}${x}_deg`)),...PLANE_SINGLE.map(d=>`${d.p}_${d.k}_deg`),"body_heading_deg"];
   const nf=new Set([0]); // 不做濾波的欄位（時間、可信度、來源代碼）
   for(const l of LM){ head.push(l[0]+"_x",l[0]+"_y",l[0]+"_z",l[0]+"_vis"); nf.add(head.length-1); }
   for(const l of LM){ head.push(l[0]+"_src"); nf.add(head.length-1); }
   for(const l of LM) head.push(l[0]+"_X3_m",l[0]+"_Y3_m",l[0]+"_Z3_m");
   for(const k of VM_KEYS) head.push("PiG_"+k+"_x","PiG_"+k+"_y");
+  const ISBK=["hipF","hipA","kneeF","kneeA","ankF"], ISBN={hipF:"hip_flex",hipA:"hip_abd",kneeF:"knee_flex",kneeA:"knee_valgus",ankF:"ankle_df"};
   for(const s of ["L","R"]){
     head.push(`hand${s}_grip_pct`);
     for(const f of FINGERS) for(let j=1;j<=3;j++) head.push(`hand${s}_${f.k}_j${j}_flex_deg`);
     for(const h of HAND_LM) head.push(`hand${s}_${h[0]}_x`,`hand${s}_${h[0]}_y`,`hand${s}_${h[0]}_z`);
   }
+  head.push("hGRF_BW","load_share_L","cam_dist_m");
+  for(const s of ["L","R"]) for(const k of ISBK) head.push(`isb_${ISBN[k]}_${s}_deg`);
+  for(const s of ["L","R"]) head.push(`M_ankle_PF_${s}_Nm`,`M_knee_ext_${s}_Nm`,`M_hip_ext_${s}_Nm`);
   const rows=clip.data.map(r=>{
-    const row=[r.t,...ANGLES.map(a=>r.a?.[a.k]),r.trunk,r.xf,r.shRot,r.hipRot,r.neckT,r.neckV,r.h,r.vx,r.vy,r.F,...PLANE_ROWS.flatMap(d=>[r.pl?.L[d.k],r.pl?.R[d.k]]),...PLANE_SINGLE.map(d=>r.pl?.one[d.k]),r.pl?.hd];
+    const row=[r.t,...ANGLES.map(a=>r.a?.[a.k]),r.trunk,r.xf,r.shRot,r.hipRot,r.neckT,r.neckV,K(r).h,K(r).vx,K(r).vy,K(r).F,...PLANE_ROWS.flatMap(d=>[r.pl?.L[d.k],r.pl?.R[d.k]]),...PLANE_SINGLE.map(d=>r.pl?.one[d.k]),r.pl?.hd];
     if(r.l) for(const p of r.l) row.push(p[0],p[1],p[2],p[3]); else for(let i=0;i<33*4;i++) row.push(null);
     for(let i=0;i<33;i++) row.push(r.src?r.src[i]:null);
     for(let i=0;i<33;i++){ const q=r.p3?.[i]; row.push(q?q[0]:null,q?q[1]:null,q?q[2]:null); }
@@ -3479,6 +3832,9 @@ function csvMatrix(clip){
     for(const s of ["L","R"]){ const h=r["h"+s]; row.push(h?.g);
       for(const fg of FINGERS) for(let j=0;j<3;j++) row.push(h?.f?.[fg.k]?.[j]);
       if(h) for(const p of h.l) row.push(p[0],p[1],p[2]); else for(let i=0;i<21*3;i++) row.push(null); }
+    row.push(r.k2?.Fx,r.wl,r.zc);
+    for(const s of ["L","R"]) for(const k of ISBK) row.push(r.j?.[s]?.[k]);
+    for(const s of ["L","R"]) row.push(r.M?.["ank"+s],r.M?.["knee"+s],r.M?.["hip"+s]);
     return row.map(v=>v==null||!isFinite(v)?null:+v);
   });
   return {head,rows,nf};
@@ -3488,7 +3844,7 @@ function downloadCsv(name,meta,head,rows){
   const lines=[meta,head.join(","),...rows.map(r=>r.map(f).join(","))];
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8"})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
-const clipMeta=c=>`# 學員,${settings.name||""},身高_m,${c.height},體重_kg,${c.mass},肢段模型,${c.segModel||""},補點,${settings.fill?"開":"關"},src代碼,0量測/1剛體叢集/2肢段長度/3時間預測/4手部模型/-1遺失,3D座標,X右/Y上/Z朝鏡頭_公尺_髖中點原點_${settings.scan?"轉身掃描長度":"身高比例長度"}`;
+const clipMeta=c=>`# 學員,${settings.name||""},身高_m,${c.height},體重_kg,${c.mass},外加負重_kg,${c.load||0},負重位置,${c.load?(c.loadAt==="hands"?"手上":"背上"):""},肢段模型,${c.segModel||""},ISB角度,Cardan ZXY（對應 Visual3D Cardan XYZ；不含髖膝旋轉）,關節力矩,矢狀面逆向動力學_伸肌為正_側拍畫面才計算,補點,${settings.fill?"開":"關"},src代碼,0量測/1剛體叢集/2肢段長度/3時間預測/4手部模型/-1遺失,3D座標,X右/Y上/Z朝鏡頭_公尺_髖中點原點_${settings.scan?"轉身掃描長度":"身高比例長度"}`;
 $("dlCsv").onclick=()=>{
   if(!curClip) return alert("請先選一段錄影");
   const {head,rows}=csvMatrix(curClip); downloadCsv(`${curClip.name}_動作數據_原始.csv`,clipMeta(curClip),head,rows);
@@ -3496,22 +3852,75 @@ $("dlCsv").onclick=()=>{
 $("dlCsvF").onclick=()=>{
   if(!curClip) return alert("請先選一段錄影");
   const {head,rows,nf}=csvMatrix(curClip); if(rows.length<12) return alert("錄影太短，無法濾波。");
-  const fc=+$("fcSel").value, ts=rows.map(r=>r[0]);
+  const auto=$("fcSel").value==="auto", fc=auto?null:+$("fcSel").value, ts=rows.map(r=>r[0]);
   const dts=ts.slice(1).map((t,i)=>t-ts[i]).filter(d=>d>0), fsRaw=Math.round(1/median(dts)), fs=Math.max(60,fsRaw), T=ts[ts.length-1];
-  if(fc>=fsRaw*.45&&!confirm(`這段錄影的實際取樣率約 ${fsRaw} 張/秒，${fc} Hz 已接近上限（奈奎斯特 ${fsRaw/2} Hz），濾波效果有限。仍要匯出嗎？`)) return;
+  if(!auto&&fc>=fsRaw*.45&&!confirm(`這段錄影的實際取樣率約 ${fsRaw} 張/秒，${fc} Hz 已接近上限（奈奎斯特 ${fsRaw/2} Hz），濾波效果有限。仍要匯出嗎？`)) return;
   const grid=Array.from({length:Math.floor(T*fs)+1},(_,i)=>i/fs);
   // 先重新取樣成固定頻率（缺值間隔 >0.25 秒不內插），再做零延遲 Butterworth
+  let nHampel=0; const fcs=[];
   const cols=head.map((_,c)=>{
     if(c===0) return grid;
     let j=0;
     const res=grid.map(t=>{ while(j<ts.length-2&&ts[j+1]<t) j++; const t0=ts[j],t1=ts[j+1],v0=rows[j][c],v1=rows[j+1]?.[c];
       if(nf.has(c)) return Math.abs(t-t0)<=Math.abs(t1-t)?v0:v1;
       if(v0==null||v1==null||t1-t0>.25) return (Math.abs(t-t0)<1e-6?v0:null); const r=(t-t0)/(t1-t0); return v0+(v1-v0)*Math.min(1,Math.max(0,r)); });
-    return nf.has(c)?res:filterSeries(res,fc,fs);
+    if(nf.has(c)) return res;
+    // 濾波前：角度先展開（避免 ±180° 跳躍被濾成假曲線）、再用 Hampel 去掉單點離群值（第 1、11 則）
+    let x=/_deg$/.test(head[c])?BM.unwrapDeg(res):res; x=BM.hampel(x,3,3); nHampel+=x.nFix||0;
+    let f=fc;
+    if(auto){ let best=[],cur=[]; for(const v of x){ if(v==null){ if(cur.length>best.length) best=cur; cur=[]; } else cur.push(v); } if(cur.length>best.length) best=cur;
+      const r=best.length>=30?BM.residualCutoff(best,fs,filtfilt):null; f=r==null?6:Math.max(2,Math.min(12,r)); fcs.push(f); }
+    return filterSeries(x,f,fs);
   });
   const out=grid.map((_,i)=>cols.map(col=>col[i]));
-  downloadCsv(`${curClip.name}_動作數據_Butterworth${fc}Hz.csv`,clipMeta(curClip)+`,濾波,2階Butterworth雙向(4階零延遲) ${fc}Hz（Winter 修正 0.802）,原始取樣,${fsRaw}Hz,重新取樣,${fs}Hz`,head,out);
+  const fcTxt=auto?`自動（Winter 殘差分析，各欄中位數 ${median(fcs)} Hz、範圍 ${Math.min(...fcs)}–${Math.max(...fcs)} Hz）`:`${fc}Hz`;
+  downloadCsv(`${curClip.name}_動作數據_Butterworth${auto?"自動":fc+"Hz"}.csv`,clipMeta(curClip)+`,濾波,2階Butterworth雙向(4階零延遲) ${fcTxt}（Winter 修正 0.802）,角度,濾波前已展開(unwrap),Hampel修正點數,${nHampel},原始取樣,${fsRaw}Hz,重新取樣,${fs}Hz`,head,out);
 };
+let valRef=null;
+function parseRefCsv(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()&&!/^\s*#/.test(l)); if(lines.length<3) return null;
+  const sep=[",","\t",";"].map(s=>[s,lines[0].split(s).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=lines.map(l=>l.split(sep).map(x=>x.trim().replace(/^"|"$/g,"")));
+  let head=rows[0], start=1; if(head.every(x=>x!==""&&isFinite(+x))){ head=head.map((_,i)=>i?"第 "+(i+1)+" 欄":"time"); start=0; }
+  const data=rows.slice(start).map(r=>r.map(x=>x===""||!isFinite(+x)?null:+x)), T=data.map(r=>r[0]);
+  const cols={}; head.forEach((h,i)=>{ if(!i) return; const v=data.map(r=>r[i]??null); if(v.filter(x=>x!=null).length>=10) cols[h||("第 "+(i+1)+" 欄")]=v; });
+  return Object.keys(cols).length?{T,cols}:null;
+}
+function baSVG(P,A,u){ // Bland–Altman 圖：橫軸＝兩系統平均，縱軸＝差值
+  const W=300,H=150,pl=36,pb=18,pt=8,pr=8, xs=P.map(p=>p[0]), ys=P.map(p=>p[1]).concat([A.loaLo,A.loaHi]);
+  const x0=Math.min(...xs),x1=Math.max(...xs)||x0+1,y0=Math.min(...ys),y1=Math.max(...ys)||y0+1, X=v=>pl+(v-x0)/((x1-x0)||1)*(W-pl-pr), Y=v=>pt+(1-(v-y0)/((y1-y0)||1))*(H-pt-pb);
+  const step=Math.max(1,Math.floor(P.length/400)), dots=P.filter((_,i)=>i%step===0).map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="1.6" fill="#2F7DE1" fill-opacity=".45"/>`).join("");
+  const ln=(v,c,d)=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="${c}" stroke-width="1.2" ${d?'stroke-dasharray="4 3"':""}/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:360px;display:block;margin-top:6px;background:#fff;border-radius:10px">${dots}${ln(A.bias,"#1B2230")}${ln(A.loaLo,"#D2405F",1)}${ln(A.loaHi,"#D2405F",1)}<text x="2" y="${Y(A.loaHi)-2}" font-size="9" fill="#D2405F">+1.96SD</text><text x="2" y="${Y(A.bias)-2}" font-size="9">偏差</text><text x="2" y="${Y(A.loaLo)+10}" font-size="9" fill="#D2405F">−1.96SD</text><text x="${W/2}" y="${H-3}" font-size="9" text-anchor="middle" fill="#5B6678">兩系統平均（${esc(u.trim())}）</text></svg>`;
+}
+function runValidation(){
+  const out=$("valOut"); if(!out) return;
+  if(!valRef){ out.innerHTML=""; return; }
+  if(!curClip?.data?.length){ out.innerHTML='<div class="small">請先選一段錄影。</div>'; return; }
+  enrichClip(curClip);
+  const S=SERIES.find(z=>z.k===$("series").value)||SERIES[0]; $("valSide").hidden=!S.pair;
+  const g=S.pair?S.pair[+$("valSide").value||0]:S.get, D=curClip.data, Ts=D.map(r=>r.t), Vs=D.map(r=>{ try{ const v=g(r); return v==null||!isFinite(v)?null:+v; }catch(e){ return null; } });
+  const Vr=valRef.cols[$("valCol").value]; if(!Vr) return;
+  const A=BM.alignSeries(Ts,Vs,valRef.T,Vr,2);
+  if(!A){ out.innerHTML='<div class="small" style="color:#C0567A">兩邊重疊的資料太少，無法比對。請確認參考檔第一欄是時間（秒），而且和這段錄影是同一次動作。</div>'; return; }
+  const ang=S.u==="°", d=S.d??(ang?1:2), u=S.u, lv=!ang?"":A.rmse<=2?"綠：≤2°，可接受":A.rmse<=5?"黃：2–5°，合理但解讀要留意":"紅：>5°，應該注意";
+  const row=(n,v,t)=>`<tr><td>${n}</td><td class="v">${v}</td><td class="nt">${t||""}</td></tr>`;
+  out.innerHTML=`<table class="bio" style="margin-top:6px">
+    ${row("比對項目",`${esc(S.n)}${S.pair?`（${+$("valSide").value?"右":"左"}）`:""} ↔ ${esc($("valCol").value)}`)}
+    ${row("資料點數",A.n,"每 1/30 秒一點")}
+    ${row("自動對齊的時間差",`${A.lag.toFixed(2)} s`,"參考檔比這段錄影晚多少")}
+    ${row("相關係數 r",fmtN(A.r,3),"曲線形狀像不像")}
+    ${row("平均偏差 bias",fmtN(A.bias,d)+u,"系統平均偏高（+）或偏低（−）")}
+    ${row("RMSE",fmtN(A.rmse,d)+u,lv)}
+    ${row("去除偏差後 RMSE",fmtN(A.rmseC,d)+u,"只看形狀的誤差；同一人前後比較時看這個")}
+    ${row("95% 一致性界限",`${fmtN(A.loaLo,d)} ～ ${fmtN(A.loaHi,d)}${u}`,"95% 的時候差異落在這裡")}
+  </table>${baSVG(A.pairs,A,u)}<div class="small">分級依 McGinley 等（2009）的關節角誤差建議。這裡的點是同一段錄影的連續畫面，不是獨立的受試者，所以不計算 ICC；正式的信度研究請用多位受試者的峰值或平均值另外計算。</div>`;
+}
+$("valLoad").onclick=()=>$("valFile").click();
+$("valFile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  const R=parseRefCsv(await f.text()); if(!R) return alert("讀不到可比對的數字欄位。請確認是 CSV、第一列是欄位名稱、第一欄是時間（秒）。");
+  valRef=R; const sel=$("valCol"); sel.innerHTML=Object.keys(R.cols).map(k=>`<option>${esc(k)}</option>`).join(""); sel.hidden=false; runValidation(); };
+$("valCol").onchange=$("valSide").onchange=runValidation;
 $("dlVid").onclick=()=>{ if(!curClip) return alert("請先選一段錄影"); const a=document.createElement("a"); a.href=curClip.url; a.download=`${curClip.name}.${curClip.ext}`; a.click(); };
 
 /* ===================== 示範影片 ===================== */
@@ -3525,7 +3934,7 @@ function clearRef(){
   $("refFrame").src="about:blank"; $("refFrame").hidden=true; refCanvas.hidden=true; refCanvas.classList.remove("ovl"); $("refPh").hidden=false; $("refCapHint").hidden=true;
   refRes=null; refM=null; refMode=null; refAI=true; lastRefT=-1; refVidKey="";
 }
-function showRefVideo(){ refMode="video"; $("refPh").hidden=true; refCanvas.hidden=false; if(!refLM&&!loading) loadModels(); }
+function showRefVideo(){ refMode="video"; $("refPh").hidden=true; refCanvas.hidden=false; ensureRefLM(); }
 $("refFile").onchange=e=>{
   const f=e.target.files?.[0]; if(!f) return;
   clearRef(); refVideo.removeAttribute("crossorigin"); refVideo.src=URL.createObjectURL(f); refVidKey=f.name+"|"+f.size; refVideo.playbackRate=Number($("refSpeed").value);
@@ -3583,15 +3992,15 @@ $("btnTabCap").onclick=async()=>{
   const vw=refVideo.videoWidth||st.width||0, vh=refVideo.videoHeight||st.height||1, same=st.displaySurface?st.displaySurface==="browser":true;
   if(!refRestricted&&(!same||(vw&&Math.abs(vw/vh-innerWidth/innerHeight)>.08))){ // 選到別的視窗：當成一般擷取
     $("refFrame").hidden=true; $("refCapHint").hidden=true; refCanvas.classList.remove("ovl"); showRefVideo(); refMsg("選到的不是這個分頁，已改為分析整個擷取畫面。");
-  } else { refMode="tab"; refAI=true; refCanvas.hidden=false; refCanvas.classList.add("ovl"); $("refCapHint").hidden=true; if(!refLM&&!loading) loadModels();
+  } else { refMode="tab"; refAI=true; refCanvas.hidden=false; refCanvas.classList.add("ovl"); $("refCapHint").hidden=true; ensureRefLM();
     refMsg(refRestricted===true?"正在分析播放器：請按播放器的播放鍵。":"正在分析播放器：請按播放器的播放鍵，分析期間不要捲動頁面。<br>這個瀏覽器不支援「只擷取播放器」，骨架會淡化顯示以免干擾 AI；建議更新到最新版 Chrome。"); }
   tr.addEventListener("ended",()=>{ if(refStream!==s) return; refStream=null; refVideo.srcObject=null; refRes=null; refM=null;
     if(refMode==="tab"){ refMode="iframe"; refCanvas.hidden=true; refCanvas.classList.remove("ovl"); $("refCapHint").hidden=false; refMsg("已停止分析播放器。"); } else { clearRef(); refMsg("畫面擷取已結束。"); } });
 };
 // 示範者點位：同一套補點＋跳點剔除＋1€ 平滑（與學員端相同），避免亂飄
-function smoothRef(raw,W,H,t){ if(!raw) return null; try{ return refEngine.process(raw,W,H,t,null,{euro:true}).lms; }catch(e){ return raw; } }
+function smoothRef(raw,W,H,t){ if(!raw) return null; try{ raw=refSwap.apply(raw,null,W,H,t).lms; return refEngine.process(raw,W,H,t,null,{euro:true}).lms; }catch(e){ return raw; } }
 let refPeople=null, refSide=null, refSideM=null;
-function refFromResult(r,W,H,t){ refPeople=refTrk.update(listOf(r),W,H,t); if(refPeople.changed) refEngine.reset();
+function refFromResult(r,W,H,t){ refPeople=refTrk.update(listOf(r),W,H,t); if(refPeople.changed){ refEngine.reset(); refSwap.reset(); }
   refRes=smoothRef(refPeople.pri?.lms||null,W,H,t); const mP=refRes?computeMetrics(refRes,refPeople.pri.world,W,H):null;
   refSide=refPeople.side?.lms||null; refSideM=refSide?computeMetrics(refSide,refPeople.side.world,W,H):null;
   refM=refSide?mergeViews(mP,refSideM,refRes,refSide,W,H):mP; return refRes; }
@@ -3681,7 +4090,7 @@ const seekTo=(v,t)=>new Promise(r=>{ let done=false; const f=()=>{ if(done) retu
 $("btnAnaRef").onclick=async()=>{
   if(refAnalyzing) return;
   if(refMode!=="video"||refStream) return tplMsg("「分析整段示範」需要影片檔或 .mp4 網址。平台影片或擷取畫面請用「錄下示範（即時）」。",true);
-  if(!refLM){ if(!loading) loadModels(); return tplMsg("AI 模型載入中，請稍候再按一次。"); }
+  if(!refLM){ ensureRefLM(); return tplMsg("AI 模型載入中，請稍候再按一次。"); }
   const v=refVideo; if(!isFinite(v.duration)||!v.videoWidth) return tplMsg("影片還沒載入完成，請稍候。",true);
   const W=v.videoWidth,H=v.videoHeight, dur=Math.min(v.duration,30), raw=[], prog=$("refProg"); v.pause(); refAnalyzing=true; refEngine.reset(); prog.hidden=false;
   try{ for(let t=0;t<=dur+1e-6;t+=1/TPL_FPS){ await seekTo(v,t);
@@ -3915,6 +4324,8 @@ function bindSettings(){
   $("inSex").value=settings.sex||""; $("inSex").onchange=e=>{settings.sex=e.target.value;saveSettings();renderRefTable();};
   $("inH").oninput=e=>{settings.height=Number(e.target.value)||150;saveSettings();kin.reset();renderSegTable();};
   $("inW").oninput=e=>{settings.weight=Number(e.target.value)||45;saveSettings();renderSegTable();};
+  $("inLoad").value=settings.load||""; $("inLoad").oninput=e=>{ settings.load=Math.max(0,Number(e.target.value)||0); saveSettings(); };
+  $("inLoadAt").value=settings.loadAt||"back"; $("inLoadAt").onchange=e=>{ settings.loadAt=e.target.value; saveSettings(); };
   $("setModel").onchange=e=>{settings.model=e.target.value;saveSettings();loadModels();};
   $("setCamQ").value=settings.camQ||"720"; $("setCamQ").onchange=e=>{ settings.camQ=e.target.value; saveSettings(); if(liveOn&&camSource==="local") startCam(); };
   $("setPreferExt").checked=settings.preferExt!==false; $("setPreferExt").onchange=e=>{ settings.preferExt=e.target.checked; saveSettings(); };
@@ -3943,6 +4354,10 @@ function updateUI(now){
   $("mVx").textContent=ok?fmt(kin.v.x*(liveMirror?-1:1),2," m/s"):"—";
   $("mVy").textContent=ok?fmt(-kin.v.y,2," m/s"):"—";
   $("mF").textContent=ok&&kin.Fbw!=null?`${kin.Fbw.toFixed(2)} BW（${Math.round(kin.Fbw*bodyM()*G)} N）`:"—";
+  $("mFx").textContent=ok&&kin.Fx!=null?`${(kin.Fx*(liveMirror?-1:1)).toFixed(2)} BW`:"—";
+  $("mSplit").textContent=liveSplit?`左 ${Math.round(liveSplit.L*100)}%／右 ${Math.round(liveSplit.R*100)}%（${liveSplit.mode}）`:"—";
+  $("mCam").textContent=liveCam?`約 ${liveCam.Z.toFixed(1)} m${liveCam.Z<2.5?"（太近）":""}`:"—";
+  $("qSwap").textContent=swapGuard.count;
   for(const s of ["L","R"]){
     const h=liveHands?.[s];
     $("grip"+s).style.width=(h?.grip??0)+"%"; $("grip"+s+"v").textContent=h?.grip!=null?Math.round(h.grip)+"%":(settings.hands?"未偵測":"已關閉");
