@@ -375,6 +375,7 @@ body:not([data-page=settings]) .setHead{display:none}
 /* 畫面內動作判讀標題 */
 .stage .dcap{position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);background:rgba(16,21,30,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;border:none;z-index:2;font-size:15px;min-height:0;padding:7px 12px}
 .stage .dcap b{font-weight:700}
+.biochk{border-radius:12px;padding:10px 12px;margin:6px 0 10px;background:#E9F8EE}.biochk.warn{background:#FFF4E5}.biochk b{font-size:14px}.biochk .ck{font-size:13px;line-height:1.5;margin-top:6px;padding-left:10px;border-left:3px solid #FF9500;color:#6B3E00}
 .dcap.coach{display:block;white-space:normal;padding:8px 12px;min-width:min(300px,calc(100% - 24px))}
 .dcap.coach .cr,.coachp .cr{display:flex;align-items:center;gap:8px;line-height:1.35;padding:2px 0}
 .cr i{flex:none;width:9px;height:9px;border-radius:50%;background:#8E8E93}.cr.cg i{background:#34C759}.cr.cw i{background:#FF9500}.cr.cb i{background:#FF3B30}
@@ -3405,15 +3406,41 @@ $("rvSpeed").onchange=()=>{ rv.playbackRate=Number($("rvSpeed").value); };
 
 /* ----- 回顧用的離線重算（第 1、2、17、18、19 則）：每段錄影算一次、存起來 ----- */
 function segsFor(key){ return key==="delevaM"?buildDeLeva("M"):key==="delevaF"?buildDeLeva("F"):DEMPSTER; }
+// Hampel 離群值濾波＋短缺口內插：回傳清理後的序列與被判為跳點的格
+function cleanSeries(T,V,win=.2,k=3,floor=.025,maxGap=.3){
+  const n=V.length, out=V.slice(), bad=new Set();
+  for(let i=0;i<n;i++){ if(V[i]==null||!isFinite(V[i])) continue; const w=[]; for(let j=i-1;j>=0&&T[i]-T[j]<=win;j--) if(V[j]!=null) w.push(V[j]); for(let j=i+1;j<n&&T[j]-T[i]<=win;j++) if(V[j]!=null) w.push(V[j]);
+    if(w.length<4) continue; w.sort((a,b)=>a-b); const m=w[w.length>>1], mad=w.map(x=>Math.abs(x-m)).sort((a,b)=>a-b)[w.length>>1]*1.4826;
+    if(Math.abs(V[i]-m)>Math.max(k*mad,floor)){ bad.add(i); } }
+  for(const i of [...bad]) for(const j of [i-1,i+1]) if(j>=0&&j<n&&V[j]!=null&&T[j]!=null&&Math.abs(T[j]-T[i])<.1) bad.add(j); // 跳點前後各一格也常被帶歪
+  for(const i of bad) out[i]=null;
+  // 補缺口（≤0.3 秒才補；太長的缺口保持空白）
+  let i=0; while(i<n){ if(out[i]!=null){ i++; continue; } let j=i; while(j<n&&out[j]==null) j++; if(i>0&&j<n&&T[j]-T[i-1]<=maxGap){ for(let q=i;q<j;q++){ const r=(T[q]-T[i-1])/(T[j]-T[i-1]); out[q]=out[i-1]+(out[j]-out[i-1])*r; } } i=j; }
+  return {v:out,bad};
+}
 function enrichClip(clip){
   if(!clip) return null; if(clip._bm) return clip._bm;
   const D=clip.data, bm=clip._bm={kin:false,id:false,isb:false}; if(!D||D.length<10) return bm;
   const T=D.map(r=>r.t), mass=clip.mass||bodyM(), k=1+(clip.load||0)/mass;
   // ① 重心：置中 Savitzky–Golay（沒有延遲；前後都看）
   const sc=median(D.map(r=>r.cm?.[3]).filter(v=>v!=null&&isFinite(v)));
-  if(sc){ const X=D.map(r=>r.cm?r.cm[0]*sc:null), Y=D.map(r=>r.cm?r.cm[1]*sc:null), Fy=D.map(r=>r.cm&&r.cm[2]!=null?r.cm[2]*sc:null);
+  // 走動中（人和鏡頭的距離在變，畫面上的身體大小跟著變）的格不能用同一個尺度換算成公尺 → 不列入重心計算
+  // 每格的尺度（公尺／像素）取前後 0.5 秒的中位數，避免蹲下時大腿縮短讓尺度亂跳
+  const roll=(get,win)=>D.map((r,i)=>{ const w=[]; for(let j=i;j>=0&&T[i]-T[j]<=win;j--){ const v=get(D[j]); if(v!=null&&isFinite(v)) w.push(v); } for(let j=i+1;j<D.length&&T[j]-T[i]<=win;j++){ const v=get(D[j]); if(v!=null&&isFinite(v)) w.push(v); } return w.length?median(w):null; });
+  const scR=roll(r=>r.cm?.[3],.5), scW=roll(r=>r.cm?.[3],1), ftW=roll(r=>r.cm?.[2],1), ftMed=median(D.map(r=>r.cm?.[2]).filter(v=>v!=null&&isFinite(v)));
+  // 走動＝身體在畫面上的大小「和」腳的位置都持續改變（1 秒視窗中位數，所以跳躍的 0.6 秒騰空不會被誤判）
+  const far=new Set(); if(sc) D.forEach((r,i)=>{ const s=scW[i]; if(s==null){ far.add(i); return; } if(Math.abs(sc/s-1)>.12&&ftW[i]!=null&&ftMed!=null&&Math.abs(ftW[i]-ftMed)*sc>.15) far.add(i); });
+  { const f0=[...far]; for(const i of f0) for(let j=Math.max(0,i-15);j<Math.min(D.length,i+16);j++) if(Math.abs(T[j]-T[i])<=.3) far.add(j); } // 走動前後 0.3 秒也排除（濾波邊界效應）
+  bm.walk=far.size;
+  if(sc){ const use=(r,i)=>r.cm&&!far.has(i), X0=D.map((r,i)=>use(r,i)?r.cm[0]*scR[i]:null), Y0=D.map((r,i)=>use(r,i)?r.cm[1]*scR[i]:null), F0=D.map((r,i)=>use(r,i)&&r.cm[2]!=null?r.cm[2]*scR[i]:null);
+    // 先清掉跳點（Hampel 濾波：和前後 0.2 秒的中位數差太多的點視為錯誤），短缺口線性補回，再 6 Hz 零延遲低通，最後才微分。
+    // 白話：AI 偶爾把點標錯一兩格，直接微分會變成「瞬間 2–3 m/s」「地面拉著人往下」這種不可能的數字。
+    const cx=cleanSeries(T,X0), cy=cleanSeries(T,Y0), cf=cleanSeries(T,F0), fs=1/(median(T.slice(1).map((t,i)=>t-T[i]).filter(v=>v>0))||1/30);
+    const X=filterSeries(cx.v,6,fs), Y=filterSeries(cy.v,6,fs), Fy=filterSeries(cf.v,6,fs);
+    bm.outl=new Set([...cx.bad,...cy.bad,...cf.bad]);
     const sx=BM.sgCentered(T,X,.25), sy=BM.sgCentered(T,Y,.25), sf=BM.sgCentered(T,Fy,.25);
-    D.forEach((r,i)=>{ r.k2={h:sf.p[i]!=null&&sy.p[i]!=null?sf.p[i]-sy.p[i]:null, vx:sx.v[i], vy:sy.v[i]==null?null:-sy.v[i], F:sy.a[i]==null?null:k*(G-sy.a[i])/G, Fx:sx.a[i]==null?null:k*sx.a[i]/G}; });
+    D.forEach((r,i)=>{ const F=sy.a[i]==null?null:k*(G-sy.a[i])/G; r.k2={h:sf.p[i]!=null&&sy.p[i]!=null?sf.p[i]-sy.p[i]:null, vx:sx.v[i], vy:sy.v[i]==null?null:-sy.v[i], F:F==null?null:Math.max(0,F), Fraw:F, Fx:sx.a[i]==null?null:k*sx.a[i]/G}; });
+    // 地面只能推、不能拉：負值截為 0（2026-11-24 測力板驗證：攝影機算出 −0.36 BW，測力板騰空期為 0）
     bm.kin=true; bm.sc=sc; }
   // ② ISB 3D 關節角（Cardan ZXY，對應 Visual3D 的 Cardan XYZ）
   D.forEach(r=>{ if(!r.p3) return; const a=BM.isbAngles(r.p3); if(!a) return; const pick=x=>x?{hipF:x.hipF,hipA:x.hipA,kneeF:x.kneeF,kneeA:x.kneeA,ankF:x.ankF}:null; r.j={L:pick(a.L),R:pick(a.R)}; bm.isb=true; });
@@ -3560,7 +3587,7 @@ new ResizeObserver(()=>drawChart()).observe($("chart"));
 // rom：AAOS 正常關節活動度（主動/被動量測，非動作中）；err：明顯超出人體可能範圍 → 多半是 AI 點跑錯
 // task：「蹲類動作」最低點的參考區間；src：來源
 const REF={
-  kneeFlex:{n:"膝屈曲",pl:"矢狀面",rom:"0–135°",err:[-15,155],task:{lo:90,hi:125,min:0,max:150,lowTxt:"偏淺（半蹲以上）",highTxt:"很深",okTxt:"標準深蹲"},src:"AAOS；Hoogenboom 2023（深蹲約 123°）"},
+  kneeFlex:{n:"膝屈曲",pl:"矢狀面",rom:"0–135°",err:[-12,155],task:{lo:90,hi:125,min:0,max:150,lowTxt:"偏淺（半蹲以上）",highTxt:"很深",okTxt:"標準深蹲"},src:"AAOS；Hoogenboom 2023（深蹲約 123°）"},
   hipFlex:{n:"髖屈曲",pl:"矢狀面",rom:"0–120°（伸展 20°）",err:[-35,150],task:{lo:70,hi:120,min:0,max:150,lowTxt:"屁股沒往後坐",highTxt:"折很深",okTxt:"標準"},src:"AAOS；Hoogenboom 2023（深蹲約 120°）"},
   ankDF:{n:"踝背屈",pl:"矢狀面",rom:"背屈 20°／蹠屈 50°",err:[-70,55],task:{lo:10,hi:35,min:-10,max:50,lowTxt:"腳踝較緊",highTxt:"很大",okTxt:"標準"},src:"AAOS；Hoogenboom 2023（19±6°）",est:true},
   kneeVal:{n:"膝外翻（內夾）",pl:"冠狀面",rom:"—",err:[-40,45],task:{lo:-5,hi:12,min:-20,max:30,lowTxt:"膝往外開",highTxt:"膝內夾過多",okTxt:"正常對位"},src:"Herrington & Munro 2010（女 7–13°、男 3–8°）",bySex:{F:13,M:9}},
@@ -3738,13 +3765,15 @@ function seriesStat(T,V,isAng){
   return {n,mean,sd,min:V[iMin],tMin:T[iMin],max:V[iMax],tMax:T[iMax],range:V[iMax]-V[iMin],w}; }
 function clipAllStats(clip){
   enrichClip(clip); const D=clip.data, T=D.map(r=>r.t), groups=[];
+  // 有追蹤錯誤（跳點、肢段被拉長、左右對調、超出人體範圍）的格不列入統計
+  const CK=checkClip(clip), badF=CK.flags.map(fl=>[...fl].some(x=>!/地面反作用力/.test(x))), nBad=badF.filter(Boolean).length;
   for(const o of SERIES){ const isAng=o.u==="°"; if(ANGLES.some(x=>x.k===o.k)) continue; // 單側重複項（左右合併列已涵蓋）
     const rows=o.pair?[["左",o.pair[0]],["右",o.pair[1]]]:[["",o.get]];
-    const out=rows.map(([sd,f])=>{ const st=seriesStat(T,D.map(r=>{ try{ const v=f(r); return v==null?null:+v; }catch(e){ return null; } }),isAng); return st?{side:sd,...st}:null; }).filter(Boolean);
+    const out=rows.map(([sd,f])=>{ const st=seriesStat(T,D.map((r,i)=>{ if(badF[i]) return null; try{ const v=f(r); return v==null?null:+v; }catch(e){ return null; } }),isAng); return st?{side:sd,...st}:null; }).filter(Boolean);
     if(!out.length||out.every(r=>r.range===0&&r.mean===0)) continue;
     let g=groups.find(x=>x.n===o.grp); if(!g) groups.push(g={n:o.grp,items:[]});
     g.items.push({k:o.k,n:o.n.replace(/（左右一起・([^）]*)）/,"（$1）").replace(/（左右一起）/,""),u:o.u,d:o.d??(o.u==="°"?1:2),isAng,rows:out}); }
-  return {groups,bio:clipBiomech(clip)}; }
+  return {groups,bio:clipBiomech(clip),nBad,nAll:D.length}; }
 function clipBiomech(clip){
   enrichClip(clip); const K=r=>r.k2||r;
   const D=clip.data, m=clip.mass||bodyM(), T=D.map(r=>r.t), H=D.map(r=>K(r).h), VX=D.map(r=>K(r).vx), VY=D.map(r=>K(r).vy), F=D.map(r=>K(r).F);
@@ -3755,29 +3784,50 @@ function clipBiomech(clip){
   const pk=key=>{ const v=D.map(r=>r.M?.[key]).filter(x=>x!=null&&isFinite(x)); return v.length?Math.max(...v):null; };
   const mom={}; for(const j of ["ank","knee","hip"]) for(const s of ["L","R"]) mom[j+s]=pk(j+s);
   const idN=D.filter(r=>r.M).length;
-  // 騰空：估計地面反作用力 < 0.15 BW 持續 ≥ 0.08 s
-  let flights=[], s0=null; D.forEach((r,i)=>{ const f=K(r).F, air=f!=null&&f<.15; if(air&&s0==null) s0=i; if((!air||i===D.length-1)&&s0!=null){ const t0=T[s0], t1=T[air?i:i-1]; if(t1-t0>=.08) flights.push(t1-t0); s0=null; } });
+  // 騰空：估計地面反作用力 < 0.3 BW 持續 ≥ 0.08 s（兩次微分＋濾波會把騰空期「削短」，門檻放寬）
+  let flights=[], fl=[], s0=null; D.forEach((r,i)=>{ const f=K(r).F, air=f!=null&&f<.3; if(air&&s0==null) s0=i; if((!air||i===D.length-1)&&s0!=null){ const e=air?i:i-1; if(T[e]-T[s0]>=.08){ flights.push(T[e]-T[s0]); fl.push([s0,e]); } s0=null; } });
   const ft=flights.length?Math.max(...flights):null;
-  const vMax=ok(VX).concat(ok(VY)); const spd=D.map(r=>r.vx!=null&&r.vy!=null?Math.hypot(r.vx,r.vy):null), ss=st(spd);
-  return {m,hs,vxs,vys,fs,ps,ss,fxs,wls,mom,idN,idPct:D.length?idN/D.length*100:0,load:clip.load||0,disp:hs?hs.range:null,ft,jump:ft?G0*ft*ft/8:null,nFlight:flights.length}; }
+  // 跳躍高度以「起跳速度法」為主：h = v²／2g。2026-11-24 與測力板比對：攝影機起跳速度 2.90 vs 2.98 m/s（−3%），
+  // 但騰空時間 0.45 vs 0.59 s（−24%），所以騰空時間只當交叉檢查。
+  const jumps=fl.map(([a,b])=>{ let v=null; for(let i=a;i>=0&&T[a]-T[i]<=.35;i--){ const vy=K(D[i]).vy; if(vy!=null&&(v==null||vy>v)) v=vy; }
+    let pushF=null; for(let i=a;i>=0&&T[a]-T[i]<=.6;i--){ const f=K(D[i]).F; if(f!=null&&(pushF==null||f>pushF)) pushF=f; }
+    let landF=null; for(let i=b;i<D.length&&T[i]-T[b]<=.4;i++){ const f=K(D[i]).F; if(f!=null&&(landF==null||f>landF)) landF=f; }
+    return {v,hv:v!=null&&v>0?v*v/(2*G0):null,ft:T[b]-T[a],ht:G0*(T[b]-T[a])**2/8,pushF,landF}; });
+  const best=jumps.filter(j=>j.hv!=null).sort((x,y)=>y.hv-x.hv)[0]||null;
+  const pushPk=jumps.length?Math.max(...jumps.map(j=>j.pushF??0)):null, landPk=jumps.length?Math.max(...jumps.map(j=>j.landF??0)):null;
+  const vMax=ok(VX).concat(ok(VY)); const spd=D.map(r=>K(r).vx!=null&&K(r).vy!=null?Math.hypot(K(r).vx,K(r).vy):null), ss=st(spd);
+  // 物理一致性檢查（第 27 則的精神）：數字彼此要對得上
+  const Hm=clip.height||bodyH(), chk=[], jump=best?.hv??(ft?G0*ft*ft/8:null);
+  if(hs&&Hm){ const hi=.62*Hm+(jump||0)+.08; if(hs.max>hi) chk.push(`重心最高 ${fmtN(hs.max,2)} m 超過身高 ${Math.round(Hm*100)} cm 的合理範圍（站立約 ${fmtN(.55*Hm,2)} m）：請確認身高設定正確、全身（含腳）都在畫面內。`); }
+  { const neg=D.map(r=>r.k2?.Fraw).filter(v=>v!=null&&v<-.05); if(neg.length) chk.push(`原始計算的地面反作用力有 ${neg.length} 格是負值（最低 ${fmtN(Math.min(...neg),2)} BW）：地面不可能把人往下拉，已截為 0。多半出現在騰空與落地附近。`); }
+  if(best&&best.ht!=null&&Math.abs(best.hv-best.ht)>.05) chk.push(`跳躍高度：起跳速度法 ${fmtN(best.hv*100,1)} cm、騰空時間法 ${fmtN(best.ht*100,1)} cm，相差超過 5 cm。和測力板比對過，攝影機的起跳速度較準（誤差約 3%），騰空時間常被算短，所以以起跳速度法為準。`);
+  if(!fl.length&&vys&&vys.max>1.8) chk.push(`沒有偵測到騰空，但最大上升速度 ${fmtN(vys.max,2)} m/s 已是跳躍的速度（一般深蹲起身約 0.4–1.2 m/s）：若有跳，騰空可能沒被偵測到；若沒跳，可能有追蹤錯誤。`);
+  if(ps&&ps.max/m>45&&!(jump&&jump>.35)) chk.push(`功率 ${fmtN(ps.max/m,1)} W/kg 接近菁英跳躍選手的水準，和這段的跳躍高度不相符，請保守解讀。`);
+  { const mk=Object.entries(mom).filter(([,v])=>v!=null).map(([k,v])=>[k,v/m]); const big=mk.filter(([,v])=>v>4), neg=mk.filter(([k,v])=>/knee/.test(k)&&v<.3);
+    if(idN&&(big.length||neg.length)) chk.push(`關節力矩數值不合理（${big.length?"有關節超過 4 N·m/kg，一般跳躍約 1–3":""}${big.length&&neg.length?"；":""}${neg.length?"膝伸展力矩接近 0 或負值":""}）：只有 ${fmtN(idN/D.length*100,0)}% 的畫面是側拍可算的，請改成正側面拍攝再看力矩。`); }
+  if(fl.length) chk.push(`落地衝擊力攝影機會明顯低估（和測力板比對：落地峰值約低估 40% 以上，因為衝擊只有幾十毫秒，影像算不到）；只看推蹬期的力即可。`);
+  const outl=enrichClip(clip).outl?.size||0, walk=enrichClip(clip).walk||0;
+  return {m,Hm,hs,vxs,vys,fs,ps,ss,fxs,wls,mom,idN,idPct:D.length?idN/D.length*100:0,load:clip.load||0,disp:hs?hs.range:null,ft,jump,nFlight:flights.length,jumps,best,pushPk,landPk,chk,outl,walk,nAll:D.length}; }
 const fmtN=(v,d)=>{ if(v==null||!isFinite(v)) return "—"; const t=(+v).toFixed(d); return /^-0(\.0+)?$/.test(t)?t.slice(1):t; };
 function bioHTML(b,compact){ if(!b) return '<div class="small">這段錄影沒有足夠的重心資料。</div>';
   const kv=(n,v,note)=>`<tr><td>${n}</td><td class="v">${v}</td>${compact?"":`<td class="nt">${note||""}</td>`}</tr>`;
-  return `<table class="bio">
+  const head=`<div class="biochk ${b.chk.length?"warn":"ok"}"><b>${b.chk.length?`資料可信度：有 ${b.chk.length} 項需要注意`:"資料可信度：數字彼此一致"}</b><div class="small">以身高 ${Math.round((b.Hm||0)*100)} cm、體重 ${fmtN(b.m,0)} kg 換算${b.outl?`；已排除 ${b.outl} 格重心跳點`:""}${b.walk?`；已排除 ${b.walk} 格走動中的畫面（人和鏡頭距離改變）`:""}。身高、體重設錯，速度、力和功率都會跟著錯。</div>${b.chk.map(x=>`<div class="ck">${esc(x)}</div>`).join("")}</div>`;
+  return head+`<table class="bio">
   ${kv("重心最高／最低",`${fmtN(b.hs?.max,2)}／${fmtN(b.hs?.min,2)} m`,"離地高度")}
   ${kv("重心垂直位移",`${fmtN(b.disp,2)} m`,"最高－最低")}
   ${kv("重心最大上升速度",`${fmtN(b.vys?.max,2)} m/s`,`${fmtN(b.vys?.tMax,1)} s`)}
   ${kv("重心最大下降速度",`${fmtN(b.vys?-b.vys.min:null,2)} m/s`,`${fmtN(b.vys?.tMin,1)} s`)}
   ${kv("重心最大水平速度",`${fmtN(b.vxs?Math.max(Math.abs(b.vxs.max),Math.abs(b.vxs.min)):null,2)} m/s`,"")}
   ${kv("重心最大合速度",`${fmtN(b.ss?.max,2)} m/s`,"")}
-  ${kv("垂直地面反作用力 峰值",`${fmtN(b.fs?.max,2)} BW（${fmtN(b.fs?b.fs.max*b.m*G0:null,0)} N）`,`${fmtN(b.fs?.tMax,1)} s`)}
-  ${kv("垂直地面反作用力 最低",`${fmtN(b.fs?.min,2)} BW`,"")}
+  ${b.pushPk!=null?kv("垂直地面反作用力 推蹬期峰值",`${fmtN(b.pushPk,2)} BW（${fmtN(b.pushPk*b.m*G0,0)} N）`,"起跳前 0.6 秒內")+kv("垂直地面反作用力 落地峰值",`${fmtN(b.landPk,2)} BW ⚠`,"攝影機會低估，僅供參考"):kv("垂直地面反作用力 峰值",`${fmtN(b.fs?.max,2)} BW（${fmtN(b.fs?b.fs.max*b.m*G0:null,0)} N）`,`${fmtN(b.fs?.tMax,1)} s`)}
+  ${kv("垂直地面反作用力 最低",`${fmtN(b.fs?Math.max(0,b.fs.min):null,2)} BW`,b.nFlight?"騰空時為 0":"")}
   ${kv("向上功率 峰值",`${fmtN(b.ps?.max,0)} W（${fmtN(b.ps?b.ps.max/b.m:null,1)} W/kg）`,"F × 垂直速度")}
   ${kv("水平地面反作用力 最大",`${fmtN(b.fxs?Math.max(Math.abs(b.fxs.max),Math.abs(b.fxs.min)):null,2)} BW`,"畫面左右方向")}
   ${kv("左腳承重 平均",b.wls?`${fmtN(b.wls.mean,0)}%`:"—",b.wls?`範圍 ${fmtN(b.wls.min,0)}～${fmtN(b.wls.max,0)}%；雙腳站立、正面拍時才準`:"")}
   ${["knee","hip","ank"].map(j=>kv(({knee:"膝伸展",hip:"髖伸展",ank:"踝蹠屈"})[j]+"力矩峰值 左／右（N·m/kg）",b.idN?`${fmtN(b.mom[j+"L"]!=null?b.mom[j+"L"]/b.m:null,2)}／${fmtN(b.mom[j+"R"]!=null?b.mom[j+"R"]/b.m:null,2)}`:"—",b.idN?`${fmtN(b.idPct,0)}% 畫面可算（側拍）`:"需要側拍")).join("")}
-  ${kv("騰空時間",b.ft?`${fmtN(b.ft,2)} s（${b.nFlight} 次）`:"未偵測到騰空","")}
-  ${kv("跳躍高度（騰空時間法）",b.jump?`${fmtN(b.jump*100,1)} cm`:"—","h = g·t²／8")}
+  ${kv("跳躍高度（起跳速度法）",b.best?`${fmtN(b.best.hv*100,1)} cm`:"—",b.best?`起跳速度 ${fmtN(b.best.v,2)} m/s；h = v²／2g（主要）`:"")}
+  ${kv("跳躍高度（騰空時間法）",b.best?`${fmtN(b.best.ht*100,1)} cm`:b.ft?`${fmtN(G0*b.ft*b.ft/8*100,1)} cm`:"—","h = g·t²／8（交叉檢查，攝影機常算短）")}
+  ${kv("騰空時間",b.nFlight?`偵測 ${fmtN(b.ft,2)} s／依起跳速度 ${b.best?fmtN(2*b.best.v/G0,2):"—"} s（${b.nFlight} 次）`:"未偵測到騰空","")}
   </table><div class="small">${b.load?`已納入外加負重 ${b.load} kg。`:""}地面反作用力、關節力矩都是從影像推算（純攝影機模式），不是量到的；關節力矩是「淨力矩」，不等於某一條肌肉的出力。</div>`; }
 function allStatsHTML(S,opt={}){ const {compact,link}=opt;
   return S.groups.map(g=>`<div class="ash">${esc(g.n)}</div><table class="ast"><tr><th>項目</th><th></th><th>平均±SD</th><th>最小（秒）</th><th>最大（秒）</th><th>範圍</th>${g.items.some(i=>i.isAng)?"<th>峰值角速度</th>":""}</tr>`+
@@ -3785,7 +3835,7 @@ function allStatsHTML(S,opt={}){ const {compact,link}=opt;
 function renderAllStats(){ const box=$("allStats"); if(!box) return;
   if(!curClip?.data?.length){ box.innerHTML='<div class="small">錄影後這裡會列出整段的所有數據。</div>'; return; }
   const S=clipAllStats(curClip);
-  box.innerHTML=`<div class="ash">重心與生物力學（估計）</div>${bioHTML(S.bio,true)}${allStatsHTML(S,{compact:true,link:true})}<div class="small" style="margin-top:6px">點任一列可在下方看它的曲線。時間（秒）為該值出現的時刻；角速度用 Savitzky–Golay（0.2 秒視窗）計算。</div>`;
+  box.innerHTML=`<div class="ash">重心與生物力學（估計）</div>${bioHTML(S.bio,true)}${S.nBad?`<div class="small" style="margin:6px 0">角度統計已排除 ${S.nBad} 格追蹤錯誤的畫面（共 ${S.nAll} 格）。</div>`:""}${allStatsHTML(S,{compact:true,link:true})}<div class="small" style="margin-top:6px">點任一列可在下方看它的曲線。時間（秒）為該值出現的時刻；角速度用 Savitzky–Golay（0.2 秒視窗）計算。</div>`;
   box.querySelectorAll("tr[data-k]").forEach(tr=>tr.onclick=()=>{ $("series").value=tr.dataset.k; $("series").dispatchEvent(new Event("change")); }); }
 
 function openReport(){
