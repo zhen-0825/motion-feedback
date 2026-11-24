@@ -375,6 +375,14 @@ body:not([data-page=settings]) .setHead{display:none}
 /* 畫面內動作判讀標題 */
 .stage .dcap{position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);background:rgba(16,21,30,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;border:none;z-index:2;font-size:15px;min-height:0;padding:7px 12px}
 .stage .dcap b{font-weight:700}
+.dcap.coach{display:block;white-space:normal;padding:8px 12px;min-width:min(300px,calc(100% - 24px))}
+.dcap.coach .cr,.coachp .cr{display:flex;align-items:center;gap:8px;line-height:1.35;padding:2px 0}
+.cr i{flex:none;width:9px;height:9px;border-radius:50%;background:#8E8E93}.cr.cg i{background:#34C759}.cr.cw i{background:#FF9500}.cr.cb i{background:#FF3B30}
+.cr .cl{flex:none;font-size:.8em;opacity:.75;width:2.6em}.cr .ct{font-weight:600}
+.dcap.coach .cr.cb .ct{color:#FFB3B0}.dcap.coach .cr.cw .ct{color:#FFD08A}
+.dwarn .coachp,.dwarn .coachp div{border:0!important;padding-left:0!important;margin-left:0!important;color:var(--ink,#1C1C1E)!important;background:none!important}
+.dwarn .coachp .cr.cb .ct{color:#D70015!important}.dwarn .coachp .cr.cw .ct{color:#B25E00!important}.dwarn .coachp .cl{color:#8E8E93!important}
+.coachp{background:#fff;border-radius:12px;padding:8px 12px;margin:4px 0}.coachp .cr.cb .ct{color:#D70015}.coachp .cr.cw .ct{color:#B25E00}
 .dcap .w{margin-left:12px;padding-left:12px;border-left:2px solid #FF8A9C;color:#FFB3C0;font-weight:600}
 /* 動作判讀面板 */
 .dhead{font-size:21px;font-weight:700;letter-spacing:.01em}
@@ -595,6 +603,9 @@ table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{
 .txt{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;letter-spacing:.12em}
 .mmtoast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#1B2230;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:9999;max-width:90vw}
 .mmtoast.on{opacity:1;transform:translate(-50%,0)}
+.mmnote{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:10000;padding:20px}
+.mmnote.on{display:flex}.mmn-b{background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-radius:16px;padding:18px 18px 14px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);color:#1C1C1E}
+.mmn-t{display:block;font-size:17px;margin-bottom:6px}.mmn-x{font-size:14.5px;line-height:1.55;white-space:pre-line;color:#3A3A3C;margin-bottom:12px}.mmn-ok{width:100%;min-height:44px;font-weight:700}
 .lmodal{position:fixed;inset:0;background:rgba(16,21,30,.55);display:grid;place-items:center;z-index:9000;padding:16px}
 .lmodal[hidden]{display:none}
 .lbox{position:relative;background:#fff;border-radius:14px;padding:22px 22px 18px;width:min(420px,100%);max-height:92vh;overflow:auto;text-align:center}
@@ -954,7 +965,8 @@ body.refview #btnHome,body.refview #tgLeft,body.refview #status,body.refview #fp
           </select>
           <div style="margin-top:8px">
             <button class="pbtn mint" id="tgHands">✋ 手指追蹤：開</button>
-            <button class="pbtn mint" id="tgAngles">🔢 角度數字：開</button>
+            <button class="pbtn mint" id="tgLiveAng">即時畫面角度數字：關</button>
+            <button class="pbtn mint" id="tgAngles">🔢 回顧畫面角度數字：開</button>
             <button class="pbtn mint" id="tgCom">⭐ 重心：開</button>
             <button class="pbtn mint" id="tgFace">🙂 臉部點：關</button>
           </div>
@@ -968,6 +980,7 @@ body.refview #btnHome,body.refview #tgLeft,body.refview #status,body.refview #fp
           <label class="f">解剖模型（由內而外：脊柱 → 骨骼 → 肌肉）</label>
           <div>
             <button class="pbtn" id="tgSpine">脊柱：開</button>
+            <button class="pbtn" id="tgSternum">胸骨：開</button>
             <button class="pbtn" id="tgBone2d">影像疊加骨骼：關</button>
             <button class="pbtn" id="tgMus2d">影像疊加肌肉：關</button>
             <div class="small">3D 視窗的骨骼、肌肉在視窗下方切換。脊柱、肋骨、骨盆與肌肉為依學員軀幹方向與身高比例套用的解剖模板，用於教學示意，形狀不是量測值。</div>
@@ -1520,7 +1533,7 @@ function hostOf(u){ try{ return new URL(u).host||"同資料夾"; }catch(e){ retu
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
 
 /* ===================== 設定 ===================== */
-const settings=Object.assign({camQ:"720",preferExt:true,people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45,load:0,loadAt:"back"},store.get("settings",{}));
+const settings=Object.assign({camQ:"720",preferExt:true,people:2,model:isMobile?"lite":"full",angleMode:"2d",segModel:"dempster",showAngles:true,showCom:true,showFace:false,hands:!isMobile,fill:true,euro:true,vm:false,vmLabel:false,calib:null,scan:null,speak:false,audio:"off",sex:"",view3d:true,anatSpine:true,anatSternum:true,liveAngles:false,bone3d:true,muscle3d:false,bone2d:false,muscle2d:false,camId:"",name:"",height:150,weight:45,load:0,loadAt:"back"},store.get("settings",{}));
 const saveSettings=()=>store.set("settings",settings);
 const bodyH=()=>Math.max(.5,(Number(settings.height)||150)/100);
 const bodyM=()=>Math.max(5,Number(settings.weight)||45);
@@ -1758,6 +1771,7 @@ function star(ctx,x,y,R){ // 重心：準星
   ctx.strokeStyle=COLORS.com; ctx.lineWidth=Math.max(1.2,R*.11); ctx.beginPath(); ctx.arc(x,y,R*.62,0,Math.PI*2); ctx.moveTo(x-R,y); ctx.lineTo(x-R*.3,y); ctx.moveTo(x+R*.3,y); ctx.lineTo(x+R,y); ctx.moveTo(x,y-R); ctx.lineTo(x,y-R*.3); ctx.moveTo(x,y+R*.3); ctx.lineTo(x,y+R); ctx.stroke();
   ctx.fillStyle=COLORS.com; ctx.beginPath(); ctx.arc(x,y,R*.12,0,Math.PI*2); ctx.fill(); ctx.restore();
 }
+let liveNoAng=false; // 即時畫面不顯示角度數字（只顯示安全／動作／表現提示）
 function drawPose(ctx,lms,W,H,mirror,M,hands){
   if(!lms) return;
   const X=l=>(mirror?1-l.x:l.x)*W, Y=l=>l.y*H;
@@ -1783,7 +1797,7 @@ function drawPose(ctx,lms,W,H,mirror,M,hands){
   if(!settings.showFace){ const n=lms[0],e1=lms[7],e2=lms[8]; if((n.visibility??1)>.4){ const rr=Math.max(lw*2.2,Math.hypot((e1.x-e2.x)*W,(e1.y-e2.y)*H)*.7); ctx.strokeStyle="rgba(16,21,30,.5)"; ctx.lineWidth=lw*1.6; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); ctx.strokeStyle=COLORS.C; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(X(n),Y(n),rr,0,Math.PI*2); ctx.stroke(); } }
   if(M){
     const fs=Math.max(13,Math.min(W,H)/34);
-    if(settings.showAngles) for(const d of ANGLES){
+    if(settings.showAngles&&!liveNoAng) for(const d of ANGLES){
       const v=M.angles[d.k]; if(v==null) continue;
       const l=lms[d.b], side=d.k.endsWith("L")?"L":"R", off=(side==="L")!==mirror?fs*1.6:-fs*1.6;
       pill(ctx,Math.round(v)+"°",X(l)+off,Y(l),fs,"",COLORS[side]);
@@ -1795,7 +1809,7 @@ function drawPose(ctx,lms,W,H,mirror,M,hands){
         pill(ctx,lab,x+(mirror?-1:1)*fs*3,y,fs*.7,"rgba(255,255,255,.75)","#7A6A93");
       }
     }
-    if(settings.showAngles&&M.sideView&&M.neckT!=null){
+    if(settings.showAngles&&!liveNoAng&&M.sideView&&M.neckT!=null){
       const o=(lms[7].visibility??1)>=(lms[8].visibility??1)?0:1, e=lms[7+o], sh=lms[11+o];
       ctx.save(); ctx.setLineDash([lw,lw]); ctx.strokeStyle="#C9B6FF"; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.moveTo(X(sh),Y(sh)); ctx.lineTo(X(e),Y(e)); ctx.stroke(); ctx.restore();
       pill(ctx,`頭頸 ${Math.round(M.neckT)}°`,X(e),Y(e)-fs*1.6,fs*.85,"rgba(255,255,255,.88)","#7A5AE0");
@@ -1822,7 +1836,7 @@ function drawHands(ctx,hands,W,H,mirror){
     for(const [a,b] of HAND_CONN){ ctx.strokeStyle="rgba(16,21,30,.6)"; ctx.lineWidth=lw*2.1; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
     for(const [a,b] of HAND_CONN){ ctx.strokeStyle=COLORS[side]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(X(L[a]),Y(L[a])); ctx.lineTo(X(L[b]),Y(L[b])); ctx.stroke(); }
     L.forEach((p,i)=>{ const tip=i%4===0&&i>0; ctx.fillStyle=tip?"#fff":COLORS[side]; ctx.strokeStyle=tip?COLORS[side]:"#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(X(p),Y(p),tip?lw*1.25:lw*.95,0,Math.PI*2); ctx.fill(); ctx.stroke(); });
-    if(h.grip!=null && settings.showAngles){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`握 ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"",COLORS[side]); }
+    if(h.grip!=null && settings.showAngles && !liveNoAng){ const fs=Math.max(12,Math.min(W,H)/36); pill(ctx,`握 ${Math.round(h.grip)}%`,X(L[0]),Y(L[0])+fs*1.6,fs,"",COLORS[side]); }
   }
   ctx.restore();
 }
@@ -2000,7 +2014,7 @@ function startCalib(){
     setTimeout(()=>{ cd.textContent=""; finishCalib(); },3000); },1000);
 }
 function finishCalib(){
-  const run=calibRun; calibRun=null; if(!run||run.frames.length<10) return alert("偵測到的畫面太少，請確認全身入鏡後再試一次。");
+  const run=calibRun; calibRun=null; if(!run||run.frames.length<10) return notice("偵測到的畫面太少：請確認全身（頭到腳）都在畫面裡、光線足夠，再試一次。","靜態校正沒有完成");
   const ratios={}, tpl={}, len3d={};
   const Ts=run.frames.map(f=>Math.hypot((f.P[11].x+f.P[12].x)/2-(f.P[23].x+f.P[24].x)/2,(f.P[11].y+f.P[12].y)/2-(f.P[23].y+f.P[24].y)/2));
   for(const [a,b] of SEG_PAIRS){ const r=run.frames.map((f,i)=>f.P[a].ok&&f.P[b].ok?dist2(f.P[a],f.P[b])/Ts[i]:null).filter(v=>v!=null); if(r.length>=5) ratios[a+"-"+b]=median(r); }
@@ -2014,7 +2028,7 @@ function finishCalib(){
   // 骨長抖動：主要肢段長度（÷軀幹長）的變異係數
   const cvs=[]; for(const [a,b] of [[11,13],[12,14],[23,25],[24,26],[25,27],[26,28]]){ const r=run.frames.map((f,i)=>f.P[a].ok&&f.P[b].ok?dist2(f.P[a],f.P[b])/Ts[i]:null).filter(v=>v!=null); if(r.length>=10){ const m=r.reduce((x,y)=>x+y)/r.length; cvs.push(Math.sqrt(r.reduce((s,v)=>s+(v-m)**2,0)/(r.length-1))/m*100); } }
   settings.calib={name:settings.name||"",date:new Date().toISOString(),frames:run.frames.length,ratios,tpl,len3d,noise,lenCV:cvs.length?median(cvs):null}; saveSettings(); engine.reset(); renderCalib();
-  alert(`靜態校正完成：${run.frames.length} 格、${Object.keys(ratios).length} 個肢段、${Object.keys(tpl).length} 個叢集模板。`);
+  notice(`${run.frames.length} 格、${Object.keys(ratios).length} 個肢段、${Object.keys(tpl).length} 個叢集模板。可以繼續做轉身掃描，或直接開始分析。`,"靜態校正完成");
 }
 function renderCalib(){
   const c=settings.calib;
@@ -2441,7 +2455,7 @@ function totalRes(F,th){ const {res}=fitTemplate(F,th); let s=0,n=0; for(const r
 function finishScan(){
   document.body.classList.remove("scanning");
   const run=scanRun; scanRun=null;
-  if(!run||run.frames.length<60) return alert("掃描時偵測到的畫面太少，請確認全身入鏡、光線充足後再試一次。");
+  if(!run||run.frames.length<60) return notice("掃描時偵測到的畫面太少：請確認全身入鏡、光線充足後再試一次。","轉身掃描沒有完成");
   const Hm=bodyH();
   // 尺度：肩中點到踝中點的垂直距離不會因轉身改變 ≈ (0.818−0.039)·身高（Drillis & Contini）
   const sArr=run.frames.map(f=>Math.abs((f.P[27].y+f.P[28].y)/2-(f.P[11].y+f.P[12].y)/2)/(.779*Hm)).filter(v=>v>0);
@@ -2470,7 +2484,7 @@ function finishScan(){
   settings.scan={name:settings.name||"",date:new Date().toISOString(),H:Hm,frames:F.length,cover:Math.round(cover),rms:Math.sqrt(rs/rn),pts:pts.map(p=>p&&p.map(v=>+v.toFixed(4))),bones};
   saveSettings(); lifter.reset(); renderScan(); view3d.src="scan";
   const warn=cover<270?`\n⚠️ 只轉了約 ${Math.round(cover)}°，建議重做並轉滿一圈。`:"";
-  alert(`轉身掃描完成：${F.length} 格、轉了約 ${Math.round(cover)}°、重投影誤差 ${(settings.scan.rms*100).toFixed(1)} cm。${warn}`);
+  notice(`${F.length} 格、轉了約 ${Math.round(cover)}°、重投影誤差 ${(settings.scan.rms*100).toFixed(1)} cm。${warn}`,"轉身掃描完成");
 }
 function renderScan(){
   const c=settings.scan, el=$("scanTable");
@@ -2505,14 +2519,14 @@ function draw3D(){
   if(!P){ ctx.fillStyle="#8D99AB"; ctx.font=`500 ${14*dpr}px "Noto Sans TC",sans-serif`; ctx.textAlign="center"; ctx.fillText(liveOn?"等待偵測到完整身體":"開啟鏡頭後顯示即時 3D 骨架",W/2,H/2); return; }
   // 重心投影（地面）
   const lw0=Math.max(2.5*dpr,H/150), anOn=settings.bone3d||settings.muscle3d, lw=anOn?lw0*.55:lw0;
-  if(anOn||settings.anatSpine) drawAnat(ctx,anatBuild(P,view3d.src==="live"?handsToLift(liveHands,liveRes,liveLift,liveCanvas.width,liveCanvas.height):null),p=>proj(p.x,p.y,p.z),sc,{bone:settings.bone3d,muscle:settings.muscle3d,spine:settings.anatSpine,lw:lw0,dpr,label:settings.anatSpine});
+  if(anOn||settings.anatSpine||settings.anatSternum) drawAnat(ctx,anatBuild(P,view3d.src==="live"?handsToLift(liveHands,liveRes,liveLift,liveCanvas.width,liveCanvas.height):null),p=>proj(p.x,p.y,p.z),sc,{bone:settings.bone3d,muscle:settings.muscle3d,spine:settings.anatSpine,sternum:settings.anatSternum,lw:lw0,dpr,label:settings.anatSpine});
   const segs=CONN.filter(([a,b])=>!(a<11&&b<11)||settings.showFace).map(([a,b,s])=>{ const A=P[a],B=P[b]; if(!A||!B||(A.visibility??1)<.35||(B.visibility??1)<.35) return null; const pa=proj(A.x,A.y,A.z), pb=proj(B.x,B.y,B.z); return {pa,pb,s,z:(pa[2]+pb[2])/2}; }).filter(Boolean).sort((p,q)=>q.z-p.z);
   ctx.lineCap="round";
   for(const g of segs){ const ts=settings.anatSpine&&g.s!=="C"&&false; ctx.strokeStyle="rgba(0,0,0,.45)"; ctx.lineWidth=lw*2; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); ctx.strokeStyle=COLORS[g.s]; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(g.pa[0],g.pa[1]); ctx.lineTo(g.pb[0],g.pb[1]); ctx.stroke(); }
   for(let i=11;i<33;i++){ const p=P[i]; if(!p||(p.visibility??1)<.35||(i>=17&&i<=22)) continue; const q=proj(p.x,p.y,p.z); ctx.fillStyle=COLORS[i%2?"L":"R"]; ctx.strokeStyle="#fff"; ctx.lineWidth=Math.max(1.2,lw*.4); ctx.beginPath(); ctx.arc(q[0],q[1],lw*1.05,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
   if(!settings.bone3d){ const n=P[0], e1=P[7], e2=P[8]; if(n&&(n.visibility??1)>.4){ const q=proj(n.x,n.y,n.z), rr=Math.max(lw*2.5,Math.hypot(e1.x-e2.x,e1.y-e2.y,(e1.z||0)-(e2.z||0))*sc*.7); ctx.strokeStyle="#C9D2DE"; ctx.lineWidth=lw*.7; ctx.beginPath(); ctx.arc(q[0],q[1],rr,0,Math.PI*2); ctx.stroke(); } }
   // 主要關節角度（雙平面）
-  if(livePl&&view3d.src==="live"){ const fs=Math.max(12*dpr,H/36);
+  if(livePl&&view3d.src==="live"&&settings.liveAngles){ const fs=Math.max(12*dpr,H/36);
     for(const [s,o] of [["L",0],["R",1]]){ const r=livePl[s]; const k=P[25+o], h=P[23+o];
       if(k&&r.kneeFlex!=null){ const q=proj(k.x,k.y,k.z); pill(ctx,Math.round(r.kneeFlex)+"°",q[0]+(s==="L"?1:-1)*mir*fs*1.8,q[1],fs,"",COLORS[s]); }
       if(h&&r.hipFlex!=null){ const q=proj(h.x,h.y,h.z); pill(ctx,Math.round(r.hipFlex)+"°",q[0]+(s==="L"?1:-1)*mir*fs*1.8,q[1],fs,"",COLORS[s]); } } }
@@ -2668,12 +2682,61 @@ class Describer{
     for(const [nm,v,kk] of [["左膝屈曲",kL,"kneeFlex"],["右膝屈曲",kR,"kneeFlex"],["左髖屈曲",hL,"hipFlex"],["右髖屈曲",hR,"hipFlex"],["左膝外翻",vL,"kneeVal"],["右膝外翻",vR,"kneeVal"],["左肘屈曲",eL,"elbFlex"],["右肘屈曲",eR,"elbFlex"],["軀幹前傾",tf,"trunkFlex"]]){ const e=REF[kk]?.err; if(e&&v!=null&&(v<e[0]||v>e[1])){ warn.push(`疑似追蹤錯誤：${nm} ${r(v)}° 超出生理範圍`); break; } }
     const head=`${pose}${phase?"｜"+phase:""}`;
     if(head!==this.lastHead){ this.lastHead=head; this.headSince=t; }
-    return {head,pose,phase,items,warn,stable:t-this.headSince,reliable:froOK?"冠狀面：量測｜矢狀面：推算*":sagOK?"矢狀面：量測｜冠狀面：推算*":"斜向：兩平面皆含推算*"};
+    return {head,pose,phase,items,warn,v:{kL,kR,hL,hR,vL,vR,tf,tl,k,vK:this.vK},stable:t-this.headSince,reliable:froOK?"冠狀面：量測｜矢狀面：推算*":sagOK?"矢狀面：量測｜冠狀面：推算*":"斜向：兩平面皆含推算*"};
   }
 }
 const describer=new Describer(); let liveDesc=null;
+/* ===================== 即時教練提示：只說「安不安全、對不對、怎麼更好」，不顯示角度數字 =====================
+   安全：膝外翻、軀幹側彎、負重下軀幹過度前傾（參考區間見 REF）
+   動作：深度是否到位、左右是否平均、目前該做什麼
+   表現：每一下起身的最快速度（重心往上的速度），和這組最快的一下比較；
+         速度下降 ≥20% 代表接近疲勞（Pareja-Blanco et al. 2017 速度損失 20% 與 40% 的比較），建議結束這組。 */
+const perf={reps:[],cur:0,lastRep:0,lastT:0};
+function coachTick(d,t){
+  if(fb.reps<perf.lastRep||(perf.lastT&&t-perf.lastT>20)){ perf.reps=[]; perf.cur=0; }
+  if(d&&d.phase==="向心期"){ const vy=-(kin.v?.y??0); if(isFinite(vy)&&vy>perf.cur) perf.cur=vy; }
+  if(fb.reps>perf.lastRep){ if(perf.cur>.05) perf.reps.push(perf.cur); perf.cur=0; perf.lastT=t; }
+  perf.lastRep=fb.reps; if(d&&d.v.k!=null&&d.v.k>20) perf.lastT=t;
+}
+function coachOf(d){
+  if(!d) return null;
+  const v=d.v, sq=/蹲|弓箭步|單腳/.test(d.pose), lo=REF.kneeFlex.task.lo, th=valgTh(), load=loadFrac()>0;
+  const track=d.warn.some(w=>w.startsWith("疑似追蹤錯誤"));
+  let safe, form, perfL;
+  // 安全
+  const vMax=Math.max(v.vL??-99,v.vR??-99);
+  if(track) safe=["n","看不清楚：請讓全身入鏡、光線充足"];
+  else if(sq&&vMax>th) safe=["b",`${(v.vL??-99)>(v.vR??-99)?"左":"右"}膝往內倒：膝蓋對準腳尖方向`];
+  else if(sq&&v.tl!=null&&Math.abs(v.tl)>REF.trunkLat.task.hi) safe=["w","身體歪一邊：重心放回兩腳中間"];
+  else if(load&&v.k!=null&&v.k>=DESC_TH.mild&&v.tf!=null&&v.tf>REF.trunkFlex.task.hi) safe=["w","有負重時上身太前傾：胸口抬高、背打直"];
+  else safe=["g","安全"];
+  // 動作
+  if(track) form=["n","—"];
+  else if(!sq) form=["n",fb.reps?"站穩，準備下一下":"站穩，準備好就開始"];
+  else if(v.kL!=null&&v.kR!=null&&!/單腳|弓箭步/.test(d.pose)&&Math.abs(v.kL-v.kR)>REF.asym.task.hi) form=["w","左右不平均：重量平均放在兩腳"];
+  else if(d.phase==="離心期") form=["n",v.k!=null&&v.k>=lo?"深度到位，準備往上":"控制速度，慢慢往下"];
+  else if(d.phase==="底部停留"||(d.phase===""&&v.k!=null&&v.k>=DESC_TH.mild)) form=v.k>=lo?["g","深度到位"]:["w","再蹲深一點"];
+  else if(d.phase==="向心期") form=["n","往上推，全腳掌踩穩"];
+  else form=["g","動作正確"];
+  if(!track&&!load&&sq&&v.k!=null&&v.k>=DESC_TH.mild&&v.tf!=null&&v.tf>REF.trunkFlex.task.hi&&form[0]!=="w") form=["w","上身太前傾：胸口抬高"];
+  // 表現
+  const R=perf.reps;
+  if(R.length>=2){ const best=Math.max(...R), last=R[R.length-1], drop=(best-last)/best*100;
+    perfL=drop>=20?["b",`起身速度比最快的一下慢 ${Math.round(drop)}%：接近疲勞，建議結束這組`]:drop>=10?["w",`起身速度慢了 ${Math.round(drop)}%：保持專注，用力往上推`]:["g",`起身速度穩定（${R.length} 下）：表現很好`]; }
+  else if(d.phase==="向心期") perfL=["n","起身時盡全力往上推，速度越快越好"];
+  else perfL=["n",R.length?"再做一下就能比較速度":"做完 2 下後開始比較起身速度"];
+  return {safe,form,perf:perfL};
+}
+function coachHTML(c){ if(!c) return ""; const row=(lab,[lv,t])=>`<div class="cr c${lv}"><i></i><span class="cl">${lab}</span><span class="ct">${esc(t)}</span></div>`;
+  return row("安全",c.safe)+row("動作",c.form)+row("表現",c.perf); }
 function renderDesc(){
   const d=liveDesc, r=v=>v==null?"—":Math.round(v)+"°";
+  if(!settings.liveAngles){ const c=coachOf(d);
+    $("dHead").textContent=d?d.pose+(fb.reps?`｜${fb.reps} 下`:""):(liveOn?"未偵測到完整身體：請退後或調整鏡頭":"尚未開啟鏡頭");
+    const cap=$("dCap"); cap.classList.add("coach"); cap.innerHTML=c?coachHTML(c):""; cap.hidden=!c;
+    $("dItems").innerHTML=""; $("dWarn").innerHTML=c?`<div class="coachp">${coachHTML(c)}</div>`:""; $("dRel").textContent=d?"角度數字已隱藏（可在設定開啟）；單鏡頭判讀，僅供參考":"";
+    return; }
+  $("dCap").classList.remove("coach");
   $("dHead").textContent=d?d.head+(fb.reps?`｜${fb.reps} 下`:""):(liveOn?"未偵測到完整身體：請退後或調整鏡頭":"尚未開啟鏡頭");
   const cap=$("dCap"); cap.innerHTML=d?`<b>${esc(d.head)}</b>${d.warn.length?`<span class="w">${esc(d.warn[0].split("：")[0])}</span>`:""}`:""; cap.hidden=!d;
   $("dItems").innerHTML=d?`<tr><th></th><th class="L">L</th><th class="R">R</th></tr>`+d.items.map(([n,l,rr,p,e])=>`<tr><td>${esc(n)}${e?"<sup>*</sup>":""}</td>${rr===null&&!/膝|髖|肩|肘/.test(n)?`<td colspan="2" class="v">${r(l)}</td>`:`<td class="v L">${r(l)}</td><td class="v R">${r(rr)}</td>`}</tr>`).join(""):"";
@@ -2844,11 +2907,22 @@ function drawAnat(ctx,A,proj,sc,opt){
     // 肋骨、胸骨、鎖骨
     ctx.strokeStyle="rgba(233,225,204,.9)"; ctx.lineWidth=Math.max(1.2*dpr,.008*A.k*sc);
     for(const arc of A.ribs){ ctx.beginPath(); arc.forEach((p,i)=>{ const q=pr(p); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }); ctx.stroke(); }
-    for(const [a,b,w] of [[A.stTop,A.stBot,.022],...A.clav.map(c=>[c[0],c[1],.012])]){ const qa=pr(a),qb=pr(b); ctx.strokeStyle=BONE_LINE; ctx.lineWidth=w*A.k*sc+2*dpr; ctx.beginPath(); ctx.moveTo(qa[0],qa[1]); ctx.lineTo(qb[0],qb[1]); ctx.stroke(); ctx.strokeStyle=BONE_FILL; ctx.lineWidth=w*A.k*sc; ctx.stroke(); }
+    for(const [a,b,w] of A.clav.map(c=>[c[0],c[1],.012])){ const qa=pr(a),qb=pr(b); ctx.strokeStyle=BONE_LINE; ctx.lineWidth=w*A.k*sc+2*dpr; ctx.beginPath(); ctx.moveTo(qa[0],qa[1]); ctx.lineTo(qb[0],qb[1]); ctx.stroke(); ctx.strokeStyle=BONE_FILL; ctx.lineWidth=w*A.k*sc; ctx.stroke(); }
     // 頭骨
     if(A.skull){ const c=pr(A.skull.c); ctx.fillStyle="rgba(233,225,204,.92)"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1.4*dpr; ctx.beginPath(); ctx.arc(c[0],c[1],A.skull.r*sc,0,Math.PI*2); ctx.fill(); ctx.stroke();
       if(!A.face){ const j=A.skull.jaw.map(pr); ctx.beginPath(); ctx.moveTo(j[0][0],j[0][1]); ctx.quadraticCurveTo(j[1][0],j[1][1]+(j[1][1]-c[1])*.15,j[2][0],j[2][1]); ctx.stroke(); } }
   }
+  // 胸骨：胸骨柄（上段較寬）→ 胸骨體 → 劍突（尖端）；IJ＝胸骨上切跡、PX＝劍突（ISB 胸廓座標系統的前方兩點）
+  if(opt.sternum||opt.bone){ const T0=A.stTop, T1=A.stBot, ax=A3.sub(T1,T0), Lr=A3.len(ax), k=A.k, ml=A.ml;
+    const at=(t,w)=>[pr(A3.add(A3.add(T0,A3.mul(ax,t)),A3.mul(ml,w*k))),pr(A3.add(A3.add(T0,A3.mul(ax,t)),A3.mul(ml,-w*k)))];
+    const prof=[[0,.026],[.04,.03],[.22,.022],[.26,.016],[.3,.017],[.6,.02],[.88,.016],[.92,.008],[1.08,.002]];
+    const Lp=prof.map(([t,w])=>at(t,w)[0]), Rp=prof.map(([t,w])=>at(t,w)[1]).reverse(), notch=pr(A3.add(T0,A3.mul(ax,.035)));
+    ctx.beginPath(); ctx.moveTo(Lp[0][0],Lp[0][1]); ctx.lineTo(notch[0],notch[1]); ctx.lineTo(Rp[Rp.length-1][0],Rp[Rp.length-1][1]); Rp.slice().reverse().forEach(q=>ctx.lineTo(q[0],q[1])); Lp.slice().reverse().forEach(q=>ctx.lineTo(q[0],q[1])); ctx.closePath();
+    ctx.fillStyle=opt.bone?BONE_FILL:"rgba(236,228,206,.82)"; ctx.strokeStyle=BONE_LINE; ctx.lineWidth=1.3*dpr; ctx.fill(); ctx.stroke();
+    { const a=at(.26,.016), b=at(.88,.014); ctx.strokeStyle="rgba(126,111,82,.75)"; ctx.lineWidth=1*dpr; for(const q of [a,b]){ ctx.beginPath(); ctx.moveTo(q[0][0],q[0][1]); ctx.lineTo(q[1][0],q[1][1]); ctx.stroke(); } } // 胸骨柄體交界（胸骨角）、劍胸交界
+    if(opt.sternum&&Lr>0){ const fs=Math.max(10,(opt.lw||3)*3.2), ij=pr(T0), px=pr(A3.add(T0,A3.mul(ax,.92))); ctx.font=`600 ${fs}px "Barlow Semi Condensed","Bahnschrift",sans-serif`; ctx.textBaseline="middle"; ctx.textAlign="left";
+      for(const [q,n] of [[ij,"IJ"],[px,"PX"]]){ ctx.fillStyle="#fff"; ctx.strokeStyle="rgba(16,21,30,.8)"; ctx.lineWidth=1.2*dpr; ctx.beginPath(); ctx.arc(q[0],q[1],Math.max(2*dpr,(opt.lw||3)*.6),0,Math.PI*2); ctx.fill(); ctx.stroke();
+        if(opt.label!==false){ const x=q[0]-(opt.lw||3)*2.5-ctx.measureText(n).width, w=ctx.measureText(n).width; ctx.fillStyle="rgba(16,21,30,.7)"; ctx.fillRect(x-3,q[1]-fs*.6,w+6,fs*1.2); ctx.fillStyle="#fff"; ctx.fillText(n,x,q[1]); } } } }
   // 脊柱（骨骼模式畫椎體；只開脊柱時畫中軸線）
   if(opt.spine||opt.bone){ const cv=A.curve.map(pr);
     ctx.strokeStyle=opt.bone?"rgba(126,111,82,.9)":"rgba(16,21,30,.55)"; ctx.lineWidth=(opt.bone?2:Math.max(3*dpr,opt.lw*2)); ctx.beginPath(); cv.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke();
@@ -2891,11 +2965,11 @@ function handsToLift(hands,lms,lift,W,H){
 }
 // 影像疊加：用即時 3D 重建點，投影回畫面（x、y 為影像像素）
 function drawAnat2D(ctx,lms,lift,W,H,mirror){
-  if(!lift||!lms) return; const sp=settings.anatSpine, bo=settings.bone2d, mu=settings.muscle2d; if(!sp&&!bo&&!mu) return;
+  if(!lift||!lms) return; const sp=settings.anatSpine, st=settings.anatSternum, bo=settings.bone2d, mu=settings.muscle2d; if(!sp&&!st&&!bo&&!mu) return;
   const A=anatBuild(lift,handsToLift(liveHands,lms,lift,W,H)); if(!A) return;
   const Ox=(lms[23].x+lms[24].x)/2*W, Oy=(lms[23].y+lms[24].y)/2*H, s=lift.s;
   const proj=p=>{ const x=Ox+p.x*s; return [mirror?W-x:x, Oy+p.y*s, p.z]; };
-  drawAnat(ctx,A,proj,s,{bone:bo,muscle:mu,spine:sp,lw:Math.max(2.5,Math.min(W,H)/150),label:sp&&!bo});
+  drawAnat(ctx,A,proj,s,{bone:bo,muscle:mu,spine:sp,sternum:st,lw:Math.max(2.5,Math.min(W,H)/150),label:sp&&!bo});
 }
 /* ===================== 多人追蹤：同一人給固定代號、可點選分析對象 ===================== */
 const PLAB="ABCDEFGH";
@@ -3023,6 +3097,22 @@ async function onDeviceChange(){
     if(ext){ if(settings.preferExt!==false){ settings.camId=ext.deviceId; saveSettings(); toast(`偵測到新鏡頭「${ext.label||"外接鏡頭"}」，已切換`); if(liveOn&&camSource!=="phone") await startCam(); } else toast(`偵測到新鏡頭「${ext.label||"外接鏡頭"}」，可在相機選單切換`); }
     if(removedCur&&camSource!=="phone"){ settings.camId=""; saveSettings(); toast("外接鏡頭已拔除，改用預設相機"); if(liveOn) await startCam(); } }
   knownCams=ids; listCams(); renderCamList(); }
+/* 不卡畫面的提示框：iPhone 的 alert() 會讓鏡頭畫面暫停，所以校正、掃描的結果改用這個 */
+function notice(t,title){ let el=$("mmNote"); if(!el){ el=document.createElement("div"); el.id="mmNote"; el.className="mmnote"; el.setAttribute("role","dialog"); el.innerHTML='<div class="mmn-b"><b class="mmn-t"></b><div class="mmn-x"></div><button class="pbtn mmn-ok">好</button></div>'; document.body.appendChild(el); el.querySelector(".mmn-ok").onclick=()=>el.classList.remove("on"); }
+  el.querySelector(".mmn-t").textContent=title||""; el.querySelector(".mmn-x").textContent=t; el.classList.add("on"); resumeLive(); }
+/* 鏡頭看門狗：畫面卡住（被系統暫停、彈出視窗、切到背景再回來）時自動恢復 */
+let vidLastT=-1, vidStallAt=0, vidRestartAt=0;
+function resumeLive(){ if(!liveOn||!liveVideo.srcObject) return; if(liveVideo.paused||liveVideo.readyState<2) liveVideo.play().catch(()=>{}); }
+function watchLive(now){
+  if(!liveOn||!liveVideo.srcObject) return;
+  if(liveVideo.currentTime!==vidLastT){ vidLastT=liveVideo.currentTime; vidStallAt=now; return; }
+  const st=now-vidStallAt; if(st<1200) return;
+  resumeLive();
+  const tr=liveVideo.srcObject.getVideoTracks?.()[0];
+  if(st>4000&&camSource==="local"&&now-vidRestartAt>8000&&(!tr||tr.readyState==="ended"||tr.muted||st>6000)){ vidRestartAt=now; vidStallAt=now; toast("鏡頭畫面停住了，正在重新連線…"); startCam(); }
+}
+["visibilitychange","pageshow","focus"].forEach(ev=>window.addEventListener(ev,()=>{ if(!document.hidden) setTimeout(resumeLive,150); }));
+{ const A=window.alert.bind(window), C=window.confirm.bind(window); window.alert=m=>{ A(m); setTimeout(resumeLive,50); }; window.confirm=m=>{ const r=C(m); setTimeout(resumeLive,50); return r; }; }
 function toast(t){ let el=$("mmToast"); if(!el){ el=document.createElement("div"); el.id="mmToast"; el.className="mmtoast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("on"),3500); }
 
 /* ===================== 手機連動（WebRTC 點對點，PeerJS 只負責配對） ===================== */
@@ -3223,7 +3313,7 @@ function processLive(now){
     { const src=liveLift||liveWorld; livePl=liveRes&&src?computePlanes(src):null; livePlSrc=liveLift?(settings.scan?"3D 重建（轉身掃描長度）":"3D 重建（身高比例長度）"):"AI 3D 估計"; }
     liveSplit=livePl?BM.loadSplit(livePl.pts,SEGS,loadFrac(),settings.loadAt,TF):null;   // 第 18 則
     { const c=liveLift?BM.camDistance(liveLift,W,H):null; if(c) liveCam=liveCam?{Z:lerp(liveCam.Z,c.Z,.05),ratio:c.ratio==null?liveCam.ratio:lerp(liveCam.ratio??c.ratio,c.ratio,.05)}:c; } // 第 5 則
-    liveDesc=describer.update(livePl,now/1000); audioFeedback(liveDesc,now/1000);
+    liveDesc=describer.update(livePl,now/1000); audioFeedback(liveDesc,now/1000); coachTick(liveDesc,now/1000);
     if(scanRun) scanFrame(liveRes,W,H);
     liveM=liveRes?computeMetrics(liveRes,(settings.angleMode==="lift"&&liveLift)?liveLift:liveWorld,W,H):null;
     liveVM=liveRes?computeVM(liveRes,W,H,liveHands):null;
@@ -3237,9 +3327,11 @@ function processLive(now){
   drawFrame(lctx,VS.src,W,H,liveMirror);
   drawAnat2D(lctx,liveRes,liveLift,W,H,liveMirror);
   drawOthers(lctx,livePeople,W,H,liveMirror);
+  liveNoAng=!settings.liveAngles;
   drawPose(lctx,liveRes,W,H,liveMirror,liveM,liveHands);
   drawPalmLite(lctx,liveRes,W,H,liveMirror);
   drawHands(lctx,liveHands,W,H,liveMirror);
+  liveNoAng=false;
   if(settings.vm) drawVM(lctx,liveVM,W,H,liveMirror);
   drawGhost(lctx,W,H);
   if(!(settings.view3d&&document.body.dataset.mode==="mirror")) drawScanGuide(lctx,W,H);
@@ -4423,8 +4515,8 @@ function bindSettings(){
   $("setAngle").onchange=e=>{settings.angleMode=e.target.value;saveSettings();};
   const tg=(id,key,label,after)=>{ const b=$(id),up=()=>{ b.textContent=label+"："+(settings[key]?"開":"關"); b.classList.toggle("off",!settings[key]); }; up(); b.onclick=()=>{ settings[key]=!settings[key]; saveSettings(); up(); after&&after(); }; };
   tg("tgHands","hands","✋ 手指追蹤",async()=>{ if(settings.hands&&!handLM&&vision){ setStatus("⏳ 載入手指模型…"); await loadHands(); } refreshStatus(); });
-  tg("tgAngles","showAngles","🔢 角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
-  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpine","anatSpine","脊柱"); tg("tgBone2d","bone2d","影像疊加骨骼"); tg("tgMus2d","muscle2d","影像疊加肌肉"); $("btnAudio").onclick=cycleAudio; if(settings.speak&&!settings.audio) settings.audio="full"; updateAudioBtn(); tg("tgEuro","euro","即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
+  tg("tgAngles","showAngles","🔢 回顧畫面角度數字"); tg("tgLiveAng","liveAngles","即時畫面角度數字"); tg("tgCom","showCom","⭐ 重心"); tg("tgFace","showFace","🙂 臉部點");
+  tg("tgFill","fill","🛠️ 缺點補點",()=>engine.reset()); tg("tgSpine","anatSpine","脊柱"); tg("tgSternum","anatSternum","胸骨"); tg("tgBone2d","bone2d","影像疊加骨骼"); tg("tgMus2d","muscle2d","影像疊加肌肉"); $("btnAudio").onclick=cycleAudio; if(settings.speak&&!settings.audio) settings.audio="full"; updateAudioBtn(); tg("tgEuro","euro","即時平滑（1€）"); tg("tgVM","vm","📍 PiG 虛擬標記"); tg("tgVMLabel","vmLabel","🏷️ 標記名稱");
   $("btnCalib").onclick=startCalib;
 }
 function updateUI(now){
@@ -4539,7 +4631,7 @@ document.body.classList.add("right-open");
 
 /* ===================== 主迴圈 ===================== */
 let lastUI=0;
-function loop(){ requestAnimationFrame(loop); const now=performance.now(); processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
+function loop(){ requestAnimationFrame(loop); const now=performance.now(); try{ watchLive(now); }catch(e){} processLive(now); processRef(); draw3D(); drawPlaneView("cvFro",livePl,"fro"); drawPlaneView("cvSag",livePl,"sag"); if(now-lastUI>120){ lastUI=now; updateUI(now); } }
 
 applySegModel(); buildCards(); bindSettings(); renderCalib(); bind3D(); renderScan(); renderRefTable();
 document.querySelectorAll("#right details.panel").forEach(d=>{ const t=d.querySelector("summary").textContent; d.open=/動作判讀|比對目標|示範影片來源|重心與力學|雙平面角度|數據曲線|全部數據|動作報告|肢段參考圖|資料檢查/.test(t); }); renderSegTable(); renderRefTables(); renderTargets(); updateViewBtn(); $("btnView").onclick=e=>{ e.stopPropagation(); viewOpen=!viewOpen; if(viewOpen&&!liveOn) toast("開鏡頭後可調整畫面"); renderViewCtl(); updateViewBtn(); }; setAbtn("btnTrial","trial","跟做一次"); updateGhostBtn(); updateMirrorBtn(); applyCompact(); setMode("mirror"); goPage("home");
