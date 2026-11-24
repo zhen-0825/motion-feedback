@@ -422,6 +422,12 @@ table.cmp{background:#fff;border:1px solid var(--line)}
 table.cmp th{white-space:nowrap}
 table.cmp td{font-variant-numeric:tabular-nums;white-space:nowrap}
 table.cmp td.c{font-weight:700} table.cmp td.r{color:#2E8B62}
+.decs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:0 0 10px}
+.dec{background:#fff;border-radius:14px;padding:12px 14px;border:1px solid var(--line,#E5E5EA)}
+.odd{font-size:11px;font-weight:700;color:#A15C00;background:#FFF1DB;border-radius:6px;padding:1px 6px;margin-left:4px}
+.dec .dh{display:flex;justify-content:space-between;align-items:center;gap:8px}.dec .dt{white-space:nowrap;flex:none;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:#F2F2F7;color:#6B7280}
+.dec.g .dt{background:#E3F6EC;color:#17996B}.dec.b .dt{background:#FDE7EA;color:#C8364E}
+.dec .dn{font-size:13px;margin:6px 0 4px;font-variant-numeric:tabular-nums}.dec .dtp{font-size:12.5px;color:#4B5563;line-height:1.5}
 table.cmp td.d{font-family:var(--num);font-weight:600} .d.g{color:#17996B} .d.b{color:#C8364E} .d.n{color:#8D99AB}
 .hxcharts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:16px}
 .tc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px 4px}
@@ -3737,7 +3743,7 @@ function openReport(){
     <div class="rp-score"><div class="lab">動作分數</div><div class="big">${sum.score}<span>/100</span></div><div class="grade">${sum.grade}</div><div class="sm">教學用自訂分數，未經效度驗證</div></div>
     <div class="rp-box"><div class="h">疊圖比較（各下最低點）</div><img src="${imgO}" style="width:100%"><img src="${imgOS}" style="width:100%"><div class="sm">灰＝開始站姿；彩色＝各下最低點。線條越分散＝每下動作越不一致。</div></div>
     <div class="rp-box"><div class="h">資料品質</div><table class="rp-kv"><tr><td>判定</td><td><b>${K.grade}</b></td></tr><tr><td>推算補點</td><td>${K.reconPct.toFixed(0)}%</td></tr><tr><td>可疑畫面</td><td>${K.badPct.toFixed(1)}%</td></tr><tr><td>可疑片段</td><td>${K.eps.length} 段</td></tr></table>${K.eps.slice(0,4).map(e=>`<div class="sm">${e.t0.toFixed(1)}s：${esc([...e.why].slice(0,2).join("、"))}</div>`).join("")}</div>
-    <div class="rp-box"><div class="h">與前次比較</div>${cmpTable(hist[hist.length-2],hist[hist.length-1],true)}</div><div class="rp-box"><div class="h">歷次變化（${hist.length} 次）</div>${trendSet(hist,true)}</div>
+    <div class="rp-box"><div class="h">與前次比較</div>${cmpTable(hist[hist.length-2],hist[hist.length-1],true,errModel(hist).E)}</div><div class="rp-box"><div class="h">歷次變化（${hist.length} 次）</div>${trendSet(hist,true)}</div>
    </div>
   </div>
   ${sec("6","生物力學摘要（重心與地面反作用力，估計）")}
@@ -3772,16 +3778,70 @@ function upsertHistory(clip,sum){
   return rec;
 }
 function autoSaveClip(clip){ try{ if(clip.data.length<20) return; upsertHistory(clip,clipSummary(clip)); }catch(e){ console.warn("自動儲存失敗",e); } }
+/* ---------- 量測誤差與有意義的改變（Hopkins 2000；Weir 2005；Munro 2012） ----------
+   典型誤差 TE＝同一天重複測驗差值的標準差÷√2；最小可偵測變化 MDC95＝1.96×√2×TE≈2.77×TE。
+   同一天有 ≥3 組重複時用「這個學員自己的」誤差，不夠時用文獻預設值。 */
+const MDC_DEF={score:10,reps:1,knee:8,hip:8,valL:8,valR:8,trunk:8,lat:8,asym:8,cv:10,kneeL:8,kneeR:8};
+const okRec=r=>r&&r.quality!=="不佳";
+function measErr(recs,skip){
+  const R=recs.filter(r=>okRec(r)&&!skip?.[r.id]), byDay={}; for(const r of R)(byDay[r.date.slice(0,10)]??=[]).push(r);
+  const out={};
+  for(const k of Object.keys(MDC_DEF)){
+    const d=[]; for(const g of Object.values(byDay)) for(let i=1;i<g.length;i++) if(g[i][k]!=null&&g[i-1][k]!=null) d.push(g[i][k]-g[i-1][k]);
+    if(d.length>=3){ const m=d.reduce((a,b)=>a+b,0)/d.length, sd=Math.sqrt(d.reduce((a,b)=>a+(b-m)**2,0)/(d.length-1)), te=sd/Math.SQRT2;
+      out[k]={te,mdc:Math.max(2.77*te,k==="reps"?1:.5),src:"own",n:d.length}; }
+    else out[k]={te:null,mdc:MDC_DEF[k],src:"lit",n:d.length};
+  }
+  return out;
+}
+// 先粗估誤差→找出異常紀錄→排除異常後重算誤差
+function errModel(recs){ const E0=measErr(recs), F=flagOutliers(recs,E0); return {E:Object.keys(F).length?measErr(recs,F):E0,F}; }
+// 異常紀錄：和這個學員的中位數差太多（>3×MAD 且 >MDC），可能是拍攝或辨識出問題
+function flagOutliers(recs,E){
+  const keys=["knee","valL","valR","trunk","asym"], flag={};
+  for(const k of keys){ const v=recs.map(r=>r[k]).filter(x=>x!=null); if(v.length<5) continue;
+    const sv=[...v].sort((a,b)=>a-b), med=sv[sv.length>>1], mad=[...v.map(x=>Math.abs(x-med))].sort((a,b)=>a-b)[v.length>>1]*1.4826||1;
+    for(const r of recs) if(r[k]!=null&&Math.abs(r[k]-med)>Math.max(3*mad,E[k].mdc)) (flag[r.id]??=[]).push(k); }
+  return flag;
+}
+// 給教練的決策卡：基準（最早 3 次的平均）→ 最近 3 次的平均，變化是否大於 MDC
+const DEC=[["knee","蹲深（膝屈曲）","kneeFlex","range","動作幅度"],["valL","左膝外翻","kneeVal","range","膝蓋控制"],["valR","右膝外翻","kneeVal","range","膝蓋控制"],
+  ["trunk","軀幹前傾","trunkFlex","range","軀幹控制"],["asym","左右膝差","asym","range","左右對稱"],["cv","每下深度變異","cv","range","動作一致性"],["score","動作分數",null,"up","整體"]];
+const NEXT={kneeFlex:{b:"幅度變小：先檢查髖、踝活動度（例如踝背屈不足），可加入箱上蹲或高腳跟蹲，降低難度讓幅度回來。",g:"幅度改善：維持目前的活動度練習，可以逐步加負重。"},
+  kneeVal:{b:"膝蓋內倒變多：降低負重或速度，加入彈力帶繞膝深蹲、臀中肌（髖外展）練習，提醒「膝蓋對準第二、三腳趾」。",g:"膝蓋控制進步：可以把練習換成單腳或跳躍落地，檢查在更難的動作中是否還維持得住。"},
+  trunkFlex:{b:"軀幹前傾變多：檢查踝背屈與核心控制，可用高腳杯深蹲（重量放胸前）幫助身體保持直立。",g:"軀幹控制改善：維持目前練習。"},
+  asym:{b:"左右差變大：先問有沒有不舒服或受傷；可加入單側練習（分腿蹲），弱側多做一組。",g:"左右更對稱：維持單側練習。"},
+  cv:{b:"每下深度不穩定：降低次數或速度，用節拍器或目標高度（碰箱子）幫助每下一致，也要考慮是否疲勞。",g:"一致性提高：可以增加次數或負重。"},
+  _up:{b:"分數下降：看上面哪一項退步最多，先處理那一項。",g:"分數提高：維持目前的訓練安排。"}};
+function decisions(recs,E,flag){
+  const R=recs.filter(r=>okRec(r)&&!flag[r.id]); if(R.length<4) return null;
+  const n=Math.min(3,Math.floor(R.length/2)), A=R.slice(0,n), B=R.slice(-n), mean=(L,k)=>{ const v=L.map(r=>r[k]).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+  return DEC.map(([k,name,rk,dir,dom])=>{ const a=mean(A,k), b=mean(B,k); if(a==null||b==null) return null; const d=b-a, m=E[k].mdc;
+    let st="same"; if(Math.abs(d)>=m){ if(dir==="up") st=d>0?"g":"b"; else { const da=dist(rk,a), db=dist(rk,b); st=db==null||da==null?"chg":db<da?"g":db>da?"b":"chg"; } }
+    const tip=st==="same"?"變化小於量測誤差：目前還不能說有進步或退步，繼續追蹤。":st==="chg"?"有超過誤差的改變，但前後都在參考區間內：屬於正常範圍內的變化，留意是不是訓練內容（例如負重、站距）改了。":(NEXT[rk||"_up"]||NEXT._up)[st];
+    return {k,name,dom,a,b,d,m,src:E[k].src,st,tip}; }).filter(Boolean);
+}
+function decisionHTML(recs){
+  const {E,F:flag}=errModel(recs), D=decisions(recs,E,flag);
+  const nOwn=Object.values(E).filter(e=>e.src==="own").length;
+  const errNote=nOwn?`誤差門檻：有 ${nOwn} 項用這位學員「同一天重測」算出的個人誤差，其餘用文獻預設值。`:`誤差門檻目前用文獻預設值（角度約 8°，Munro 2012）。同一天多錄 2–3 次，系統就能算出這位學員自己的量測誤差，判斷會更準。`;
+  if(!D) return `<h3>訓練決策建議</h3><div class="small">需要至少 4 次品質合格的紀錄才會給建議（目前 ${recs.filter(okRec).length} 次）。${errNote}</div>`;
+  const lab={g:"真的進步",b:"真的退步",chg:"範圍內改變",same:"在誤差內"}, u=k=>k==="score"?"分":k==="cv"?"%":"°";
+  return `<h3>訓練決策建議</h3><div class="small" style="margin-bottom:8px">比較「最早幾次的平均」和「最近幾次的平均」。變化要大於<b>最小可偵測變化（MDC）</b>才算真的改變。MDC 的意思是：同一個人、同一天重複做，數字本來就會晃動的範圍，比它小的差異可能只是量測誤差。</div>
+  <div class="decs">${D.map(x=>`<div class="dec ${x.st}"><div class="dh"><b>${x.name}</b><span class="dt">${lab[x.st]}</span></div><div class="dn">${x.a.toFixed(0)}${u(x.k)} → ${x.b.toFixed(0)}${u(x.k)}（${x.d>0?"+":""}${x.d.toFixed(1)}，門檻 ±${x.m.toFixed(1)}${x.src==="own"?"・個人":"・文獻"}）</div><div class="dtp">${x.tip}</div></div>`).join("")}</div>
+  <div class="small">${errNote}${Object.keys(flag).length?` 有 ${Object.keys(flag).length} 筆紀錄和這位學員平常差太多（表中標「疑似異常」），可能是拍攝或辨識問題，已從建議中排除。`:""} 建議是教學用的經驗規則，不是醫療診斷；學員有疼痛時請轉介專業人員。</div>`;
+}
 const dist=(k,v)=>{ if(v==null||!REF[k]?.task) return null; const t=taskRange(k); return v<t.lo?t.lo-v:v>t.hi?v-t.hi:0; };
-function deltaCell(m,prev,cur){
+function deltaCell(m,prev,cur,E){
   const [k,,u,rk,dir]=m; if(prev?.[k]==null||cur?.[k]==null) return `<td class="d">—</td>`;
   const d=cur[k]-prev[k]; if(Math.abs(d)<.5) return `<td class="d n">±0${u}</td>`;
+  const lim=E?.[k]?.mdc; if(lim!=null&&Math.abs(d)<lim) return `<td class="d n" title="小於量測誤差 ±${lim.toFixed(1)}${u}">≈ ${d>0?"+":""}${d.toFixed(k==="cv"||k==="score"||k==="reps"?0:1)}${u}</td>`;
   let cls="n"; if(dir==="up") cls=d>0?"g":"b"; else if(dir==="range"){ const a=dist(rk,prev[k]), b=dist(rk,cur[k]); cls=b<a?"g":b>a?"b":"n"; }
   return `<td class="d ${cls}">${d>0?"▲":"▼"} ${Math.abs(d).toFixed(k==="cv"||k==="score"||k==="reps"?0:1)}${u}</td>`;
 }
-function cmpTable(prev,cur,compact){
+function cmpTable(prev,cur,compact,E){
   const rows=HMET.filter(m=>!compact||["score","knee","valL","valR","trunk","asym"].includes(m[0])).map(m=>{ const [k,n,u,rk]=m, t=rk&&REF[rk]?.task?taskRange(rk):null, f=v=>v==null?"—":(k==="score"||k==="reps"?Math.round(v):Math.round(v))+u;
-    return `<tr><td class="n">${n}</td><td>${f(prev?.[k])}</td><td class="c">${f(cur?.[k])}</td>${deltaCell(m,prev,cur)}${compact?"":`<td class="r">${t?t.lo+"～"+t.hi:"—"}</td>`}</tr>`; }).join("");
+    return `<tr><td class="n">${n}</td><td>${f(prev?.[k])}</td><td class="c">${f(cur?.[k])}</td>${deltaCell(m,prev,cur,E)}${compact?"":`<td class="r">${t?t.lo+"～"+t.hi:"—"}</td>`}</tr>`; }).join("");
   const dd=d=>d?d.slice(5,10).replace("-","/"):"—";
   return `<table class="cmp"><tr><th>指標</th><th>前次${compact?"":" "+dd(prev?.date)}</th><th>本次${compact?"":" "+dd(cur?.date)}</th><th>變化</th>${compact?"":"<th>參考</th>"}</tr>${rows}</table>`;
 }
@@ -3817,9 +3877,10 @@ function renderHistory(){
   const name=names.includes(want)?want:names[0], recs=name?histOf(name):[];
   $("hxSum").textContent=recs.length?`${recs.length} 次紀錄・${recs[0].date.slice(0,10)} ～ ${recs[recs.length-1].date.slice(0,10)}`:"錄影後會自動儲存每次的摘要數據";
   const cur2=recs[recs.length-1], prev=recs[recs.length-2];
-  $("hxCmp").innerHTML=recs.length?`<h3>與前次比較</h3>${cmpTable(prev,cur2)}<div class="small">▲▼ 綠色＝更接近參考區間（或分數提高），紅色＝偏離。差異小於量測誤差（約 8°，Munro 2012）時請保守解讀。</div>`:"";
+  const {E,F:FL}=recs.length?errModel(recs):{E:null,F:{}};
+  $("hxCmp").innerHTML=recs.length?`${decisionHTML(recs)}<h3>與前次比較</h3>${cmpTable(prev,cur2,false,E)}<div class="small">▲▼ 綠色＝更接近參考區間（或分數提高），紅色＝偏離。「≈」＝變化小於量測誤差，不算真的改變。</div>`:"";
   $("hxCharts").innerHTML=recs.length?trendSet(recs):"";
-  $("hxTable").innerHTML=recs.length?`<h3>歷次紀錄</h3><div class="tw"><table class="cmp"><tr><th>日期</th><th>錄影</th><th>次數</th><th>分數</th><th>膝屈曲</th><th>膝外翻 L／R</th><th>前傾</th><th>品質</th><th></th></tr>${recs.slice().reverse().map(r=>`<tr><td>${r.date.slice(0,16).replace("T"," ")}</td><td>${esc(r.clip||"")}</td><td>${r.reps}</td><td><b>${r.score}</b></td><td>${Math.round(r.knee??NaN)||"—"}°</td><td>${r.valL==null?"—":Math.round(r.valL)}°／${r.valR==null?"—":Math.round(r.valR)}°</td><td>${r.trunk==null?"—":Math.round(r.trunk)}°</td><td>${r.quality||"—"}</td><td><button class="pbtn hxdel" data-id="${r.id}">刪除</button></td></tr>`).join("")}</table></div>`:"<div class='small'>尚無紀錄。到「即時分析」錄影一次，結束後會自動儲存。</div>";
+  $("hxTable").innerHTML=recs.length?`<h3>歷次紀錄</h3><div class="tw"><table class="cmp"><tr><th>日期</th><th>錄影</th><th>次數</th><th>分數</th><th>膝屈曲</th><th>膝外翻 L／R</th><th>前傾</th><th>品質</th><th></th></tr>${recs.slice().reverse().map(r=>`<tr><td>${r.date.slice(0,16).replace("T"," ")}</td><td>${esc(r.clip||"")}</td><td>${r.reps}</td><td><b>${r.score}</b></td><td>${Math.round(r.knee??NaN)||"—"}°</td><td>${r.valL==null?"—":Math.round(r.valL)}°／${r.valR==null?"—":Math.round(r.valR)}°</td><td>${r.trunk==null?"—":Math.round(r.trunk)}°</td><td>${r.quality||"—"}${FL[r.id]?` <span class="odd" title="和這位學員平常差太多，可能是拍攝或辨識問題">疑似異常</span>`:""}</td><td><button class="pbtn hxdel" data-id="${r.id}">刪除</button></td></tr>`).join("")}</table></div>`:"<div class='small'>尚無紀錄。到「即時分析」錄影一次，結束後會自動儲存。</div>";
   document.querySelectorAll(".hxdel").forEach(b=>b.onclick=()=>{ if(!confirm("刪除這筆紀錄？")) return; store.set(HKEY,histAll().filter(h=>String(h.id)!==b.dataset.id)); renderHistory(); });
 }
 function bindHistory(){
